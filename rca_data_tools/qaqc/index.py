@@ -29,7 +29,7 @@ def create_cloud_index(
         else:
             logger.warning(f"Unknown file found: {item}.")
 
-    with fsmap.fs.open(INDEX_FILE, mode='wb') as f:
+    with fsmap.fs.open(f"{fsmap.root}/{INDEX_FILE}", mode='w') as f:
         json.dump(index_dict, f)
 
 
