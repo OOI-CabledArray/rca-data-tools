@@ -18,7 +18,6 @@ import xarray as xr
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
 from rca_data_tools.qaqc.utils import coerce_qartod_executed_to_int
-from rca_data_tools.qaqc.flow import S3_BUCKET
 from rca_data_tools.qaqc.utils import select_logger
 
 HERE = Path(__file__).parent.absolute()
@@ -402,7 +401,7 @@ def run_dashboard_creation(
 
 
 def organize_images(
-    sync_to_s3=False, bucket_name=S3_BUCKET, fs_kwargs={}
+    sync_to_s3=False, bucket_name='ooi-rca-qaqc-prod', fs_kwargs={}
 ):
     logger = select_logger()
     if sync_to_s3 is True:
