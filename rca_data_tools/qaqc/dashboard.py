@@ -238,23 +238,19 @@ def loadProfiles(refDes):
     gh_baseURL = 'https://raw.githubusercontent.com/OOI-CabledArray/profileIndices/main/'
 
     page = requests.get(github_url).text
-    soup = BeautifulSoup(page, 'html.parser')
-    csvfiles = soup.find_all(title=re.compile("{}_profiles_.*\.csv$".format(site)))
-    
-    fileNames = []
-    for i in csvfiles:
-        fileNames.append(i.extract().get_text())
+    fileNames = list(set(re.findall(site + '_profiles_[0-9]{4}\.csv',page)))
 
-    profiles_partial = []
-    for file in fileNames:
-        profiles_URL = gh_baseURL + file
-        download = requests.get(profiles_URL)
-        if download.status_code == 200:
-            data = pd.read_csv(io.StringIO(download.content.decode('utf-8')),parse_dates=dateColumns)
-            profiles_partial.append(data)
+    if fileNames:
+        profiles_partial = []
+        for file in fileNames:
+            profiles_URL = gh_baseURL + file
+            download = requests.get(profiles_URL)
+            if download.status_code == 200:
+                data = pd.read_csv(io.StringIO(download.content.decode('utf-8')),parse_dates=dateColumns)
+                profiles_partial.append(data)
 
-    profileList = pd.concat(profiles_partial, ignore_index=True)
-    profileList = profileList.sort_values('start')
+        profileList = pd.concat(profiles_partial, ignore_index=True)
+        profileList = profileList.sort_values('start')
     
     return profileList
 
@@ -1207,7 +1203,7 @@ def plotProfilesScatter(
                         if len(flag_X) > 0:
                             n = len(flag_X)
                             legendString = f'{flagType} {level}: {n} points'
-                            flag_Y = flaggedDS[Xparam].values
+                            flag_Y = flaggedDS[pressParam].values
                             flagLine = plt.plot(flag_X,-flag_Y,flags[flagType]['symbol'],color=flagStatus[level]['color'],
                             	    markersize=1,label='%s' % legendString,
                             	    )
