@@ -236,7 +236,7 @@ def main():
 
     args = parse_args()
 
-    if args.sync_to_s3 is True:
+    if args.s3_sync is True:
         prepare_s3_bucket(S3_BUCKET)
 
     if args.all is True:
