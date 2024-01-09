@@ -24,6 +24,7 @@ from rca_data_tools.qaqc.plots import (
 )
 from rca_data_tools.qaqc.compute_constants import COMPUTE_EXCEPTIONS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
+from rca_data_tools.qaqc.utils import prepare_s3_bucket
 
 HERE = Path(__file__).parent.absolute()
 now = datetime.datetime.utcnow()
@@ -234,7 +235,10 @@ def main():
     from loguru import logger
 
     args = parse_args()
-    now = datetime.datetime.utcnow()
+
+    if args.sync_to_s3 is True:
+        prepare_s3_bucket(S3_BUCKET)
+
     if args.all is True:
         # Creates pipeline objects for all the sites
         # if run is specified, will actually run the pipeline

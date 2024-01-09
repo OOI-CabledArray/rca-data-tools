@@ -18,7 +18,6 @@ import xarray as xr
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
 from rca_data_tools.qaqc.utils import coerce_qartod_executed_to_int
-from rca_data_tools.qaqc.utils import select_logger
 
 HERE = Path(__file__).parent.absolute()
 PARAMS_DIR = HERE.joinpath('params')
@@ -403,19 +402,6 @@ def run_dashboard_creation(
 def organize_images(
     sync_to_s3=False, bucket_name='ooi-rca-qaqc-prod', fs_kwargs={}
 ):
-    logger = select_logger()
-    if sync_to_s3 is True:
-        import fsspec
-        S3FS = fsspec.filesystem('s3', **fs_kwargs)
-
-        logger.info("collecting existing 'profile' files")
-        existing_files = S3FS.ls(f's3://{bucket_name}/')
-        files_to_delete = [file for file in existing_files if 'profile' in file]
-        # The number of profiles changes so we want to delete old profile files.
-        for f in files_to_delete:
-            S3FS.rm(f)
-        logger.info("'profile' files deleted")
-
     for i in PLOT_DIR.iterdir():
         if i.is_file():
             if i.suffix == '.png' or i.suffix == '.svg':
@@ -430,6 +416,9 @@ def organize_images(
 
                 # Sync to s3
                 if sync_to_s3 is True:
+                    import fsspec
+                    S3FS = fsspec.filesystem('s3', **fs_kwargs)
+                    
                     fs_path = '/'.join(
                         [bucket_name, PLOT_DIR.name, subsite_dir.name, fname]
                     )
