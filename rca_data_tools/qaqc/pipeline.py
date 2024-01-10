@@ -237,6 +237,7 @@ def main():
     args = parse_args()
 
     if args.s3_sync and args.all:
+        logger.info("prepare s3 bucket triggered")
         prepare_s3_bucket(S3_BUCKET)
 
     if args.all is True:
