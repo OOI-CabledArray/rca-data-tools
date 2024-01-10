@@ -28,24 +28,3 @@ def coerce_qartod_executed_to_int(ds):
         ds = ds.drop(var)
     logger.info(f"ds size post coercion: {ds.nbytes}")
     return ds
-
-
-def prepare_s3_bucket(bucket_name):
-    logger = select_logger()
-
-    # Load secrets from gh runner because this function is called outside of prefect flow
-    aws_key = os.environ.get('AWS_KEY')
-    aws_secret = os.environ.get('AWS_SECRET')
-    fs_kwargs = {'key': aws_key, 'secret': aws_secret}
-
-    S3FS = fsspec.filesystem('s3', **fs_kwargs)
-    logger.info("Collecting existing 'profile' image files.")
-
-    existing_files = S3FS.ls(f's3://{bucket_name}/')
-    files_to_delete = [file for file in existing_files if 'profile' in file]
-    logger.info(f"To be deleted: {files_to_delete} ")
-    # The number of profiles changes so we want to delete old profile files.
-    for f in files_to_delete:
-        S3FS.rm(f)
-
-    logger.info("'Profile' files deleted.")
