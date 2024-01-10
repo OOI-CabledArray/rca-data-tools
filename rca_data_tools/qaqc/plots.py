@@ -300,6 +300,7 @@ def run_dashboard_creation(
                         statusDict,
                         site,
                     )
+                    plotList.append(plots)
                     depths = sites_dict[site]['depths'].strip('"').split(',')
                     if 'Single' not in depths:
                         for profileDepth in depths:
@@ -418,7 +419,7 @@ def organize_images(
                 if sync_to_s3 is True:
                     import fsspec
                     S3FS = fsspec.filesystem('s3', **fs_kwargs)
-                    
+
                     fs_path = '/'.join(
                         [bucket_name, PLOT_DIR.name, subsite_dir.name, fname]
                     )

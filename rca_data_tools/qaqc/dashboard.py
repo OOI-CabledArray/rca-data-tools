@@ -1621,7 +1621,6 @@ def plotProfilesScatter(
                 fig.savefig(fileName + '_local.png', dpi=300)
                 fileNameList.append(fileName + '_local.png')
 
-    logger.warning(f"fileNameList: {fileNameList}")    
     return fileNameList
 
 
