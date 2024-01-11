@@ -11,13 +11,15 @@ import concurrent.futures
 from datetime import datetime
 from dateutil import parser
 import gc
+import fsspec
 import pandas as pd
 from pathlib import Path
+from typing import List
 import xarray as xr
 
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
-from rca_data_tools.qaqc.utils import coerce_qartod_executed_to_int
+from rca_data_tools.qaqc.utils import coerce_qartod_executed_to_int, select_logger
 
 HERE = Path(__file__).parent.absolute()
 PARAMS_DIR = HERE.joinpath('params')
@@ -430,6 +432,45 @@ def organize_images(
                 print(f"{i} is not a `png` or `svg` file ... skipping ...")
         else:
             print(f"{i} is not a file ... skipping ...")
+
+def delete_outdated_images(
+    plot_list: List,
+    site: str, # instrument
+    span_string: str,
+    sync_to_s3: bool, 
+    bucket_name: str, 
+    fs_kwargs={}) -> None: 
+
+    logger = select_logger()
+
+    if sync_to_s3:
+        flat_plot_list = [item for sublist in plot_list for item in sublist]
+        site_prefix = site.split('-')[0]
+
+        S3FS = fsspec.filesystem('s3', **fs_kwargs)
+        logger.info("Collecting existing 'profile' image files.")
+
+        existing_instrument_files = S3FS.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}**")
+
+        existing_profile_files = [f for f in existing_instrument_files if 'profile' in f and span_string in f]
+        new_profile_files = [f for f in flat_plot_list if 'profile' in f and span_string in f]
+
+        # Extract only the files name in both types of paths in both lists
+        just_file_existing = [f.split("/")[3] for f in existing_profile_files]
+        just_file_new = [f.split("/")[1] for f in new_profile_files]
+        logger.info(f"Number of existing files: {len(just_file_existing)}| Number of new files: {len(just_file_new)}")
+
+        files_to_delete = list(set(just_file_existing) - set(just_file_new))
+        files_to_delete_full_path = [f"{bucket_name}/QAQC_plots/{site_prefix}/{f}" for f in files_to_delete]
+
+        for f in files_to_delete_full_path:
+            S3FS.rm(f)
+
+        logger.info(f"{len(files_to_delete_full_path)} outdated profile images deleted.")
+
+    else:
+        logger.info("No s3 sync - no outdated images to delete.")
+        pass
 
 
 def parse_args():

@@ -1,3 +1,4 @@
+from typing import List
 import datetime
 import pkg_resources
 
@@ -9,10 +10,12 @@ from rca_data_tools.qaqc.plots import (
     instrument_dict,
     organize_images,
     run_dashboard_creation,
+    delete_outdated_images,
     sites_dict,
 )
 
 S3_BUCKET = 'ooi-rca-qaqc-prod'
+SPAN_DICT = {'1': 'day', '7': 'week', '30': 'month', '365': 'year'}
 
 @task
 def dashboard_creation_task(
@@ -49,6 +52,30 @@ def dashboard_creation_task(
         # )
         # return Failed(message=f"PNG Creation Failed for {site}: {e}")
         
+
+@task 
+def delete_outdated_images_task(
+    plotList: List,
+    site: str, # instrument
+    span: str,
+    sync_to_s3: bool, 
+    bucket_name: str, 
+    fs_kwargs={}) -> None:
+    """
+    Prefect task for deleting outdating image files that would otherwise not be overwritten.
+    """
+    span_string = SPAN_DICT[span]
+
+    delete_outdated_images(
+        plot_list=plotList,
+        site=site,
+        span_string=span_string,
+        sync_to_s3=sync_to_s3,
+        bucket_name=bucket_name,
+        fs_kwargs=fs_kwargs,
+    )
+
+
 
 @task
 def organize_images_task(
@@ -98,6 +125,16 @@ def qaqc_pipeline_flow(
         timeString=timeString,
         span=span,
         threshold=threshold,
+    )
+
+    # Delete outdated images
+    delete_outdated_images_task(
+        plotList=plotList,
+        site=site,
+        span=span,
+        sync_to_s3=sync_to_s3,
+        bucket_name=s3_bucket,
+        fs_kwargs=fs_kwargs
     )
 
     # Run organize images task
