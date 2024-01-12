@@ -135,7 +135,6 @@ def run_dashboard_creation(
     try:
         logger = get_run_logger()
     except:
-        print('Could not start prefect logger...running local log')
         from loguru import logger
 
     if isinstance(timeRef, str):
