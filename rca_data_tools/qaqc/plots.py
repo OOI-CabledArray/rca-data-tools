@@ -472,78 +472,78 @@ def delete_outdated_images(
         logger.info("No s3 sync - no outdated images to delete.")
         pass
 
+# TODO I think this might be vestigial code that has been replaced by qaqc pipeline
+# def parse_args():
+#     arg_parser = argparse.ArgumentParser(
+#         description='QAQC Dashboard Plot Creator'
+#     )
+#     arg_parser.add_argument('--time', type=str, default='2016-01-01')
+#     arg_parser.add_argument(
+#         '--instrument',
+#         type=str,
+#         default='ctd-profiler',
+#         help=f"Choices {str(list(selection_mapping.keys()))}",
+#     )
+#     arg_parser.add_argument(
+#         '--span',
+#         type=str,
+#         default='7',
+#         help=f"Choices {str(list(span_dict.keys()))}",
+#     )
+#     arg_parser.add_argument('--threshold', type=int, default=1000000)
 
-def parse_args():
-    arg_parser = argparse.ArgumentParser(
-        description='QAQC Dashboard Plot Creator'
-    )
-    arg_parser.add_argument('--time', type=str, default='2016-01-01')
-    arg_parser.add_argument(
-        '--instrument',
-        type=str,
-        default='ctd-profiler',
-        help=f"Choices {str(list(selection_mapping.keys()))}",
-    )
-    arg_parser.add_argument(
-        '--span',
-        type=str,
-        default='7',
-        help=f"Choices {str(list(span_dict.keys()))}",
-    )
-    arg_parser.add_argument('--threshold', type=int, default=1000000)
-
-    return arg_parser.parse_args()
-
-
-def main():
-    from loguru import logger
-
-    args = parse_args()
-
-    # User options ...
-    timeString = args.time
-    timeRef = parser.parse(timeString)
-    logger.add("logfile_create_dashboard_{time}.log")
-    logger.info('Dashboard creation initiated')
-    # Always make sure it gets created
-    PLOT_DIR.mkdir(exist_ok=True)
-
-    plotInstrument = selection_mapping[args.instrument]
-
-    #  For each param in instrument, append to list of params in checkbox
-    paramList = []
-    for param in (
-        instrument_dict[plotInstrument]['plotParameters']
-        .replace('"', '')
-        .split(',')
-    ):
-        paramList.append(param)
-
-    dataList = []
-    for key, values in sites_dict.items():
-        if plotInstrument in sites_dict[key]['instrument']:
-            dataList.append(key)
-
-    now = datetime.utcnow()
-    logger.info(f"======= Creation started at: {now.isoformat()} ======")
-    for site in dataList:
-        run_dashboard_creation(
-            site,
-            paramList,
-            timeRef,
-            plotInstrument,
-            args.span,
-            args.threshold,
-            logger=logger,
-        )
-        # Organize pngs and svgs into folders
-        organize_images()
-
-    end = datetime.utcnow()
-    logger.info(
-        f"======= Creation finished at: {end.isoformat()}. Time elapsed ({(end - now)}) ======",
-    )
+#     return arg_parser.parse_args()
 
 
-if __name__ == "__main__":
-    main()
+# def main():
+#     from loguru import logger
+
+#     args = parse_args()
+
+#     # User options ...
+#     timeString = args.time
+#     timeRef = parser.parse(timeString)
+#     logger.add("logfile_create_dashboard_{time}.log")
+#     logger.info('Dashboard creation initiated')
+#     # Always make sure it gets created
+#     PLOT_DIR.mkdir(exist_ok=True)
+
+#     plotInstrument = selection_mapping[args.instrument]
+
+#     #  For each param in instrument, append to list of params in checkbox
+#     paramList = []
+#     for param in (
+#         instrument_dict[plotInstrument]['plotParameters']
+#         .replace('"', '')
+#         .split(',')
+#     ):
+#         paramList.append(param)
+
+#     dataList = []
+#     for key, values in sites_dict.items():
+#         if plotInstrument in sites_dict[key]['instrument']:
+#             dataList.append(key)
+
+#     now = datetime.utcnow()
+#     logger.info(f"======= Creation started at: {now.isoformat()} ======")
+#     for site in dataList:
+#         run_dashboard_creation(
+#             site,
+#             paramList,
+#             timeRef,
+#             plotInstrument,
+#             args.span,
+#             args.threshold,
+#             logger=logger,
+#         )
+#         # Organize pngs and svgs into folders
+#         organize_images()
+
+#     end = datetime.utcnow()
+#     logger.info(
+#         f"======= Creation finished at: {end.isoformat()}. Time elapsed ({(end - now)}) ======",
+#     )
+
+
+# if __name__ == "__main__":
+#     main()

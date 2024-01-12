@@ -39,7 +39,7 @@ dependencies = [
 ]
 
 [project.scripts]
-    create_dashboard = "rca_data_tools.qaqc.plots:main"
+    # TODO vestigial? create_dashboard = "rca_data_tools.qaqc.plots:main"
     generate_hitl_tables = "rca_data_tools.qaqc.notes:main"
     qaqc_pipeline = "rca_data_tools.qaqc.pipeline:main"
     qaqc_index = "rca_data_tools.qaqc.index:main"
