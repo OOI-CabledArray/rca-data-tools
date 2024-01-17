@@ -89,7 +89,6 @@ def organize_images_task(
     logger.info(f"plot list: {plotList}")
     logger.info(f"sync_to_s3: {sync_to_s3}")
     logger.info(f"s3_bucket: {S3_BUCKET}")
-    logger.info(f"fs_kwargs: {fs_kwargs}")
 
     if len(plotList) > 0:
         organize_images(
