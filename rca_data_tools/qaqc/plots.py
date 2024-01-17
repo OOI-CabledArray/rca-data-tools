@@ -432,6 +432,7 @@ def organize_images(
         else:
             print(f"{i} is not a file ... skipping ...")
 
+
 def delete_outdated_images(
     plot_list: List,
     site: str, # instrument
