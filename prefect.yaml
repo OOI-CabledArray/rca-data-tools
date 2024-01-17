@@ -17,6 +17,8 @@ pull:
 - prefect.deployments.steps.git_clone:
     repository: git@github.com:OOI-CabledArray/rca-data-tools.git
     branch: main
+    access_token: '{{ prefect.blocks.secret.deployment-4vcpu-32gb-qaqc-pipeline-flow-repo-token
+      }}'
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
@@ -41,6 +43,8 @@ deployments:
   work_pool:
     name: scope-push-pool
     work_queue_name:
-    job_variables: {}
+    job_variables:
+      cpu: 2048
+      memory: 16384
   schedule:
   is_schedule_active: true
