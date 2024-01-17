@@ -4,7 +4,7 @@
 
 # Generic metadata about this project
 name: rca-data-tools
-prefect-version: 2.11.5
+prefect-version: 2.14.15
 
 # build section allows you to manage and build docker images
 build:
@@ -15,35 +15,23 @@ push:
 # pull section allows you to provide instructions for cloning this project in remote locations
 pull:
 - prefect.deployments.steps.git_clone:
-    repository: https://github.com/OOI-CabledArray/rca-data-tools.git
+    repository: git@github.com:OOI-CabledArray/rca-data-tools.git
     branch: main
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
-- name: 4vcpu_30gb
+- name: 4vcpu_32gb
   version:
   tags: []
   description:
   entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
   parameters: {}
   work_pool:
-    name: QAQC-default-workpool
+    name: scope-push-pool
     work_queue_name:
     job_variables: {}
   schedule:
-- name: 8vcpu_48gb
-  version:
-  tags: []
-  description:
-  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
-  parameters: {}
-  work_pool:
-    name: QAQC-default-workpool
-    work_queue_name:
-    job_variables:
-      cpu: 8192
-      memory: 49152
-  schedule:
+  is_schedule_active: true
 - name: 2vcpu_16gb
   version:
   tags: []
@@ -51,9 +39,8 @@ deployments:
   entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
   parameters: {}
   work_pool:
-    name: QAQC-default-workpool
+    name: scope-push-pool
     work_queue_name:
-    job_variables:
-      cpu: 2048
-      memory: 16384
+    job_variables: {}
   schedule:
+  is_schedule_active: true
