@@ -13,6 +13,7 @@ from rca_data_tools.qaqc.plots import (
     delete_outdated_images,
     sites_dict,
 )
+from rca_data_tools.qaqc.utils import get_s3_kwargs
 
 S3_BUCKET = 'ooi-rca-qaqc-prod'
 SPAN_DICT = {'1': 'day', '7': 'week', '30': 'month', '365': 'year'}
@@ -127,6 +128,7 @@ def qaqc_pipeline_flow(
         threshold=threshold,
     )
 
+    fs_kwargs = get_s3_kwargs()
     # Delete outdated images
     delete_outdated_images_task(
         plotList=plotList,

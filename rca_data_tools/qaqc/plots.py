@@ -19,10 +19,8 @@ import xarray as xr
 
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
-from rca_data_tools.qaqc.utils import (
-    coerce_qartod_executed_to_int, 
-    select_logger, 
-    get_s3_kwargs)
+from rca_data_tools.qaqc.utils import coerce_qartod_executed_to_int, select_logger
+
 
 HERE = Path(__file__).parent.absolute()
 PARAMS_DIR = HERE.joinpath('params')
@@ -450,7 +448,6 @@ def delete_outdated_images(
         flat_plot_list = [item for sublist in plot_list for item in sublist]
         site_prefix = site.split('-')[0]
 
-        fs_kwargs = get_s3_kwargs()
         S3FS = fsspec.filesystem('s3', **fs_kwargs)
         logger.info("Collecting existing 'profile' image files.")
 
