@@ -15,10 +15,8 @@ push:
 # pull section allows you to provide instructions for cloning this project in remote locations
 pull:
 - prefect.deployments.steps.git_clone:
-    repository: git@github.com:OOI-CabledArray/rca-data-tools.git
+    repository: https://github.com/OOI-CabledArray/rca-data-tools.git
     branch: main
-    access_token: '{{ prefect.blocks.secret.deployment-4vcpu-32gb-qaqc-pipeline-flow-repo-token
-      }}'
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
