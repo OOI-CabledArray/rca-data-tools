@@ -13,7 +13,6 @@ import datetime
 from typing import Dict
 import argparse
 import time
-import os
 from pathlib import Path
 
 from prefect.deployments import run_deployment
@@ -46,6 +45,7 @@ class QAQCPipeline:
         cloud_run=True,
         s3_bucket=S3_BUCKET,
         s3_sync=True,
+        s3fs_kwargs={},
     ):
         self.site = site
         self.time = time
@@ -54,12 +54,8 @@ class QAQCPipeline:
         self._cloud_run = cloud_run
         self.s3_bucket = s3_bucket
         self.s3_sync = s3_sync
+        self.s3fs_kwargs = s3fs_kwargs
         self._site_ds = {}
-
-        # get s3 keyword arguments from environment variables on github runner machine
-        aws_key = os.environ.get("AWS_KEY")
-        aws_secret = os.environ.get('AWS_SECRET')
-        self.s3fs_kwargs = {'key': aws_key, 'secret': aws_secret}
 
         self.__setup()
         #self.__setup_flow()
