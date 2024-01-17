@@ -449,7 +449,7 @@ def delete_outdated_images(
         S3FS = fsspec.filesystem('s3', **fs_kwargs)
         logger.info("Collecting existing 'profile' image files.")
 
-        existing_instrument_files = S3FS.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}**")
+        existing_instrument_files = S3FS.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
 
         existing_profile_files = [f for f in existing_instrument_files if 'profile' in f and span_string in f]
         new_profile_files = [f for f in flat_plot_list if 'profile' in f and span_string in f]
