@@ -28,3 +28,11 @@ def coerce_qartod_executed_to_int(ds):
         ds = ds.drop(var)
     logger.info(f"ds size post coercion: {ds.nbytes}")
     return ds
+
+
+def get_s3_kwargs():
+    aws_key = os.environ.get("AWS_KEY")
+    aws_secret = os.environ.get("AWS_SECRET")
+    
+    s3_kwargs = {'key': aws_key, 'secret': aws_secret}
+    return s3_kwargs
