@@ -150,8 +150,6 @@ def run_dashboard_creation(
     spanString = span_dict[span]
     # load data for site
     siteData = dashboard.loadData(site, sites_dict)
-
-    logger.info("Coercing `qartod_executed` to int for each test, then drop original variable.")
     #siteData = coerce_qartod_executed_to_int(siteData)
 
     fileParams = sites_dict[site]['dataParameters'].strip('"').split(',')
