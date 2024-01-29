@@ -17,7 +17,7 @@ import xarray as xr
 
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
-from rca_data_tools.qaqc.utils import coerce_qartod_executed_to_int, select_logger
+from rca_data_tools.qaqc.utils import select_logger
 
 
 HERE = Path(__file__).parent.absolute()
@@ -152,7 +152,7 @@ def run_dashboard_creation(
     siteData = dashboard.loadData(site, sites_dict)
 
     logger.info("Coercing `qartod_executed` to int for each test, then drop original variable.")
-    siteData = coerce_qartod_executed_to_int(siteData)
+    #siteData = coerce_qartod_executed_to_int(siteData)
 
     fileParams = sites_dict[site]['dataParameters'].strip('"').split(',')
     allVar = list(siteData.keys())
