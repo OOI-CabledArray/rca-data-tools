@@ -1,6 +1,6 @@
 """
-Streams that require more compute resources on AWS than 4 vcpu 
-and 30 gb. (Those are the defaults associated with the prefect 2
+Streams that require more compute resources on AWS than 2 vcpu 
+and 16 gb. (Those are the defaults associated with the prefect 2
 workpool.)
 
 """
@@ -35,5 +35,9 @@ COMPUTE_EXCEPTIONS = {
     # ctdbpo
     'CE04OSBP-LJ01C-06-CTDBPO108':{
         '365': '4vcpu_30gb',
-    }
+    },
+    # ctdpfa
+    'CE04OSPS-SF01B-2A-CTDPFA107':{
+        '365': '4vcpu_30gb',
+    },
 }
