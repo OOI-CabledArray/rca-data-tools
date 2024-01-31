@@ -63,6 +63,9 @@ class QAQCPipeline:
         #self.__setup_flow()
 
     def __setup(self):
+        # TODO data filtering/verification should occur in this class
+        # for example, cameras only need 30 and 365 spans, and should have some tag
+        # which runs the appropriate scripts downstream
         self.created_dt = datetime.datetime.utcnow()
         # if self.site is not None:
         #     if self.site not in sites_dict:
