@@ -14,12 +14,14 @@ from typing import Dict
 import argparse
 import time
 from pathlib import Path
+from loguru import logger
 
 from prefect.deployments import run_deployment
 
 from rca_data_tools.qaqc.plots import (
     instrument_dict,
     sites_dict,
+    stage3_dict,
     span_dict,
 )
 from rca_data_tools.qaqc.compute_constants import COMPUTE_EXCEPTIONS
@@ -62,20 +64,20 @@ class QAQCPipeline:
 
     def __setup(self):
         self.created_dt = datetime.datetime.utcnow()
-        if self.site is not None:
-            if self.site not in sites_dict:
-                raise ValueError(
-                    f"{self.site} is not available. Available sites {','.join(list(sites_dict.keys()))}"  # noqa
-                )
-            self._site_ds = sites_dict[self.site]
-            self.plotInstrument = self._site_ds.get('instrument', None)
-            if self.span not in span_dict:
-                raise ValueError(
-                    f"{self.span} not valid. Must be {','.join(list(span_dict.keys()))}"  # noqa
-                )
-            self.name = f"{self.site}--{self.plotInstrument}--{self.span}"
-        else:
-            self.name = "No site"
+        # if self.site is not None:
+        #     if self.site not in sites_dict:
+        #         raise ValueError(
+        #             f"{self.site} is not available. Available sites {','.join(list(sites_dict.keys()))}"  # noqa
+        #         )
+        #     self._site_ds = sites_dict[self.site]
+        #     self.plotInstrument = self._site_ds.get('instrument', None)
+        #     if self.span not in span_dict:
+        #         raise ValueError(
+        #             f"{self.span} not valid. Must be {','.join(list(span_dict.keys()))}"  # noqa
+        #         )
+        self.name = f"{self.site}--{self.span}"
+        # else:
+        #     self.name = "No site"
 
     def __repr__(self):
         return f"<{self.name}>"
@@ -204,6 +206,25 @@ class QAQCPipeline:
             qaqc_pipeline_flow(**parameters)
 
 
+def run_stage(stage_dict, args):
+    for key in stage_dict.keys():
+        logger.info(f"creating pipeline instance for site: {key}")
+        pipeline = QAQCPipeline(
+            site=key,
+            time=args.time,
+            span=args.span,
+            threshold=args.threshold,
+            cloud_run=args.cloud,
+            s3_bucket=args.s3_bucket,
+            s3_sync=args.s3_sync,
+        )
+        logger.info(f"{pipeline.name} created.")
+        if args.run is True:
+            pipeline.run()
+        # Add 20s delay for each run #TODO is this really necessary? 
+        time.sleep(20)
+
+
 def parse_args():
     arg_parser = argparse.ArgumentParser(description='QAQC Pipeline cli')
 
@@ -233,28 +254,15 @@ def parse_args():
 
 
 def main():
-    from loguru import logger
-
     args = parse_args()
 
     if args.stage1 is True:
-        # Creates pipeline objects for all STAGE 1 sites
-        for key in sites_dict.keys():
-            logger.info(f"creating pipeline instance for site: {key}")
-            pipeline = QAQCPipeline(
-                site=key,
-                time=args.time,
-                span=args.span,
-                threshold=args.threshold,
-                cloud_run=args.cloud,
-                s3_bucket=args.s3_bucket,
-                s3_sync=args.s3_sync,
-            )
-            logger.info(f"{pipeline.name} created.")
-            if args.run is True:
-                pipeline.run()
-            # Add 20s delay for each run #TODO is this really necessary? 
-            time.sleep(20)
+        run_stage(sites_dict, args)
+    elif args.stage2 is True:
+        logger.error("No stage 2 instruments currently implimented.")
+    elif args.stage3 is True:
+        run_stage(stage3_dict, args)
+
     else:
         # Creates only one pipeline instance, useful for testing
         pipeline = QAQCPipeline(
