@@ -207,7 +207,9 @@ class QAQCPipeline:
 def parse_args():
     arg_parser = argparse.ArgumentParser(description='QAQC Pipeline cli')
 
-    arg_parser.add_argument('--all', action="store_true")
+    arg_parser.add_argument('--stage1', action="store_true", help="run all stage1 instruments")
+    arg_parser.add_argument('--stage2', action='store_true', help="run all stage2 instruments")
+    arg_parser.add_argument('--stage3', action='store_true', help="run all stage3 instruments")
     arg_parser.add_argument('--run', action="store_true")
     arg_parser.add_argument('--cloud', action="store_true")
     arg_parser.add_argument('--s3-sync', action="store_true")
@@ -235,10 +237,8 @@ def main():
 
     args = parse_args()
 
-    if args.all is True:
-        # Creates pipeline objects for all the sites
-        # if run is specified, will actually run the pipeline
-        # in prefect cloud.
+    if args.stage1 is True:
+        # Creates pipeline objects for all STAGE 1 sites
         for key in sites_dict.keys():
             logger.info(f"creating pipeline instance for site: {key}")
             pipeline = QAQCPipeline(
@@ -253,11 +253,10 @@ def main():
             logger.info(f"{pipeline.name} created.")
             if args.run is True:
                 pipeline.run()
-            # Add 20s delay for each run
+            # Add 20s delay for each run #TODO is this really necessary? 
             time.sleep(20)
     else:
-        # Creates only one pipeline
-        # This may be useful for testing
+        # Creates only one pipeline instance, useful for testing
         pipeline = QAQCPipeline(
             site=args.site,
             time=args.time,
