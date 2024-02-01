@@ -8,6 +8,7 @@ from matplotlib.lines import Line2D
 
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from dateutil import parser
 from loguru import logger
 from prefect import task
 
@@ -98,6 +99,7 @@ def make_wide_summary_df(timerange_df, img_size_cutoff):
 
     return wide_df
 
+
 @task
 def cam_qaqc_stacked_bar(site, time_string, span):
 
@@ -108,7 +110,7 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     img_size_cutoff = stage3_dict[site]['dataParameters']  #TODO *hacky* consult Wendi
 
     # calculate time window
-    end_date = time_string
+    end_date = parser.parse(time_string)
     days_delta = timedelta(days=int(span))
     start_date = end_date - days_delta
 
