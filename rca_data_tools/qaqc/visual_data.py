@@ -13,7 +13,7 @@ from loguru import logger
 from prefect import task
 
 from rca_data_tools.qaqc.constants import SPAN_DICT, CAM_URL_DICT, N_EXPECTED_IMGS
-from rca_data_tools.qaqc.plots import stage3_dict
+from rca_data_tools.qaqc.plots import stage3_dict, plotDir
 
 def extract_numeric(value, full_url):
     match = re.search(r'\d+', value)
@@ -106,7 +106,8 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     plot_list = []
     overlay = 'none'
     span_str = SPAN_DICT[span]
-    file_name = f'./QAQC_plots/{site}_{span_str}_{overlay}.png'
+    file_name = f'{plotDir}{site}_{span_str}_{overlay}.png'
+    logger.warning(file_name)
     img_size_cutoff = stage3_dict[site]['dataParameters']  #TODO *hacky* consult Wendi
 
     # calculate time window

@@ -109,7 +109,7 @@ def qaqc_pipeline_flow(
     logger.info(f"Installed packages: {installed_packages}")
 
     if 'CAMDS' in site:
-        logger.warning("Running digital still qaqc routine!")
+        logger.warning("Running digital still camera qaqc routine.")
         plotList = cam_qaqc_stacked_bar(
             site=site,
             time_string=timeString,
