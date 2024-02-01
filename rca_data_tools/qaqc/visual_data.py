@@ -115,7 +115,7 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     overlay = 'none'
     depth = 'full' #TODO
     span_str = SPAN_DICT[span]
-    file_name = f'{plotDir}{site}_{span_str}_{overlay}_{depth}.png'
+    file_name = f'{plotDir}{site}_placeholder_{span_str}_{overlay}_{depth}.png' #TODO
     logger.warning(file_name)
     img_size_cutoff = stage3_dict[site]['dataParameters']  #TODO *hacky* consult Wendi
 
