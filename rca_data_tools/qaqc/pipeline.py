@@ -55,7 +55,9 @@ class QAQCPipeline:
         self.s3_bucket = s3_bucket
         self.s3_sync = s3_sync
         self.s3fs_kwargs = s3fs_kwargs
+        self.valid_spans = span_dict
         self._site_ds = {}
+        self._params_valid = True
 
         self.__setup()
 
@@ -71,14 +73,15 @@ class QAQCPipeline:
         self._site_ds = all_configs_dict[self.site]
 
         self.plotInstrument = self._site_ds.get('instrument', None)
-
         if self.plotInstrument in ['CAMDS-FIXED']:
-            span_dict = {'30': 'month', '365': 'year','0': 'deploy',}
+            self.valid_spans = {'30': 'month', '365': 'year','0': 'deploy'}
 
-        if self.span not in span_dict:
-            raise ValueError(
-                f"{self.span} not valid. Must be {','.join(list(span_dict.keys()))}"  # noqa
+        if self.span not in self.valid_spans:
+            logger.warning(
+                f"span {self.span} not valid. Must be {','.join(list(self.valid_spans.keys()))}"  # noqa
             )
+            self._params_valid = False
+
         self.name = f"{self.site}--{self.span}"
 
     def __repr__(self):
@@ -175,36 +178,36 @@ class QAQCPipeline:
         """
         Runs the flow either in the cloud or locally.
         """
-
-        if self.site is None:
-            raise ValueError("No site found. Please provide site.")
-        if parameters is None:
-            parameters = self.flow_parameters
-    
-        logger.info(f"parameters set to: {parameters}!")
-        if self.cloud_run is True:
-            run_name = "-".join([str(self.site), str(self.time), str(self.threshold), str(self.span), "flow_run"])
-            # IMPORTANT run_deployment determines the infrastructure and resources for each flow_run
-            if self.site in COMPUTE_EXCEPTIONS and self.span in COMPUTE_EXCEPTIONS[self.site]:
-
-                deployment_name = f"qaqc-pipeline-flow/{COMPUTE_EXCEPTIONS[self.site][self.span]}"
-                logger.warning(f"{self.site} with span {self.span} requires additional compute resources, creating flow_run from {deployment_name} instead of default")
-                run_deployment(
-                    name=deployment_name,
-                    parameters=parameters,
-                    flow_run_name=run_name,
-                    timeout=10
-                )
-            # otherwise run the default deployment with default compute resources        
-            else:
-                run_deployment(
-                    name="qaqc-pipeline-flow/2vcpu_16gb",
-                    parameters=parameters,
-                    flow_run_name=run_name,
-                    timeout=10 #TODO timeout might need to be increase if we have race condition errors
-                )
+        if self._params_valid == False:
+            logger.info(f"{self.name} with span {self.span} is not a valid combination skipping...")
         else:
-            qaqc_pipeline_flow(**parameters)
+            if parameters is None:
+                parameters = self.flow_parameters
+        
+            logger.info(f"parameters set to: {parameters}!")
+            if self.cloud_run is True:
+                run_name = "-".join([str(self.site), str(self.time), str(self.threshold), str(self.span), "flow_run"])
+                # IMPORTANT run_deployment determines the infrastructure and resources for each flow_run
+                if self.site in COMPUTE_EXCEPTIONS and self.span in COMPUTE_EXCEPTIONS[self.site]:
+
+                    deployment_name = f"qaqc-pipeline-flow/{COMPUTE_EXCEPTIONS[self.site][self.span]}"
+                    logger.warning(f"{self.site} with span {self.span} requires additional compute resources, creating flow_run from {deployment_name} instead of default")
+                    run_deployment(
+                        name=deployment_name,
+                        parameters=parameters,
+                        flow_run_name=run_name,
+                        timeout=10
+                    )
+                # otherwise run the default deployment with default compute resources        
+                else:
+                    run_deployment(
+                        name="qaqc-pipeline-flow/2vcpu_16gb",
+                        parameters=parameters,
+                        flow_run_name=run_name,
+                        timeout=10 #TODO timeout might need to be increase if we have race condition errors
+                    )
+            else:
+                qaqc_pipeline_flow(**parameters)
 
 
 def run_stage(stage_dict, args):
@@ -219,7 +222,6 @@ def run_stage(stage_dict, args):
             s3_bucket=args.s3_bucket,
             s3_sync=args.s3_sync,
         )
-        logger.info(f"{pipeline.name} created.")
         if args.run is True:
             pipeline.run()
         # Add 20s delay for each run #TODO is this really necessary? 
@@ -275,7 +277,6 @@ def main():
             s3_bucket=args.s3_bucket,
             s3_sync=args.s3_sync,
         )
-        logger.info(f"{pipeline.name} created")
 
         if args.run is True:
             pipeline.run()
