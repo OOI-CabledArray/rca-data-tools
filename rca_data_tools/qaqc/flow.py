@@ -14,9 +14,9 @@ from rca_data_tools.qaqc.plots import (
     sites_dict,
 )
 from rca_data_tools.qaqc.utils import get_s3_kwargs
+from rca_data_tools.qaqc.visual_data import cam_qaqc_stacked_bar
+from rca_data_tools.qaqc.constants import S3_BUCKET, SPAN_DICT
 
-S3_BUCKET = 'ooi-rca-qaqc-prod'
-SPAN_DICT = {'1': 'day', '7': 'week', '30': 'month', '365': 'year'}
 
 @task
 def dashboard_creation_task(
@@ -24,7 +24,6 @@ def dashboard_creation_task(
     timeString, 
     span, 
     threshold, 
-    #logger
     ):
     """
     Prefect task for running dashboard creation
@@ -44,14 +43,8 @@ def dashboard_creation_task(
         plotInstrument,
         span,
         threshold,
-        #logger,
     )
     return plotList
-    # except Exception as e:
-        # raise prefect_signals.FAIL(
-        #     message=f"PNG Creation Failed for {site}: {e}"
-        # )
-        # return Failed(message=f"PNG Creation Failed for {site}: {e}")
         
 
 @task 
@@ -115,13 +108,22 @@ def qaqc_pipeline_flow(
     installed_packages = {p.project_name: p.version for p in pkg_resources.working_set}
     logger.info(f"Installed packages: {installed_packages}")
 
+    if 'CAMDS' in site:
+        logger.warning("Running digital still qaqc routine!")
+        plotList = cam_qaqc_stacked_bar(
+            site=site,
+            time_string=timeString,
+            span=span,
+        )
+
+    else:
     # Run dashboard creation task
-    plotList = dashboard_creation_task(
-        site=site,
-        timeString=timeString,
-        span=span,
-        threshold=threshold,
-    )
+        plotList = dashboard_creation_task(
+            site=site,
+            timeString=timeString,
+            span=span,
+            threshold=threshold,
+        )
 
     fs_kwargs = get_s3_kwargs()
     # Delete outdated images
