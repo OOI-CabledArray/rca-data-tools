@@ -29,15 +29,13 @@ from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
 
 HERE = Path(__file__).parent.absolute()
 now = datetime.datetime.utcnow()
+all_configs_dict = {**sites_dict, **stage3_dict}
 
 class QAQCPipeline:
     """
     QAQC Pipeline Class to create Pipeline for specified site, time, and span.
 
-
     """
-    __dockerfile_path = HERE / "docker" / "Dockerfile" #TODO is this necessary?
-
     def __init__(
         self,
         site=None,
