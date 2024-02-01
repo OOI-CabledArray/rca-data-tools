@@ -14,7 +14,11 @@ from prefect import task
 
 from rca_data_tools.qaqc.constants import SPAN_DICT, CAM_URL_DICT, N_EXPECTED_IMGS
 from rca_data_tools.qaqc.plots import stage3_dict, plotDir, PLOT_DIR 
+from rca_data_tools.qaqc.utils import select_logger
 # see plots module for directories definitions #TODO neater way to do this?
+
+logger = select_logger()
+
 
 def extract_numeric(value, full_url):
     match = re.search(r'\d+', value)
@@ -109,8 +113,9 @@ def cam_qaqc_stacked_bar(site, time_string, span):
 
     plot_list = []
     overlay = 'none'
+    depth = 'full' #TODO
     span_str = SPAN_DICT[span]
-    file_name = f'{plotDir}{site}_{span_str}_{overlay}.png'
+    file_name = f'{plotDir}{site}_{span_str}_{overlay}_{depth}.png'
     logger.warning(file_name)
     img_size_cutoff = stage3_dict[site]['dataParameters']  #TODO *hacky* consult Wendi
 
