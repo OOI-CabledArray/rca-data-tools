@@ -24,7 +24,7 @@ from rca_data_tools.qaqc.plots import (
     stage3_dict,
     span_dict,
 )
-from rca_data_tools.qaqc.compute_constants import COMPUTE_EXCEPTIONS
+from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
 
 HERE = Path(__file__).parent.absolute()
