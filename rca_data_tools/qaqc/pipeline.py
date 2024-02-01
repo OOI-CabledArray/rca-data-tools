@@ -73,7 +73,7 @@ class QAQCPipeline:
         self._site_ds = all_configs_dict[self.site]
 
         self.plotInstrument = self._site_ds.get('instrument', None)
-        if self.plotInstrument in ['CAMDS-FIXED']:
+        if 'CAMDS' in self.site:
             self.valid_spans = {'30': 'month', '365': 'year','0': 'deploy'}
 
         if self.span not in self.valid_spans:
