@@ -201,6 +201,7 @@ def run_dashboard_creation(
             Yparam = parameterList[0]
             # set up plotting parameters
             imageName_base = plotDir + site + '_' + param
+            logger.info(imageName_base)
             plotTitle = site + ' ' + param
             paramMin = float(variable_paramDict[param]['min'])
             paramMax = float(variable_paramDict[param]['max'])

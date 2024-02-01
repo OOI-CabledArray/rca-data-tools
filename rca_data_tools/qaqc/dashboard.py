@@ -515,7 +515,6 @@ def plotProfilesGrid(
 
     def plotter(Xx,Yy,Zz,plotType,colorBar,annotation,params):
 
-        logger.info("closing open figues...")
         logger.info(f"plot-type: {plotType}")
         plt.close('all')
         plt.rcParams["font.family"] = "serif"
@@ -563,7 +562,6 @@ def plotProfilesGrid(
         plt.xlim(xMin, xMax)
         
         if 'contour' in plotType:
-            logger.info("contour in plotType...")
             if 'full' in params['range']:
                 graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar)
                 for a in graph.collections:
@@ -615,7 +613,6 @@ def plotProfilesGrid(
             cbar.formatter.set_useOffset(False)
             cbar.ax.set_ylabel(zLabel, fontsize=4)
             cbar.ax.tick_params(length=2, width=0.5, labelsize=4)
-            logger.info("returning fig...")
         return (fig, ax)
 
     logger.info('plotting grid for timeSpan: ', span)
@@ -971,9 +968,7 @@ def plotProfilesGrid(
                         ###climParams['norm']['divnorm'] = divnorm
                         climParams['vmin'] = climDiffMin
                         climParams['vmax'] = climDiffMax
-                        logger.info("entering climPlot plotter")
                         climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams)
-                        logger.info("climPlot successful")
 
                     else:
                         # plot filled contours
