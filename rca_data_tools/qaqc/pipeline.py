@@ -122,57 +122,6 @@ class QAQCPipeline:
             's3_bucket': self.s3_bucket,
         }
 
-    @property
-    def image_info(self):
-        """
-        Docker Image Info
-        """
-        tag = f"{self.created_dt:%Y%m%dT%H%M}"
-        registry = "cormorack"
-        repo = "qaqc-dashboard"
-        return {
-            'tag': tag,
-            'registry': registry,
-            'repo': repo,
-            'url': f"{registry}/{repo}:{tag}",
-        }
-
-    @property
-    def dockerfile(self):
-        """
-        Dockerfile content
-        """
-        return self.__dockerfile_path.read_text(encoding='utf-8')
-
-
-    @staticmethod
-    def _get_resource_values(resource: str) -> Dict:
-        span_configs = [sp.split('::') for sp in resource.split(',')]
-        return dict(span_configs)
-
-    def _parse_resources(self) -> Dict:
-        cpu = self._site_ds.get('cpu', None)
-        memory = self._site_ds.get('memory', None)
-        instance = self._site_ds.get('instance', None)
-        cpu_spans = {}
-        memory_spans = {}
-        instance_spans = {}
-
-        if isinstance(cpu, str):
-            cpu_spans = self._get_resource_values(cpu)
-
-        if isinstance(memory, str):
-            memory_spans = self._get_resource_values(memory)
-
-        if isinstance(instance, str):
-            instance_spans = self._get_resource_values(instance)
-
-        return {
-            'cpu': cpu_spans.get(self.span, None),
-            'memory': memory_spans.get(self.span, None),
-            'instance': instance_spans.get(self.span, None),
-        }
-
 
     def run(self, parameters=None):
         """
