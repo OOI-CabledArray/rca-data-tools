@@ -13,7 +13,8 @@ from loguru import logger
 from prefect import task
 
 from rca_data_tools.qaqc.constants import SPAN_DICT, CAM_URL_DICT, N_EXPECTED_IMGS
-from rca_data_tools.qaqc.plots import stage3_dict, plotDir
+from rca_data_tools.qaqc.plots import stage3_dict, plotDir, PLOT_DIR 
+# see plots module for directories definitions #TODO neater way to do this?
 
 def extract_numeric(value, full_url):
     match = re.search(r'\d+', value)
@@ -102,6 +103,9 @@ def make_wide_summary_df(timerange_df, img_size_cutoff):
 
 @task
 def cam_qaqc_stacked_bar(site, time_string, span):
+
+    # Ensure that plot dir is created!
+    PLOT_DIR.mkdir(exist_ok=True)
 
     plot_list = []
     overlay = 'none'
