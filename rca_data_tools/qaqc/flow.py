@@ -77,7 +77,6 @@ def delete_outdated_images_task(
     )
 
 
-
 @task
 def organize_images_task(
     plotList=[], fs_kwargs={}, sync_to_s3=False, s3_bucket=S3_BUCKET
@@ -95,16 +94,13 @@ def organize_images_task(
             sync_to_s3=sync_to_s3, fs_kwargs=fs_kwargs, bucket_name=s3_bucket
         )
     else:
-        #raise prefect_signals.SKIP(message="No plots found to be organized.")
         return Cancelled(message="No plots found to be organized.")
     
-
-now = datetime.datetime.utcnow()
 
 @flow
 def qaqc_pipeline_flow(
     site: str,
-    timeString: str=now.strftime('%Y-%m-%d'),
+    timeString: str,
     span: str='1',
     threshold: int=1000000,
     # For organizing pngs

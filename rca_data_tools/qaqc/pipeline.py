@@ -58,27 +58,28 @@ class QAQCPipeline:
         self._site_ds = {}
 
         self.__setup()
-        #self.__setup_flow()
 
     def __setup(self):
         # TODO data filtering/verification should occur in this class
         # for example, cameras only need 30 and 365 spans, and should have some tag
         # which runs the appropriate scripts downstream
         self.created_dt = datetime.datetime.utcnow()
-        # if self.site is not None:
-        #     if self.site not in sites_dict:
-        #         raise ValueError(
-        #             f"{self.site} is not available. Available sites {','.join(list(sites_dict.keys()))}"  # noqa
-        #         )
-        #     self._site_ds = sites_dict[self.site]
-        #     self.plotInstrument = self._site_ds.get('instrument', None)
-        #     if self.span not in span_dict:
-        #         raise ValueError(
-        #             f"{self.span} not valid. Must be {','.join(list(span_dict.keys()))}"  # noqa
-        #         )
+        if self.site not in all_configs_dict:
+            raise ValueError(
+                f"{self.site} is not available. Available sites {','.join(list(all_configs_dict.keys()))}"  # noqa
+            )
+        self._site_ds = all_configs_dict[self.site]
+
+        self.plotInstrument = self._site_ds.get('instrument', None)
+
+        if self.plotInstrument in ['CAMDS-FIXED']:
+            span_dict = {'30': 'month', '365': 'year','0': 'deploy',}
+
+        if self.span not in span_dict:
+            raise ValueError(
+                f"{self.span} not valid. Must be {','.join(list(span_dict.keys()))}"  # noqa
+            )
         self.name = f"{self.site}--{self.span}"
-        # else:
-        #     self.name = "No site"
 
     def __repr__(self):
         return f"<{self.name}>"
@@ -174,7 +175,6 @@ class QAQCPipeline:
         """
         Runs the flow either in the cloud or locally.
         """
-        from loguru import logger
 
         if self.site is None:
             raise ValueError("No site found. Please provide site.")
