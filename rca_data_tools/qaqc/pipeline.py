@@ -63,8 +63,6 @@ class QAQCPipeline:
 
     def __setup(self):
         # TODO data filtering/verification should occur in this class
-        # for example, cameras only need 30 and 365 spans, and should have some tag
-        # which runs the appropriate scripts downstream
         self.created_dt = datetime.datetime.utcnow()
         if self.site not in all_configs_dict:
             raise ValueError(
@@ -208,14 +206,19 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # arg validation
+    if args.site and any([args.stage1, args.stage2, args.stage3]):
+        raise ValueError("Do not use `--site` and `--stage` arguments together. "
+            "Run either individual sites OR stage groups of instruments.")
+
     if args.stage1 is True:
         run_stage(sites_dict, args)
-    elif args.stage2 is True:
+    if args.stage2 is True:
         logger.error("No stage 2 instruments currently implimented.")
-    elif args.stage3 is True:
+    if args.stage3 is True:
         run_stage(stage3_dict, args)
 
-    else:
+    if args.site is not None:
         # Creates only one pipeline instance, useful for testing
         pipeline = QAQCPipeline(
             site=args.site,

@@ -129,7 +129,7 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     timerange_df = make_timerange_df(start_date, end_date, base_url, img_size_cutoff)
     wide_df = make_wide_summary_df(timerange_df, img_size_cutoff)
 
-    plt.figure(figsize=(5, 1.75))
+    plt.figure(figsize=(19, 6))
     plt.bar(wide_df['date_taken'], wide_df['not_blank'], color="blue")
     plt.bar(wide_df['date_taken'], wide_df['possibly_blank'], bottom=wide_df['not_blank'], color="red")
     plt.title(site)
