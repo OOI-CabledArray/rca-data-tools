@@ -129,13 +129,13 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     timerange_df = make_timerange_df(start_date, end_date, base_url, img_size_cutoff)
     wide_df = make_wide_summary_df(timerange_df, img_size_cutoff)
 
-    plt.figure(figsize=(20,6))
+    plt.figure(figsize=(5, 1.75))
     plt.bar(wide_df['date_taken'], wide_df['not_blank'], color="blue")
     plt.bar(wide_df['date_taken'], wide_df['possibly_blank'], bottom=wide_df['not_blank'], color="red")
     plt.title(site)
     plt.ylabel("Number of Images")
     plt.axhline(y=N_EXPECTED_IMGS, color='black', linestyle='--')
-    plt.axvline(x=end_date, color='black', linewidth=0.5)
+    plt.axvline(x=end_date, color='black')
 
     # custom labels and handles legend
     handles = [
@@ -143,7 +143,7 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     Line2D([0], [0], color='blue', linewidth=8)
     ]
 
-    labels = [f'Under {str(img_size_cutoff)}M', f'Over {str(img_size_cutoff)}M']
+    labels = [f'Under {str(img_size_cutoff)}MB', f'Over {str(img_size_cutoff)}M']
     plt.legend(handles=handles, labels=labels, loc='upper left')
 
     # saving plot 
