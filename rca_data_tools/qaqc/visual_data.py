@@ -30,6 +30,7 @@ def extract_numeric(value, full_url):
     
 
 def create_daily_cam_df(base_url, str_date, img_size_cutoff):
+    logger = select_logger()
 
     full_url = f"{base_url}{str_date}"
     img_data_list = []
