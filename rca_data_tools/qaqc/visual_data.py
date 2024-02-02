@@ -17,7 +17,6 @@ from rca_data_tools.qaqc.plots import stage3_dict, plotDir, PLOT_DIR
 from rca_data_tools.qaqc.utils import select_logger
 # see plots module for directories definitions #TODO neater way to do this?
 
-logger = select_logger()
 
 
 def extract_numeric(value, full_url):
@@ -108,6 +107,7 @@ def make_wide_summary_df(timerange_df, img_size_cutoff):
 @task
 def cam_qaqc_stacked_bar(site, time_string, span):
 
+    logger = select_logger()
     PLOT_DIR.mkdir(exist_ok=True)
 
     plot_list = []
