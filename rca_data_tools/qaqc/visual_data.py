@@ -108,14 +108,13 @@ def make_wide_summary_df(timerange_df, img_size_cutoff):
 @task
 def cam_qaqc_stacked_bar(site, time_string, span):
 
-    # Ensure that plot dir is created!
     PLOT_DIR.mkdir(exist_ok=True)
 
     plot_list = []
     overlay = 'none'
     depth = 'full' #TODO
     span_str = SPAN_DICT[span]
-    file_name = f'{plotDir}{site}_placeholder_{span_str}_{overlay}_{depth}.png' #TODO
+    file_name = f'{plotDir}{site}_{span_str}_{overlay}_{depth}.png'
     logger.warning(file_name)
     img_size_cutoff = stage3_dict[site]['dataParameters']  #TODO *hacky* consult Wendi
 
