@@ -24,22 +24,7 @@ HERE = Path(__file__).parent.absolute()
 PARAMS_DIR = HERE.joinpath('params')
 PLOT_DIR = Path('QAQC_plots')
 
-selection_mapping = {
-    'ctd-profiler': 'CTD-PROFILER',
-    'ctd-fixed': 'CTD-FIXED',
-    'ctd-fixed-xo2': 'CTD-FIXED-XO2',
-    'flr-profiler': 'FLR-PROFILER',
-    'flr-fixed': 'FLR-FIXED',
-    'nut-profiler': 'NUT-PROFILER',
-    'nut-fixed': 'NUT-FIXED',
-    'par-profiler': 'PAR-PROFILER',
-    'pco2-profiler': 'PCO2-PROFILER',
-    'pco2-fixed': 'PCO2-FIXED',
-    'ph-profiler': 'PH-PROFILER',
-    'ph-fixed': 'PH-FIXED',
-    'spkir-profiler': 'SPKIR-PROFILER',
-    'velpt-profiler': 'VELPT-PROFILER',
-}
+
 span_dict = {
     '1': 'day',
     '7': 'week',
