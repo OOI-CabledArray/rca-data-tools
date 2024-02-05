@@ -46,3 +46,17 @@ deployments:
     job_variables: {}
   schedule:
   is_schedule_active: true
+- name: 8vcpu_60gb
+  version:
+  tags: []
+  description:
+  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
+  parameters: {}
+  work_pool:
+    name: scope-push-pool
+    work_queue_name:
+    job_variables:
+      cpu: 8192
+      memory: 64424
+  schedule:
+  is_schedule_active: true
