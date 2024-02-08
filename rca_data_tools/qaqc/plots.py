@@ -9,6 +9,7 @@ import concurrent.futures
 from datetime import datetime
 from dateutil import parser
 import gc
+import os
 import fsspec
 import pandas as pd
 from pathlib import Path
@@ -430,7 +431,7 @@ def delete_outdated_images(
     sync_to_s3: bool, 
     bucket_name: str, 
     fs_kwargs={}) -> None: 
-
+    # TODO this may not be working when annotation files are involved - are they piped to plot_list?
     logger = select_logger()
 
     if sync_to_s3:
@@ -460,4 +461,48 @@ def delete_outdated_images(
 
     else:
         logger.info("No s3 sync - no outdated images to delete.")
-        pass
+
+
+def delete_outdated_annotations(
+    site: str, # instrument
+    span_string: str,
+    sync_to_s3: bool, 
+    bucket_name: str, 
+    fs_kwargs={}) -> None: 
+
+    logger = select_logger()
+
+    if sync_to_s3:
+        #TODO could turn this an delete_outdated imgs into a single function.
+        site_prefix = site.split('-')[0]
+        S3FS = fsspec.filesystem('s3', **fs_kwargs)
+        existing_instrument_files = S3FS.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
+
+        existing_anno_files = [f for f in existing_instrument_files if 'anno' in f and span_string in f]
+        anno_svgs = [os.path.splitext(f)[0] for f in existing_anno_files if 'svg' in f]
+        anno_pngs = [os.path.splitext(f)[0] for f in existing_anno_files if 'png' in f]
+
+        anno_files_modified_dict = {} # k=file : v=when it was modified
+
+        for fpath in existing_anno_files:
+            last_modified = S3FS.info(fpath)['LastModified']
+            anno_files_modified_dict[fpath] = last_modified
+
+        overlapping_files = list(set(anno_svgs) & set(anno_pngs))
+
+        outdated_annos_to_delete = []
+        for f in overlapping_files:
+            svg_time_created = anno_files_modified_dict[f'{f}.svg']
+            png_time_created = anno_files_modified_dict[f'{f}.png']
+
+            if svg_time_created < png_time_created:
+                outdated_annos_to_delete.append(f'{f}.svg')
+            elif png_time_created < svg_time_created:
+                outdated_annos_to_delete.append(f'{f}.png')
+
+        for f in outdated_annos_to_delete:
+            S3FS.rm(f)
+
+        logger.info(f'These outdated files were deleted from s3: {outdated_annos_to_delete}')
+    else:
+        logger.info("No s3 sync - no outdated images to delete.")

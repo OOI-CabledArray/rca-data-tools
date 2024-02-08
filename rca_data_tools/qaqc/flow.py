@@ -11,6 +11,7 @@ from rca_data_tools.qaqc.plots import (
     organize_images,
     run_dashboard_creation,
     delete_outdated_images,
+    delete_outdated_annotations,
     sites_dict,
 )
 from rca_data_tools.qaqc.utils import get_s3_kwargs
@@ -62,6 +63,14 @@ def delete_outdated_images_task(
 
     delete_outdated_images(
         plot_list=plotList,
+        site=site,
+        span_string=span_string,
+        sync_to_s3=sync_to_s3,
+        bucket_name=bucket_name,
+        fs_kwargs=fs_kwargs,
+    )
+
+    delete_outdated_annotations(
         site=site,
         span_string=span_string,
         sync_to_s3=sync_to_s3,
