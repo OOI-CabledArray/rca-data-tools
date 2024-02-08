@@ -1,5 +1,6 @@
 from typing import List
 import datetime
+import fsspec
 import pkg_resources
 
 from prefect import task, flow
@@ -55,7 +56,7 @@ def delete_outdated_images_task(
     span: str,
     sync_to_s3: bool, 
     bucket_name: str, 
-    fs_kwargs={}) -> None:
+    s3fs: fsspec.filesystem) -> None:
     """
     Prefect task for deleting outdating image files that would otherwise not be overwritten.
     """
@@ -67,7 +68,7 @@ def delete_outdated_images_task(
         span_string=span_string,
         sync_to_s3=sync_to_s3,
         bucket_name=bucket_name,
-        fs_kwargs=fs_kwargs,
+        s3fs=s3fs,
     )
 
     delete_outdated_annotations(
@@ -75,7 +76,7 @@ def delete_outdated_images_task(
         span_string=span_string,
         sync_to_s3=sync_to_s3,
         bucket_name=bucket_name,
-        fs_kwargs=fs_kwargs,
+        s3fs=s3fs,
     )
 
 
@@ -105,7 +106,7 @@ def qaqc_pipeline_flow(
     timeString: str,
     span: str='1',
     threshold: int=1000000,
-    # For organizing pngs
+    # cloud args
     fs_kwargs: dict={},
     sync_to_s3: bool=True,
     s3_bucket: str=S3_BUCKET,
@@ -133,16 +134,17 @@ def qaqc_pipeline_flow(
             span=span,
             threshold=threshold,
         )
-
+    # TODO pipe this up, but don't want to break anything before vacation
     fs_kwargs = get_s3_kwargs()
-    # Delete outdated images
+    S3FS = fsspec.filesystem('s3', **fs_kwargs)
+    # Delete outdated profile and annotation images
     delete_outdated_images_task(
         plotList=plotList,
         site=site,
         span=span,
         sync_to_s3=sync_to_s3,
         bucket_name=s3_bucket,
-        fs_kwargs=fs_kwargs
+        s3fs=S3FS
     )
 
     # Run organize images task

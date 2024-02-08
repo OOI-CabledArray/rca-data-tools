@@ -430,7 +430,7 @@ def delete_outdated_images(
     span_string: str,
     sync_to_s3: bool, 
     bucket_name: str, 
-    fs_kwargs={}) -> None: 
+    s3fs: fsspec.filesystem) -> None: 
     # TODO this may not be working when annotation files are involved - are they piped to plot_list?
     logger = select_logger()
 
@@ -438,10 +438,9 @@ def delete_outdated_images(
         flat_plot_list = [item for sublist in plot_list for item in sublist]
         site_prefix = site.split('-')[0]
 
-        S3FS = fsspec.filesystem('s3', **fs_kwargs)
         logger.info("Collecting existing 'profile' image files.")
 
-        existing_instrument_files = S3FS.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
+        existing_instrument_files = s3fs.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
 
         existing_profile_files = [f for f in existing_instrument_files if 'profile' in f and span_string in f]
         new_profile_files = [f for f in flat_plot_list if 'profile' in f and span_string in f]
@@ -455,7 +454,7 @@ def delete_outdated_images(
         files_to_delete_full_path = [f"{bucket_name}/QAQC_plots/{site_prefix}/{f}" for f in files_to_delete]
 
         for f in files_to_delete_full_path:
-            S3FS.rm(f)
+            s3fs.rm(f)
 
         logger.info(f"{len(files_to_delete_full_path)} outdated profile images deleted.")
 
@@ -468,15 +467,14 @@ def delete_outdated_annotations(
     span_string: str,
     sync_to_s3: bool, 
     bucket_name: str, 
-    fs_kwargs={}) -> None: 
+    s3fs: fsspec.filesystem) -> None: 
 
     logger = select_logger()
 
     if sync_to_s3:
         #TODO could turn this an delete_outdated imgs into a single function.
         site_prefix = site.split('-')[0]
-        S3FS = fsspec.filesystem('s3', **fs_kwargs)
-        existing_instrument_files = S3FS.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
+        existing_instrument_files = s3fs.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
 
         existing_anno_files = [f for f in existing_instrument_files if 'anno' in f and span_string in f]
         anno_svgs = [os.path.splitext(f)[0] for f in existing_anno_files if 'svg' in f]
@@ -485,7 +483,7 @@ def delete_outdated_annotations(
         anno_files_modified_dict = {} # k=file : v=when it was modified
 
         for fpath in existing_anno_files:
-            last_modified = S3FS.info(fpath)['LastModified']
+            last_modified = s3fs.info(fpath)['LastModified']
             anno_files_modified_dict[fpath] = last_modified
 
         overlapping_files = list(set(anno_svgs) & set(anno_pngs))
@@ -501,7 +499,7 @@ def delete_outdated_annotations(
                 outdated_annos_to_delete.append(f'{f}.png')
 
         for f in outdated_annos_to_delete:
-            S3FS.rm(f)
+            s3fs.rm(f)
 
         logger.info(f'These outdated files were deleted from s3: {outdated_annos_to_delete}')
     else:
