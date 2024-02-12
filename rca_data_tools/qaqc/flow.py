@@ -71,13 +71,13 @@ def delete_outdated_images_task(
         s3fs=s3fs,
     )
 
-    # delete_outdated_annotations(
-    #     site=site,
-    #     span_string=span_string,
-    #     sync_to_s3=sync_to_s3,
-    #     bucket_name=bucket_name,
-    #     s3fs=s3fs,
-    # )
+    delete_outdated_annotations(
+        site=site,
+        span_string=span_string,
+        sync_to_s3=sync_to_s3,
+        bucket_name=bucket_name,
+        s3fs=s3fs,
+    )
 
 
 @task
