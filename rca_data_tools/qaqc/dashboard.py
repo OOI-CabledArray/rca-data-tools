@@ -43,6 +43,7 @@ INPUT_BUCKET = "ooi-data/"
 
 
 def loadAnnotations(site):
+    anno = {}
     fs = s3fs.S3FileSystem(anon=True)
     annoFile = INPUT_BUCKET + 'annotations/' + site + '.json'
     anno_store = fs.open(annoFile)
