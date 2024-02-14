@@ -43,11 +43,15 @@ INPUT_BUCKET = "ooi-data/"
 
 
 def loadAnnotations(site):
+    logger = select_logger()
     anno = {}
     fs = s3fs.S3FileSystem(anon=True)
     annoFile = INPUT_BUCKET + 'annotations/' + site + '.json'
-    anno_store = fs.open(annoFile)
-    anno = json.load(anno_store)
+    if fs.exists(annoFile):
+        anno_store = fs.open(annoFile)
+        anno = json.load(anno_store)
+    else:
+        logger.warning(f"error retrieving annotation history for {site}")
 
     return anno
 
