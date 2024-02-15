@@ -1164,12 +1164,12 @@ def plotProfilesScatter(
 
         elif 'clim' in overlay:
             climatology = {}
-            if isinstance(timeSpan, list):
-                climMonths = sorted(set(range(pd.to_datetime(timeSpan[0]).month,(pd.to_datetime(timeSpan[1]).month) + 1)))
-                climatology = extractClimProfiles(climMonths, overlayData_clim)
-            elif isinstance(timeSpan, pd.Timestamp):
+            if 'day' in spanString:
                 climMonths = []
-                climMonths.append(pd.to_datetime(timeSpan).month)
+                climMonths.append(pd.to_datetime(timeSpan[0]).month)
+                climatology = extractClimProfiles(climMonths, overlayData_clim)
+            else:
+                climMonths = sorted(set(range(pd.to_datetime(timeSpan[0]).month,(pd.to_datetime(timeSpan[1]).month) + 1)))
                 climatology = extractClimProfiles(climMonths, overlayData_clim)
             if climatology:
                 xLimits = plt.gca().get_xlim()
@@ -1185,7 +1185,7 @@ def plotProfilesScatter(
                         child.remove()
 
         elif 'flag' in overlay:
-            qcDS = overlayData_flag.sel(time=slice(startDate, endDate))
+            qcDS = overlayData_flag.sel(time=slice(timeSpan[0], timeSpan[1]))
             qcDS = retrieve_qc(qcDS)
             flags = {
                     'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
@@ -1490,7 +1490,7 @@ def plotProfilesScatter(
                             fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
                             fig.savefig(fileName + '_full.png', dpi=300)
                             fileNameList.append(fileName + '_full.png')
-                            timeSpan = key
+                            timeSpan = [scatterZ_sub[0],scatterZ_sub[-1]]
                             overlayFileName = fileName + '_full'
                             for overlay in overlays:
                                 plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
