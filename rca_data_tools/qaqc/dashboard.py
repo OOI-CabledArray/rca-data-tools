@@ -178,14 +178,14 @@ def gridProfiles(ds,pressureName,variableName,profileIndices):
             startTime = row[start]
             endTime = row[end]
             ds_sub = ds.sel(time=slice(startTime,endTime))
-            if len(ds_sub['time']) > 0: 
+            if invert:
+                variable = np.flip(ds_sub[variableName].values)
+                pressure = np.flip(ds_sub[pressureName].values)
+            else:
+                variable = ds_sub[variableName].values
+                pressure = ds_sub[pressureName].values
+            if (len(ds_sub['time']) > 0) and (len(pressure) > 1):
                 gridX[index] = row['peak'].timestamp()
-                if invert:
-                    variable = np.flip(ds_sub[variableName].values)
-                    pressure = np.flip(ds_sub[pressureName].values)
-                else:
-                    variable = ds_sub[variableName].values
-                    pressure = ds_sub[pressureName].values
                 try:
                     profile = np.interp(gridY,pressure,variable)
                     gridZ[:,index] = profile
