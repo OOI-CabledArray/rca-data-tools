@@ -637,8 +637,9 @@ def plotProfilesGrid(
         startDate = timeRef - timedelta(days=int(span))
         xMin = startDate - timedelta(days=int(span) * 0.002)
         xMax = endDate + timedelta(days=int(span) * 0.002)
-
-    logger.info(f"baseDS - startDate: {startDate} endDate {endDate}") #TODO clean timestamp error handling
+        timeRef_deploy=None
+        
+    logger.info(f"baseDS - startDate: {startDate} endDate {endDate}")
     baseDS = paramData.sel(time=slice(startDate, endDate))
     ### drop nans from dataset
     baseDS = baseDS.where( ((baseDS[Yparam].notnull()) & (baseDS[pressParam].notnull())).compute(), drop=True)
@@ -648,7 +649,7 @@ def plotProfilesGrid(
     if len(scatterX) > 5:
         scatterY = baseDS[pressParam].values
         scatterZ = baseDS[Yparam].values
-        # create interpolation grid ===============================================
+        # create interpolation grid
         xi, yi, zi, xiDT, emptySlice, ax = create_interpolation_grid(
             plotter,
             Yparam, 
@@ -668,13 +669,13 @@ def plotProfilesGrid(
             fileNameList, 
             unix_epoch, 
             one_second, 
-            timeRef_deploy, 
             xMin, 
             xMax, 
             baseDS, 
             scatterX, 
             scatterY, 
-            scatterZ
+            scatterZ,
+            timeRef_deploy, 
             )
     else:
         params = {'range':'full'}
@@ -967,14 +968,14 @@ def create_interpolation_grid(
     logger, 
     fileNameList, 
     unix_epoch, 
-    one_second, 
-    timeRef_deploy, 
+    one_second,  
     xMin, 
     xMax, 
     baseDS, 
     scatterX, 
     scatterY, 
-    scatterZ
+    scatterZ,
+    timeRef_deploy,
 ):
     xMinTimestamp = xMin.timestamp()
     xMaxTimestamp = xMax.timestamp()
