@@ -482,6 +482,7 @@ def plotProfilesGrid(
     profileList,
     statusDict,
     site,
+    plotInstrument,
 ):
     logger = select_logger()
 
@@ -647,109 +648,34 @@ def plotProfilesGrid(
     if len(scatterX) > 5:
         scatterY = baseDS[pressParam].values
         scatterZ = baseDS[Yparam].values
-        # create interpolation grid
-        xMinTimestamp = xMin.timestamp()
-        xMaxTimestamp = xMax.timestamp()
-        if profileList.empty:
-            print('profileList empty...interpolating with old method...')
-            # x grid in seconds, with points every 1 hour (3600 seconds)
-            xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
-            yi_arr = np.arange(yMin, yMax, 0.5)
-            xi, yi = np.meshgrid(xi_arr, yi_arr)
-
-            scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
-
-            # interpolate data to grid
-            zi = griddata(
-                (scatterX_TS, scatterY), scatterZ, (xi, yi), method='linear'
+        # create interpolation grid ===============================================
+        xi, yi, zi, xiDT, emptySlice, ax = create_interpolation_grid(
+            plotter,
+            Yparam, 
+            pressParam, 
+            yMin, 
+            yMax, 
+            zMin, 
+            zMax, 
+            zMin_local, 
+            zMax_local, 
+            colorMap, 
+            fileName_base, 
+            span, 
+            spanString, 
+            profileList, 
+            logger, 
+            fileNameList, 
+            unix_epoch, 
+            one_second, 
+            timeRef_deploy, 
+            xMin, 
+            xMax, 
+            baseDS, 
+            scatterX, 
+            scatterY, 
+            scatterZ
             )
-
-            xiDT = xi.astype('datetime64[s]')
-            # mask out any time gaps greater than 1 day
-            timeGaps = np.where(np.diff(scatterX_TS) > 86400)
-            if len(timeGaps[0]) > 1:
-                gaps = timeGaps[0]
-                for gap in gaps:
-                    gapMask = (xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])
-                    zi[gapMask] = np.nan
-        else:
-            xi_arr, yi_arr, zi = gridProfiles(baseDS,pressParam,Yparam,profileList)
-            if xi_arr.shape[0] == 1:
-                logger.info('error with gridding profiles...interpolating with old method...')
-                # x grid in seconds, with points every 1 hour (3600 seconds)
-                xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
-                # y grid in meters, with points every 1/2 meter
-                yi_arr = np.arange(yMin, yMax, 0.5)
-                xi, yi = np.meshgrid(xi_arr, yi_arr)
-
-                scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
-
-                # interpolate data to grid
-                zi = griddata(
-                    (scatterX_TS, scatterY), scatterZ, (xi, yi), method='linear'
-                )
-                xiDT = xi.astype('datetime64[s]')
-                # mask out any time gaps greater than 1 day
-                timeGaps = np.where(np.diff(scatterX_TS) > 86400)
-                if len(timeGaps[0]) > 1:
-                    gaps = timeGaps[0]
-                    for gap in gaps:
-                        gapMask = (xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])
-                        zi[gapMask] = np.nan
-            else:
-                logger.info('success gridding profiles...')
-                xi, yi = np.meshgrid(xi_arr, yi_arr)
-                ### filter out profile columns with no data where xi == 0
-                zeroMask = np.where(xi_arr == 0)
-                zi = np.delete(zi,zeroMask, axis=1)
-                xi = np.delete(xi,zeroMask, axis=1)
-                yi = np.delete(yi,zeroMask, axis=1)
-                xiDT = xi.astype('datetime64[s]')
-                if int(span) > 45:
-                    gapThreshold = 5
-                else:
-                    gapThreshold = 1
-                nanMask = np.where(np.diff(xiDT) > timedelta(days=gapThreshold))
-                zi[nanMask] = np.nan
-
-        # plot filled contours
-        if zi.shape[1] > 1:
-          params = {'range':'full'}
-          profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
-          logger.info("created profilePlot object")
-          if 'deploy' in spanString:
-              plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-          fileName = fileName_base + '_' + spanString + '_' + 'none'
-          profilePlot.savefig(fileName + '_full.png', dpi=300)
-          fileNameList.append(fileName + '_full.png')
-          params = {'range':'standard'}
-          params['vmin'] = zMin
-          params['vmax'] = zMax
-          profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
-          if 'deploy' in spanString:
-              plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-          profilePlot.savefig(fileName + '_standard.png', dpi=300)
-          fileNameList.append(fileName + '_standard.png')
-          params = {'range':'local'}
-          params['vmin'] = zMin_local
-          params['vmax'] = zMax_local
-          profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
-          if 'deploy' in spanString:
-              plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-          profilePlot.savefig(fileName + '_local.png', dpi=300)
-          fileNameList.append(fileName + '_local.png')
-          emptySlice = 'no'
-        else:
-            params = {'range':'full'}
-            profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params)
-            fileName = fileName_base + '_' + spanString + '_' + 'none'
-            profilePlot.savefig(fileName + '_full.png', dpi=300)
-            fileNameList.append(fileName + '_full.png')
-            profilePlot.savefig(fileName + '_standard.png', dpi=300)
-            fileNameList.append(fileName + '_standard.png')
-            profilePlot.savefig(fileName + '_local.png', dpi=300)
-            fileNameList.append(fileName + '_local.png')
-            emptySlice = 'yes'
     else:
         params = {'range':'full'}
         profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params)
@@ -1021,6 +947,138 @@ def plotProfilesGrid(
                 fileNameList.append(fileName + '_local.png')
 
     return fileNameList
+
+
+def create_interpolation_grid(
+    plotter,
+    Yparam, 
+    pressParam, 
+    yMin, 
+    yMax, 
+    zMin, 
+    zMax, 
+    zMin_local, 
+    zMax_local, 
+    colorMap, 
+    fileName_base, 
+    span, 
+    spanString, 
+    profileList, 
+    logger, 
+    fileNameList, 
+    unix_epoch, 
+    one_second, 
+    timeRef_deploy, 
+    xMin, 
+    xMax, 
+    baseDS, 
+    scatterX, 
+    scatterY, 
+    scatterZ
+):
+    xMinTimestamp = xMin.timestamp()
+    xMaxTimestamp = xMax.timestamp()
+    if profileList.empty:
+        print('profileList empty...interpolating with old method...')
+            # x grid in seconds, with points every 1 hour (3600 seconds)
+        xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
+        yi_arr = np.arange(yMin, yMax, 0.5)
+        xi, yi = np.meshgrid(xi_arr, yi_arr)
+
+        scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
+
+            # interpolate data to grid
+        zi = griddata(
+                (scatterX_TS, scatterY), scatterZ, (xi, yi), method='linear'
+            )
+
+        xiDT = xi.astype('datetime64[s]')
+            # mask out any time gaps greater than 1 day
+        timeGaps = np.where(np.diff(scatterX_TS) > 86400)
+        if len(timeGaps[0]) > 1:
+            gaps = timeGaps[0]
+            for gap in gaps:
+                gapMask = (xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])
+                zi[gapMask] = np.nan
+    else:
+        xi_arr, yi_arr, zi = gridProfiles(baseDS,pressParam,Yparam,profileList)
+        if xi_arr.shape[0] == 1:
+            logger.info('error with gridding profiles...interpolating with old method...')
+                # x grid in seconds, with points every 1 hour (3600 seconds)
+            xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
+                # y grid in meters, with points every 1/2 meter
+            yi_arr = np.arange(yMin, yMax, 0.5)
+            xi, yi = np.meshgrid(xi_arr, yi_arr)
+
+            scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
+
+                # interpolate data to grid
+            zi = griddata(
+                    (scatterX_TS, scatterY), scatterZ, (xi, yi), method='linear'
+                )
+            xiDT = xi.astype('datetime64[s]')
+                # mask out any time gaps greater than 1 day
+            timeGaps = np.where(np.diff(scatterX_TS) > 86400)
+            if len(timeGaps[0]) > 1:
+                gaps = timeGaps[0]
+                for gap in gaps:
+                    gapMask = (xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])
+                    zi[gapMask] = np.nan
+        else:
+            logger.info('success gridding profiles...')
+            xi, yi = np.meshgrid(xi_arr, yi_arr)
+                ### filter out profile columns with no data where xi == 0
+            zeroMask = np.where(xi_arr == 0)
+            zi = np.delete(zi,zeroMask, axis=1)
+            xi = np.delete(xi,zeroMask, axis=1)
+            yi = np.delete(yi,zeroMask, axis=1)
+            xiDT = xi.astype('datetime64[s]')
+            if int(span) > 45:
+                gapThreshold = 5
+            else:
+                gapThreshold = 1
+            nanMask = np.where(np.diff(xiDT) > timedelta(days=gapThreshold))
+            zi[nanMask] = np.nan
+
+        # plot filled contours
+    if zi.shape[1] > 1:
+      params = {'range':'full'}
+      profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
+      logger.info("created profilePlot object")
+      if 'deploy' in spanString:
+          plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+      fileName = fileName_base + '_' + spanString + '_' + 'none'
+      profilePlot.savefig(fileName + '_full.png', dpi=300)
+      fileNameList.append(fileName + '_full.png')
+      params = {'range':'standard'}
+      params['vmin'] = zMin
+      params['vmax'] = zMax
+      profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
+      if 'deploy' in spanString:
+          plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+      profilePlot.savefig(fileName + '_standard.png', dpi=300)
+      fileNameList.append(fileName + '_standard.png')
+      params = {'range':'local'}
+      params['vmin'] = zMin_local
+      params['vmax'] = zMax_local
+      profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
+      if 'deploy' in spanString:
+          plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+      profilePlot.savefig(fileName + '_local.png', dpi=300)
+      fileNameList.append(fileName + '_local.png')
+      emptySlice = 'no'
+    else:
+        params = {'range':'full'}
+        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params)
+        fileName = fileName_base + '_' + spanString + '_' + 'none'
+        profilePlot.savefig(fileName + '_full.png', dpi=300)
+        fileNameList.append(fileName + '_full.png')
+        profilePlot.savefig(fileName + '_standard.png', dpi=300)
+        fileNameList.append(fileName + '_standard.png')
+        profilePlot.savefig(fileName + '_local.png', dpi=300)
+        fileNameList.append(fileName + '_local.png')
+        emptySlice = 'yes'
+    return xi, yi, zi, xiDT, emptySlice, ax
 
 
 

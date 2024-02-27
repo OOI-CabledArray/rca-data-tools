@@ -269,6 +269,7 @@ def run_dashboard_creation(
                         profileList,
                         statusDict,
                         site,
+                        plotInstrument
                     )
                     plotList.append(plots)
                     plots = dashboard.plotProfilesScatter(
