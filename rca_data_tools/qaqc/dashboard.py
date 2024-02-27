@@ -460,9 +460,9 @@ def saveAnnos_SVG(annoLines,fileObject,fileName):
     et.ElementTree(tree).write(fileName + '.svg')
 
 def plotProfilesGrid(
-    Yparam,
-    pressParam,
-    paramData,
+    Yparam, # variable of interest
+    pressParam, # pressure parameter
+    paramData, # xr.data_array
     plotTitle,
     zLabel,
     timeRef,
