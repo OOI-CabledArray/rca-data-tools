@@ -521,6 +521,7 @@ def plotProfilesGrid(
 
     def plotter(Xx,Yy,Zz,plotType,colorBar,annotation,params):
 
+        logger.warning(f"params:{params}")
         logger.info(f"plot-type: {plotType}")
         plt.close('all')
         plt.rcParams["font.family"] = "serif"
@@ -600,7 +601,6 @@ def plotProfilesGrid(
 
         if 'clim' in plotType:
             colorRange = params['vmax'] - params['vmin']
-            logger.warning(params['vmin'],params['vmax'],colorRange)
             cbarticks = np.arange(params['vmin'],params['vmax'],colorRange/50)
             if 'yes' in params['norm']:
                 divnorm = colors.TwoSlopeNorm(
