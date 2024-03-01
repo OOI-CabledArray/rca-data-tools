@@ -600,6 +600,7 @@ def plotProfilesGrid(
 
         if 'clim' in plotType:
             colorRange = params['vmax'] - params['vmin']
+            logger.warning(params['vmin'],params['vmax'],colorRange)
             cbarticks = np.arange(params['vmin'],params['vmax'],colorRange/50)
             if 'yes' in params['norm']:
                 divnorm = colors.TwoSlopeNorm(
@@ -621,7 +622,7 @@ def plotProfilesGrid(
             cbar.ax.tick_params(length=2, width=0.5, labelsize=4)
         return (fig, ax)
 
-    logger.info('plotting grid for timeSpan: ', span)
+    logger.info(f'plotting grid for timeSpan: {span} ')
 
     if 'deploy' in spanString:
         deployHistory = loadDeploymentHistory(site)
