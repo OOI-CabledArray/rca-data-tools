@@ -15,6 +15,7 @@ import pandas as pd
 from pathlib import Path
 from typing import List
 import xarray as xr
+import matplotlib.pyplot as plt
 
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
@@ -123,11 +124,8 @@ def run_dashboard_creation(
     span,
     decimationThreshold,
 ):
-    from prefect import get_run_logger
-    try:
-        logger = get_run_logger()
-    except:
-        from loguru import logger
+    logger = select_logger()
+    plt.switch_backend('Agg') # run locally without changing anything else?
 
     if isinstance(timeRef, str):
         timeRef = parser.parse(timeRef)

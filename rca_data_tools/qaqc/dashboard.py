@@ -521,7 +521,7 @@ def plotProfilesGrid(
 
     def plotter(Xx,Yy,Zz,plotType,colorBar,annotation,params):
 
-        logger.warning(f"params:{params}")
+        logger.info(f"params:{params}")
         logger.info(f"plot-type: {plotType}")
         plt.close('all')
         plt.rcParams["font.family"] = "serif"

@@ -139,3 +139,6 @@ _build
 
 #mac os 
 .DS_store
+
+# plot directory
+QAQC_plots/
