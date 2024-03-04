@@ -4,8 +4,6 @@
 This module contains code for performing LTTB decimation.
 
 """
-
-import dask
 import gc
 import math
 import numba
@@ -14,6 +12,7 @@ import pandas as pd
 from typing import Callable, Optional
 import logging
 import xarray as xr
+import dask.array as da
 
 from functools import reduce
 
@@ -155,7 +154,7 @@ class LttbException(Exception):
 def _perform_decimation(ds, threshold):
     time_da = ds.time.astype(int)
     cols = [time_da.name, ds.name]
-    data = dask.array.stack([time_da.data, ds.data], axis=1).compute()
+    data = da.stack([time_da.data, ds.data], axis=1).compute()
     try:
         decdata = _largest_triangle_three_buckets(data, threshold)
     except Exception as e:
@@ -190,7 +189,6 @@ def downsample(
     """
     if logger is None:
         from loguru import logger
-
     logger.info("Get list of data arrays")
     da_list = (raw_ds[var] for var in raw_ds)
 
