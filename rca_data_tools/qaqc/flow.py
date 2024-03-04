@@ -2,6 +2,7 @@ from typing import List
 import datetime
 import fsspec
 import pkg_resources
+import os
 
 from prefect import task, flow
 from prefect.states import Failed, Cancelled
@@ -117,6 +118,7 @@ def qaqc_pipeline_flow(
     # log python package versions on cloud machine
     installed_packages = {p.project_name: p.version for p in pkg_resources.working_set}
     logger.info(f"Installed packages: {installed_packages}")
+    logger.info(f"Available cpu cores on runner machine: {os.cpu_count()}")
 
     if 'CAMDS' in site:
         logger.warning("Running digital still camera qaqc routine.")
