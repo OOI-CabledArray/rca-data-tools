@@ -1550,7 +1550,7 @@ def plotProfilesScatter(
                             fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
                             fig.savefig(fileName + '_full.png', dpi=300)
                             fileNameList.append(fileName + '_full.png')
-                            timeSpan = [scatterZ_sub[0],scatterZ_sub[-1]]
+                            timeSpan = [dataDict[key]['scatterZ'][0],dataDict[key]['scatterZ'][-1]]
                             overlayFileName = fileName + '_full'
                             for overlay in overlays:
                                 plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
