@@ -125,7 +125,7 @@ def run_dashboard_creation(
     decimationThreshold,
 ):
     logger = select_logger()
-    plt.switch_backend('Agg') # run locally without changing anything else?
+    #plt.switch_backend('Agg') # run locally without changing anything else?
 
     if isinstance(timeRef, str):
         timeRef = parser.parse(timeRef)
