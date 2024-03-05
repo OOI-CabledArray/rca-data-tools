@@ -12,7 +12,7 @@ import pandas as pd
 from typing import Callable, Optional
 import logging
 import xarray as xr
-import dask.array as da
+import dask.array as darray
 
 from functools import reduce
 
@@ -154,7 +154,7 @@ class LttbException(Exception):
 def _perform_decimation(ds, threshold):
     time_da = ds.time.astype(int)
     cols = [time_da.name, ds.name]
-    data = da.stack([time_da.data, ds.data], axis=1).compute()
+    data = darray.stack([time_da.data, ds.data], axis=1).compute()
     try:
         decdata = _largest_triangle_three_buckets(data, threshold)
     except Exception as e:
