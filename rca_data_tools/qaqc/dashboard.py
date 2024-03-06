@@ -519,7 +519,7 @@ def plotProfilesGrid(
 
 
 
-    def plotter(Xx,Yy,Zz,plotType,colorBar,annotation,params):
+    def plotter(Xx, Yy, Zz, plotType, colorBar, annotation, params, plotFunction=None):
 
         logger.info(f"params:{params}")
         logger.info(f"plot-type: {plotType}")
@@ -570,13 +570,19 @@ def plotProfilesGrid(
         
         if 'contour' in plotType:
             if 'full' in params['range']:
-                graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar)
+                if plotFunction == 'meshgrid': #TODO better way to do this
+                    graph = ax.pcolormesh(Xx, Yy, Zz, cmap=colorBar)
+                else:
+                    graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar)
                 for a in graph.collections:
                     a.set_edgecolor("face")
             else:
                 colorRange = params['vmax'] - params['vmin']
                 cbarticks = np.arange(params['vmin'],params['vmax'],colorRange/50)
-                graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar)
+                if plotFunction == 'meshgrid': #TODO better way to do this
+                    graph = ax.pcolormesh(Xx, Yy, Zz, vmax=params['vmax'], vmin=params['vmin'], cmap=colorBar)
+                else:
+                    graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar)
                 for a in graph.collections:
                     a.set_edgecolor("face")
             divider = make_axes_locatable(ax)
@@ -1041,7 +1047,6 @@ def create_interpolation_grid(
                 gapThreshold = 1
             nanMask = np.where(np.diff(xiDT) > timedelta(days=gapThreshold))
             zi[nanMask] = np.nan
-
         # plot filled contours
     if zi.shape[1] > 1:
       params = {'range':'full'}
