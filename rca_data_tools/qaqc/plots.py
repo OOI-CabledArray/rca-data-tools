@@ -270,81 +270,82 @@ def run_dashboard_creation(
                         plotInstrument
                     )
                     plotList.append(plots)
-                    plots = dashboard.plotProfilesScatter(
-                        Yparam,
-                        pressParam,
-                        paramData,
-                        plotTitle,
-                        timeRef,
-                        profile_paramMin,
-                        profile_paramMax,
-                        profile_paramMin_local,
-                        profile_paramMax_local,
-                        imageName_base,
-                        overlayData_anno,
-                        overlayData_clim,
-                        overlayData_flag,
-                        overlayData_near,
-                        span,
-                        spanString,
-                        profileList,
-                        statusDict,
-                        site,
-                    )
-                    plotList.append(plots)
-                    depths = sites_dict[site]['depths'].strip('"').split(',')
-                    if 'Single' not in depths:
-                        for profileDepth in depths:
-                            paramData_depth = paramData[Yparam].where(
-                                (int(profileDepth) < paramData[pressParam])
-                                & (
-                                    paramData[pressParam]
-                                    < (int(profileDepth) + 0.5)
-                                )
-                            )
-                            overlayData_flag_extract = overlayData_flag.where(
-                                (int(profileDepth) < overlayData_flag[pressParam])
-                                & (
-                                    overlayData_flag[pressParam]
-                                    < (int(profileDepth) + 0.5)
-                                )
-                            )
-                            plotTitle_depth = (
-                                plotTitle + ': ' + profileDepth + ' meters'
-                            )
-                            imageName_base_depth = (
-                                imageName_base + '_' + profileDepth + 'meters'
-                            )
-                            if overlayData_clim:
-                                overlayData_clim_extract = (
-                                    dashboard.extractClim(
-                                        timeRef, profileDepth, overlayData_clim
+                    if 'ADCP' not in plotInstrument: #TODO try to minimize new if blocks
+                        plots = dashboard.plotProfilesScatter(
+                            Yparam,
+                            pressParam,
+                            paramData,
+                            plotTitle,
+                            timeRef,
+                            profile_paramMin,
+                            profile_paramMax,
+                            profile_paramMin_local,
+                            profile_paramMax_local,
+                            imageName_base,
+                            overlayData_anno,
+                            overlayData_clim,
+                            overlayData_flag,
+                            overlayData_near,
+                            span,
+                            spanString,
+                            profileList,
+                            statusDict,
+                            site,
+                        )
+                        plotList.append(plots)
+                        depths = sites_dict[site]['depths'].strip('"').split(',')
+                        if 'Single' not in depths:
+                            for profileDepth in depths:
+                                paramData_depth = paramData[Yparam].where(
+                                    (int(profileDepth) < paramData[pressParam])
+                                    & (
+                                        paramData[pressParam]
+                                        < (int(profileDepth) + 0.5)
                                     )
                                 )
-                            else:
-                                overlayData_clim_extract = pd.DataFrame()
-                            plots = dashboard.plotScatter(
-                                Yparam,
-                                paramData_depth,
-                                plotTitle_depth,
-                                yLabel,
-                                timeRef,
-                                profile_paramMin,
-                                profile_paramMax,
-                                profile_paramMin_local,
-                                profile_paramMax_local,
-                                imageName_base_depth,
-                                overlayData_anno,
-                                overlayData_clim_extract,
-                                overlayData_flag_extract,
-                                overlayData_near,
-                                'medium',
-                                span,
-                                spanString,
-                                statusDict,
-                                site,
-                            )
-                            plotList.append(plots)
+                                overlayData_flag_extract = overlayData_flag.where(
+                                    (int(profileDepth) < overlayData_flag[pressParam])
+                                    & (
+                                        overlayData_flag[pressParam]
+                                        < (int(profileDepth) + 0.5)
+                                    )
+                                )
+                                plotTitle_depth = (
+                                    plotTitle + ': ' + profileDepth + ' meters'
+                                )
+                                imageName_base_depth = (
+                                    imageName_base + '_' + profileDepth + 'meters'
+                                )
+                                if overlayData_clim:
+                                    overlayData_clim_extract = (
+                                        dashboard.extractClim(
+                                            timeRef, profileDepth, overlayData_clim
+                                        )
+                                    )
+                                else:
+                                    overlayData_clim_extract = pd.DataFrame()
+                                plots = dashboard.plotScatter(
+                                    Yparam,
+                                    paramData_depth,
+                                    plotTitle_depth,
+                                    yLabel,
+                                    timeRef,
+                                    profile_paramMin,
+                                    profile_paramMax,
+                                    profile_paramMin_local,
+                                    profile_paramMax_local,
+                                    imageName_base_depth,
+                                    overlayData_anno,
+                                    overlayData_clim_extract,
+                                    overlayData_flag_extract,
+                                    overlayData_near,
+                                    'medium',
+                                    span,
+                                    spanString,
+                                    statusDict,
+                                    site,
+                                )
+                                plotList.append(plots)
             else:
                 paramData = siteData[Yparam]
                 flagParams = [item for item in qcParams if Yparam in item]
