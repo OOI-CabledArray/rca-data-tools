@@ -531,7 +531,7 @@ def plotProfilesGrid(
         fig.patch.set_facecolor('white')
         plt.title(plotTitle, fontsize=4, loc='left')
         plt.title(statusString, fontsize=4, fontweight=0, color=statusColors[statusString], loc='right', style='italic' )
-        plt.ylabel('Pressure (dbar)', fontsize=4)
+        plt.ylabel('Pressure (dbar)', fontsize=4) #TODO not always dbar
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
         locator = mdates.AutoDateLocator()
@@ -574,8 +574,8 @@ def plotProfilesGrid(
                     graph = ax.pcolormesh(Xx, Yy, Zz, cmap=colorBar)
                 else:
                     graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar)
-                for a in graph.collections:
-                    a.set_edgecolor("face")
+                    for a in graph.collections:
+                        a.set_edgecolor("face")
             else:
                 colorRange = params['vmax'] - params['vmin']
                 cbarticks = np.arange(params['vmin'],params['vmax'],colorRange/50)
@@ -583,8 +583,8 @@ def plotProfilesGrid(
                     graph = ax.pcolormesh(Xx, Yy, Zz, vmax=params['vmax'], vmin=params['vmin'], cmap=colorBar)
                 else:
                     graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar)
-                for a in graph.collections:
-                    a.set_edgecolor("face")
+                    for a in graph.collections:
+                        a.set_edgecolor("face")
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="2%", pad=0.05)
             cbar = plt.colorbar(graph, cax=cax)
@@ -649,48 +649,72 @@ def plotProfilesGrid(
     logger.info(f"baseDS - startDate: {startDate} endDate {endDate}")
     baseDS = paramData.sel(time=slice(startDate, endDate))
     ### drop nans from dataset
-    baseDS = baseDS.where( ((baseDS[Yparam].notnull()) & (baseDS[pressParam].notnull())).compute(), drop=True)
+    if 'ADCP' not in plotInstrument: # TODO colormesh doesn't like this mask for ADCP
+        baseDS = baseDS.where(((baseDS[Yparam].notnull()) & (baseDS[pressParam].notnull())).compute(), drop=True)
     scatterX = baseDS.time.values
     scatterY = np.array([])
     scatterZ = np.array([])
     if len(scatterX) > 5:
         scatterY = baseDS[pressParam].values
         scatterZ = baseDS[Yparam].values
+        if 'ADCP' not in plotInstrument:
         # create interpolation grid
-        xi, yi, zi, xiDT = create_interpolation_grid(
-            Yparam, 
-            pressParam, 
-            yMin, 
-            yMax,
-            span, 
-            profileList, 
-            logger, 
-            unix_epoch, 
-            one_second, 
-            xMin, 
-            xMax, 
-            baseDS, 
-            scatterX, 
-            scatterY, 
-            scatterZ,
-        )
-        
-        emptySlice, ax = plot_and_save_no_overlay_plots(
-            plotter,
-            logger,
-            yi,
-            zi,
-            xiDT,
-            colorMap,
-            spanString,
-            timeRef_deploy,
-            fileName_base,
-            fileNameList,
-            zMin,
-            zMax,
-            zMin_local,
-            zMax_local,
-        )
+            xi, yi, zi, xiDT = create_interpolation_grid(
+                Yparam, 
+                pressParam, 
+                yMin, 
+                yMax,
+                span, 
+                profileList, 
+                logger, 
+                unix_epoch, 
+                one_second, 
+                xMin, 
+                xMax, 
+                baseDS, 
+                scatterX, 
+                scatterY, 
+                scatterZ,
+            )
+            
+            emptySlice, ax = plot_and_save_no_overlay_plots(
+                plotter,
+                logger,
+                yi,
+                zi,
+                xiDT,
+                colorMap,
+                spanString,
+                timeRef_deploy,
+                fileName_base,
+                fileNameList,
+                zMin,
+                zMax,
+                zMin_local,
+                zMax_local,
+            )
+        else: # ADCP routine
+            yi = baseDS[pressParam].T #transpose
+            zi = baseDS[Yparam].T #transpose
+            xi = baseDS.time
+
+            emptySlice, ax = plot_and_save_no_overlay_plots(
+                plotter,
+                logger,
+                yi,
+                zi,
+                xi,
+                colorMap,
+                spanString,
+                timeRef_deploy,
+                fileName_base,
+                fileNameList,
+                zMin,
+                zMax,
+                zMin_local,
+                zMax_local,
+                'meshgrid', # use meshgrid in place of contourf for ADCPs due to data density
+            )
 
     else:
         params = {'range':'full'}
@@ -1319,9 +1343,9 @@ def plotProfilesScatter(
 
 
 
-    logger.info('plotting profiles for timeSpan: ', span)
+    logger.info(f'plotting profiles for timeSpan: {span} ')
     profileIterator = 0    
-    if profileList.empty:
+    if len(profileList) == 0:
         logger.info('profileList empty...cannot create profile scatter plots')
         fig,ax = setPlot()
         plt.annotate(
