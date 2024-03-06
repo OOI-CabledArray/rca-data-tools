@@ -657,23 +657,14 @@ def plotProfilesGrid(
         scatterY = baseDS[pressParam].values
         scatterZ = baseDS[Yparam].values
         # create interpolation grid
-        xi, yi, zi, xiDT, emptySlice, ax = create_interpolation_grid(
-            plotter,
+        xi, yi, zi, xiDT = create_interpolation_grid(
             Yparam, 
             pressParam, 
             yMin, 
-            yMax, 
-            zMin, 
-            zMax, 
-            zMin_local, 
-            zMax_local, 
-            colorMap, 
-            fileName_base, 
+            yMax,
             span, 
-            spanString, 
             profileList, 
             logger, 
-            fileNameList, 
             unix_epoch, 
             one_second, 
             xMin, 
@@ -682,8 +673,25 @@ def plotProfilesGrid(
             scatterX, 
             scatterY, 
             scatterZ,
-            timeRef_deploy, 
-            )
+        )
+        
+        emptySlice, ax = plot_and_save_no_overlay_plots(
+            plotter,
+            logger,
+            yi,
+            zi,
+            xiDT,
+            colorMap,
+            spanString,
+            timeRef_deploy,
+            fileName_base,
+            fileNameList,
+            zMin,
+            zMax,
+            zMin_local,
+            zMax_local,
+        )
+
     else:
         params = {'range':'full'}
         profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params)
@@ -958,22 +966,13 @@ def plotProfilesGrid(
 
 
 def create_interpolation_grid(
-    plotter,
     Yparam, 
     pressParam, 
     yMin, 
     yMax, 
-    zMin, 
-    zMax, 
-    zMin_local, 
-    zMax_local, 
-    colorMap, 
-    fileName_base, 
     span, 
-    spanString, 
     profileList, 
     logger, 
-    fileNameList, 
     unix_epoch, 
     one_second,  
     xMin, 
@@ -982,7 +981,6 @@ def create_interpolation_grid(
     scatterX, 
     scatterY, 
     scatterZ,
-    timeRef_deploy,
 ):
     xMinTimestamp = xMin.timestamp()
     xMaxTimestamp = xMax.timestamp()
@@ -1047,36 +1045,58 @@ def create_interpolation_grid(
                 gapThreshold = 1
             nanMask = np.where(np.diff(xiDT) > timedelta(days=gapThreshold))
             zi[nanMask] = np.nan
+            
         # plot filled contours
+    return xi, yi, zi, xiDT
+
+
+def plot_and_save_no_overlay_plots(
+    plotter,
+    logger,
+    yi, 
+    zi, 
+    xiDT,
+    colorMap,
+    spanString,
+    timeRef_deploy,
+    fileName_base,
+    fileNameList,
+    zMin,
+    zMax,
+    zMin_local,
+    zMax_local,
+    plotFunc=None
+):
+
     if zi.shape[1] > 1:
-      params = {'range':'full'}
-      profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
-      logger.info("created profilePlot object")
-      if 'deploy' in spanString:
-          plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-      fileName = fileName_base + '_' + spanString + '_' + 'none'
-      profilePlot.savefig(fileName + '_full.png', dpi=300)
-      fileNameList.append(fileName + '_full.png')
-      params = {'range':'standard'}
-      params['vmin'] = zMin
-      params['vmax'] = zMax
-      profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
-      if 'deploy' in spanString:
-          plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-      profilePlot.savefig(fileName + '_standard.png', dpi=300)
-      fileNameList.append(fileName + '_standard.png')
-      params = {'range':'local'}
-      params['vmin'] = zMin_local
-      params['vmax'] = zMax_local
-      profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
-      if 'deploy' in spanString:
-          plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-      profilePlot.savefig(fileName + '_local.png', dpi=300)
-      fileNameList.append(fileName + '_local.png')
-      emptySlice = 'no'
+        params = {'range':'full'}
+        profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+        logger.info("created profilePlot object")
+        if 'deploy' in spanString:
+            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+        fileName = fileName_base + '_' + spanString + '_' + 'none'
+        profilePlot.savefig(fileName + '_full.png', dpi=300)
+        fileNameList.append(fileName + '_full.png')
+        params = {'range':'standard'}
+        params['vmin'] = zMin
+        params['vmax'] = zMax
+        profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+        if 'deploy' in spanString:
+            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+        profilePlot.savefig(fileName + '_standard.png', dpi=300)
+        fileNameList.append(fileName + '_standard.png')
+        params = {'range':'local'}
+        params['vmin'] = zMin_local
+        params['vmax'] = zMax_local
+        profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+        if 'deploy' in spanString:
+            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+        profilePlot.savefig(fileName + '_local.png', dpi=300)
+        fileNameList.append(fileName + '_local.png')
+        emptySlice = 'no'
     else:
         params = {'range':'full'}
-        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params)
+        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, plotFunc)
         fileName = fileName_base + '_' + spanString + '_' + 'none'
         profilePlot.savefig(fileName + '_full.png', dpi=300)
         fileNameList.append(fileName + '_full.png')
@@ -1085,10 +1105,8 @@ def create_interpolation_grid(
         profilePlot.savefig(fileName + '_local.png', dpi=300)
         fileNameList.append(fileName + '_local.png')
         emptySlice = 'yes'
-    return xi, yi, zi, xiDT, emptySlice, ax
-
-
-
+    
+    return emptySlice, ax
 
 
 def plotProfilesScatter(
