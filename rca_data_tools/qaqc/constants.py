@@ -40,6 +40,11 @@ COMPUTE_EXCEPTIONS = {
     'CE04OSPS-SF01B-2A-CTDPFA107':{
         '365': '4vcpu_30gb',
     },
+    # adcp
+    'RS01SLBS-LJ01A-10-ADCPTE101':{
+        '30': '4vcpu_30gb',
+    }
+
 }
 
 
