@@ -531,7 +531,7 @@ def plotProfilesGrid(
         fig.patch.set_facecolor('white')
         plt.title(plotTitle, fontsize=4, loc='left')
         plt.title(statusString, fontsize=4, fontweight=0, color=statusColors[statusString], loc='right', style='italic' )
-        plt.ylabel('Pressure (dbar)', fontsize=4) #TODO not always dbar
+        plt.ylabel('Pressure (dbar)', fontsize=4) #TODO not always dbar (meters for ADCP)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
         locator = mdates.AutoDateLocator()
@@ -679,7 +679,6 @@ def plotProfilesGrid(
             
             emptySlice, ax = plot_and_save_no_overlay_plots(
                 plotter,
-                logger,
                 yi,
                 zi,
                 xiDT,
@@ -700,7 +699,6 @@ def plotProfilesGrid(
 
             emptySlice, ax = plot_and_save_no_overlay_plots(
                 plotter,
-                logger,
                 yi,
                 zi,
                 xi,
@@ -1076,7 +1074,6 @@ def create_interpolation_grid(
 
 def plot_and_save_no_overlay_plots(
     plotter,
-    logger,
     yi, 
     zi, 
     xiDT,
@@ -1095,7 +1092,6 @@ def plot_and_save_no_overlay_plots(
     if zi.shape[1] > 1:
         params = {'range':'full'}
         profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
-        logger.info("created profilePlot object")
         if 'deploy' in spanString:
             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
         fileName = fileName_base + '_' + spanString + '_' + 'none'
