@@ -9,16 +9,19 @@ from prefect.states import Failed, Cancelled
 from prefect import get_run_logger
 
 from rca_data_tools.qaqc.plots import (
-    instrument_dict,
     organize_images,
     run_dashboard_creation,
     delete_outdated_images,
     delete_outdated_annotations,
-    sites_dict,
 )
 from rca_data_tools.qaqc.utils import get_s3_kwargs
 from rca_data_tools.qaqc.visual_data import cam_qaqc_stacked_bar
-from rca_data_tools.qaqc.constants import S3_BUCKET, SPAN_DICT
+from rca_data_tools.qaqc.constants import (
+    S3_BUCKET, 
+    SPAN_DICT,
+    instrument_dict,
+    sites_dict,
+)
 
 
 @task

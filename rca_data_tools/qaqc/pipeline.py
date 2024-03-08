@@ -18,16 +18,15 @@ from loguru import logger
 
 from prefect.deployments import run_deployment
 
-from rca_data_tools.qaqc.plots import (
+from rca_data_tools.qaqc.constants import (
     instrument_dict,
     sites_dict,
     stage3_dict,
-    span_dict,
+    SPAN_DICT,
 )
 from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
 
-HERE = Path(__file__).parent.absolute()
 now = datetime.datetime.utcnow()
 all_configs_dict = {**sites_dict, **stage3_dict}
 
@@ -55,7 +54,7 @@ class QAQCPipeline:
         self.s3_bucket = s3_bucket
         self.s3_sync = s3_sync
         self.s3fs_kwargs = s3fs_kwargs
-        self.valid_spans = span_dict
+        self.valid_spans = SPAN_DICT
         self._site_ds = {}
         self._params_valid = True
 
@@ -196,7 +195,7 @@ def parse_args():
         '--span',
         type=str,
         default='7',
-        help=f"Choices {str(list(span_dict.keys()))}",
+        help=f"Choices {str(list(SPAN_DICT.keys()))}",
     )
     arg_parser.add_argument('--threshold', type=int, default=5000000)
 

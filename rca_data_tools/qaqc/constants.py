@@ -4,6 +4,8 @@ and 16 gb. (Those are the defaults associated with the prefect 2
 workpool.)
 
 """
+import pandas as pd
+from pathlib import Path
 
 COMPUTE_EXCEPTIONS = {
     # spkira
@@ -59,4 +61,67 @@ CAM_URL_DICT = {
 N_EXPECTED_IMGS = 145
 
 S3_BUCKET = 'ooi-rca-qaqc-prod'
-SPAN_DICT = {'1': 'day', '7': 'week', '30': 'month', '365': 'year'}
+#SPAN_DICT = {'1': 'day', '7': 'week', '30': 'month', '365': 'year'}
+
+# CSV config constants 
+
+HERE = Path(__file__).parent.absolute()
+PARAMS_DIR = HERE.joinpath('params')
+PLOT_DIR = Path('QAQC_plots')
+
+SPAN_DICT = {
+    '1': 'day',
+    '7': 'week',
+    '30': 'month',
+    '365': 'year',
+    '0': 'deploy',
+}
+
+# create dictionary of sites key for filePrefix, nearestNeighbors
+sites_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('sitesDictionary.csv'))
+    .set_index('refDes')
+    .T.to_dict('series')
+)
+
+# TODO different stage dictonaries now need to be piped, and probably renamed for clarity
+stage3_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('stage3Dictionary.csv'))
+    .set_index('refDes')
+    .T.to_dict('series')
+)
+
+# create dictionary of parameter vs variable Name
+variable_dict = pd.read_csv(
+    PARAMS_DIR.joinpath('variableMap.csv'), index_col=0, squeeze=True
+).to_dict()
+
+# create dictionary of instrumet key for plot parameters
+instrument_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('plotParameters.csv'))
+    .set_index('instrument')
+    .T.to_dict('series')
+)
+
+# create dictionary of variable parameters for plotting
+variable_paramDict = (
+    pd.read_csv(PARAMS_DIR.joinpath('variableParameters.csv'))
+    .set_index('variable')
+    .T.to_dict('series')
+)
+
+# create dictionary of multi-parameter instrumet variables
+multiParameter_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('multiParameters.csv'))
+    .set_index('instrument')
+    .T.to_dict('series')
+)
+
+# create dictionary of local parameter ranges for each site
+localRange_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('localRanges.csv'))
+    .set_index('refDes')
+    .T.to_dict('series')
+)
+
+plotDir = str(PLOT_DIR) + '/'
