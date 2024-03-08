@@ -37,7 +37,7 @@ import textwrap as tw
 import xml.etree.ElementTree as et
 
 from rca_data_tools.qaqc.utils import select_logger
-
+from rca_data_tools.qaqc.constants import variable_paramDict
 INPUT_BUCKET = "ooi-data/"
 
 
@@ -462,6 +462,7 @@ def saveAnnos_SVG(annoLines,fileObject,fileName):
 def plotProfilesGrid(
     Yparam, # variable of interest
     pressParam, # pressure parameter
+    paramNickname, # short parameter name - see variableMap.csv
     paramData, # xr.data_array
     plotTitle,
     zLabel,
@@ -696,6 +697,10 @@ def plotProfilesGrid(
             yi = baseDS[pressParam].T #transpose
             zi = baseDS[Yparam].T #transpose
             xi = baseDS.time
+            staticParam = False
+
+            if variable_paramDict[paramNickname]['static'] == True:
+                staticParam = True
 
             emptySlice, ax = plot_and_save_no_overlay_plots(
                 plotter,
@@ -712,6 +717,7 @@ def plotProfilesGrid(
                 zMin_local,
                 zMax_local,
                 'meshgrid', # use meshgrid in place of contourf for ADCPs due to data density
+                staticParam,
             )
 
     else:
@@ -1086,34 +1092,49 @@ def plot_and_save_no_overlay_plots(
     zMax,
     zMin_local,
     zMax_local,
-    plotFunc=None
+    plotFunc=None,
+    staticParam=False
 ):
 
     if zi.shape[1] > 1:
-        params = {'range':'full'}
-        profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
-        if 'deploy' in spanString:
-            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-        fileName = fileName_base + '_' + spanString + '_' + 'none'
-        profilePlot.savefig(fileName + '_full.png', dpi=300)
-        fileNameList.append(fileName + '_full.png')
-        params = {'range':'standard'}
-        params['vmin'] = zMin
-        params['vmax'] = zMax
-        profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
-        if 'deploy' in spanString:
-            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-        profilePlot.savefig(fileName + '_standard.png', dpi=300)
-        fileNameList.append(fileName + '_standard.png')
-        params = {'range':'local'}
-        params['vmin'] = zMin_local
-        params['vmax'] = zMax_local
-        profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
-        if 'deploy' in spanString:
-            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-        profilePlot.savefig(fileName + '_local.png', dpi=300)
-        fileNameList.append(fileName + '_local.png')
-        emptySlice = 'no'
+        if staticParam: # for parameters like percent_beam_good only a single range 0-100 is needed
+            params = {'range':'full'}
+            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            if 'deploy' in spanString:
+                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+            fileName = fileName_base + '_' + spanString + '_' + 'none'
+            profilePlot.savefig(fileName + '_full.png', dpi=300)
+            fileNameList.append(fileName + '_full.png')
+            profilePlot.savefig(fileName + '_standard.png', dpi=300)
+            fileNameList.append(fileName + '_standard.png')
+            profilePlot.savefig(fileName + '_local.png', dpi=300)
+            fileNameList.append(fileName + '_local.png')
+            emptySlice = 'no'
+        else: # for all other parameters
+            params = {'range':'full'}
+            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            if 'deploy' in spanString:
+                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+            fileName = fileName_base + '_' + spanString + '_' + 'none'
+            profilePlot.savefig(fileName + '_full.png', dpi=300)
+            fileNameList.append(fileName + '_full.png')
+            params = {'range':'standard'}
+            params['vmin'] = zMin
+            params['vmax'] = zMax
+            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            if 'deploy' in spanString:
+                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+            profilePlot.savefig(fileName + '_standard.png', dpi=300)
+            fileNameList.append(fileName + '_standard.png')
+            params = {'range':'local'}
+            params['vmin'] = zMin_local
+            params['vmax'] = zMax_local
+            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            if 'deploy' in spanString:
+                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+            profilePlot.savefig(fileName + '_local.png', dpi=300)
+            fileNameList.append(fileName + '_local.png')
+            emptySlice = 'no'
     else:
         params = {'range':'full'}
         profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, plotFunc)
