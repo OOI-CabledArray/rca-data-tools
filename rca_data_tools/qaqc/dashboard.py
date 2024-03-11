@@ -655,6 +655,9 @@ def plotProfilesGrid(
         plotFunc = None # default function is contourf()
     else: 
         plotFunc = 'meshgrid'
+
+    staticParam = variable_paramDict[paramNickname]['static']
+    
     scatterX = baseDS.time.values
     scatterY = np.array([])
     scatterZ = np.array([])
@@ -700,10 +703,6 @@ def plotProfilesGrid(
             yi = baseDS[pressParam].T #transpose
             zi = baseDS[Yparam].T #transpose
             xiDT = baseDS.time
-            staticParam = False
-
-            if variable_paramDict[paramNickname]['static'] == True:
-                staticParam = True
 
             emptySlice, ax = plot_and_save_no_overlay_plots(
                 plotter,
