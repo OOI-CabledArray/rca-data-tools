@@ -16,16 +16,16 @@ COMPUTE_EXCEPTIONS = {
         '1': '4vcpu_30gb',
     },
     'RS01SBPS-SF01A-3D-SPKIRA101':{
-        '365': '4vcpu_30gb',
-        '30': '4vcpu_30gb',
-        '7': '4vcpu_30gb',
-        '1': '4vcpu_30gb',
+        '365': '8vcpu_60gb',
+        '30': '8vcpu_60gb',
+        '7': '8vcpu_60gb',
+        '1': '8vcpu_60gb',
     },
     'RS03AXPS-SF03A-3D-SPKIRA301':{
-        '365': '4vcpu_30gb',
-        '30': '4vcpu_30gb',
-        '7': '4vcpu_30gb',
-        '1': '4vcpu_30gb',
+        '365': '8vcpu_60gb',
+        '30': '8vcpu_60gb',
+        '7': '8vcpu_60gb',
+        '1': '8vcpu_60gb',
     },
     # velptd
     'RS01SBPS-SF01A-4B-VELPTD102':{
