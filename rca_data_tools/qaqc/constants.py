@@ -45,6 +45,9 @@ COMPUTE_EXCEPTIONS = {
     # adcp
     'RS01SLBS-LJ01A-10-ADCPTE101':{
         '30': '4vcpu_30gb',
+    },
+    'RS01SUM2-MJ01B-12-ADCPSK101':{
+        '30': '4vcpu_30gb',
     }
 
 }
