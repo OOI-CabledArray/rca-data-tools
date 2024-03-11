@@ -652,6 +652,8 @@ def plotProfilesGrid(
     ### drop nans from dataset
     if 'ADCP' not in plotInstrument: # TODO colormesh doesn't like this mask for ADCP
         baseDS = baseDS.where(((baseDS[Yparam].notnull()) & (baseDS[pressParam].notnull())).compute(), drop=True)
+    else: 
+        plotFunc = 'meshgrid'
     scatterX = baseDS.time.values
     scatterY = np.array([])
     scatterZ = np.array([])
@@ -696,7 +698,7 @@ def plotProfilesGrid(
         else: # ADCP routine
             yi = baseDS[pressParam].T #transpose
             zi = baseDS[Yparam].T #transpose
-            xi = baseDS.time
+            xiDT = baseDS.time
             staticParam = False
 
             if variable_paramDict[paramNickname]['static'] == True:
@@ -706,7 +708,7 @@ def plotProfilesGrid(
                 plotter,
                 yi,
                 zi,
-                xi,
+                xiDT,
                 colorMap,
                 spanString,
                 timeRef_deploy,
@@ -716,7 +718,7 @@ def plotProfilesGrid(
                 zMax,
                 zMin_local,
                 zMax_local,
-                'meshgrid', # use meshgrid in place of contourf for ADCPs due to data density
+                plotFunc, # use meshgrid in place of contourf for ADCPs due to data density
                 staticParam,
             )
 
@@ -747,7 +749,7 @@ def plotProfilesGrid(
                         if inRange:
                             plotAnnotations[startAnnoLine] = {'endAnnoLine': endAnnoLine, 'annotation': i['annotation']}
                     params = {'range':'full'}
-                    profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
+                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
                     if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                     if plotAnnotations:
@@ -777,7 +779,7 @@ def plotProfilesGrid(
                     params = {'range':'standard'}
                     params['vmin'] = zMin
                     params['vmax'] = zMax
-                    profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
+                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
                     if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                     if plotAnnotations:
@@ -807,7 +809,7 @@ def plotProfilesGrid(
                     params = {'range':'local'}
                     params['vmin'] = zMin_local
                     params['vmax'] = zMax_local
-                    profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params)
+                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
                     if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                     if plotAnnotations:
@@ -966,7 +968,7 @@ def plotProfilesGrid(
                 else:
                     logger.info('climatology is empty!')
                     params = {'range':'full'}
-                    profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Climatology Data Available', params)
+                    profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'No Climatology Data Available', params)
                     fileName = fileName_base + '_' + spanString + '_' + 'clim'
                     profilePlot.savefig(fileName + '_full.png', dpi=300)
                     fileNameList.append(fileName + '_full.png')

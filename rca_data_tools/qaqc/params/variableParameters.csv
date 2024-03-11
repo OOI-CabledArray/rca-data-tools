@@ -18,4 +18,4 @@ spectral_irradiance_683nm,-5,150,-5,150,"uW/m2/nm",thermal,FALSE
 velocity_east,-2.5,2.5,-2.5,2.5,"m/s",balance,FALSE
 velocity_north,-2.5,2.5,-2.5,2.5,"m/s",balance,FALSE
 velocity_up,-4,4,-4,4,"m/s",balance,FALSE
-percent_good_beam,0,100,0,100,"percent",thermal,TRUE
+percent_good_beam,0,100,0,100,"percent",matter,TRUE
