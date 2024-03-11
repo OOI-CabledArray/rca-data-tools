@@ -649,9 +649,10 @@ def plotProfilesGrid(
         
     logger.info(f"baseDS - startDate: {startDate} endDate {endDate}")
     baseDS = paramData.sel(time=slice(startDate, endDate))
-    ### drop nans from dataset
-    if 'ADCP' not in plotInstrument: # TODO colormesh doesn't like this mask for ADCP
+    # drop nans from dataset
+    if 'ADCP' not in plotInstrument: # colormesh doesn't accept mask for ADCP
         baseDS = baseDS.where(((baseDS[Yparam].notnull()) & (baseDS[pressParam].notnull())).compute(), drop=True)
+        plotFunc = None # default function is contourf()
     else: 
         plotFunc = 'meshgrid'
     scatterX = baseDS.time.values
