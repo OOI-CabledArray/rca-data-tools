@@ -48,8 +48,20 @@ COMPUTE_EXCEPTIONS = {
     },
     'RS01SUM2-MJ01B-12-ADCPSK101':{
         '30': '4vcpu_30gb',
-    }
-
+    },
+    # par
+    'RS03AXPS-SF03A-3C-PARADA301':{
+        '365': '4vcpu_30gb',
+        '30': '4vcpu_30gb',
+        '7': '4vcpu_30gb',
+        '1': '4vcpu_30gb',
+    },
+    'RS01SBPS-SF01A-3C-PARADA101':{
+        '365': '4vcpu_30gb',
+        '30': '4vcpu_30gb',
+        '7': '4vcpu_30gb',
+        '1': '4vcpu_30gb',
+    },
 }
 
 
