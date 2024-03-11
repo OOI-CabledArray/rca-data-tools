@@ -44,10 +44,10 @@ COMPUTE_EXCEPTIONS = {
     },
     # adcp
     'RS01SLBS-LJ01A-10-ADCPTE101':{
-        '30': '4vcpu_30gb',
+        '30': '8vcpu_60gb',
     },
     'RS01SUM2-MJ01B-12-ADCPSK101':{
-        '30': '4vcpu_30gb',
+        '30': '8vcpu_60gb',
     },
     # par
     'RS03AXPS-SF03A-3C-PARADA301':{
