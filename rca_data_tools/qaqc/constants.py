@@ -49,7 +49,7 @@ COMPUTE_EXCEPTIONS = {
     'RS01SUM2-MJ01B-12-ADCPSK101':{
         '30': '8vcpu_60gb',
     },
-    # par
+    # parad
     'RS03AXPS-SF03A-3C-PARADA301':{
         '365': '4vcpu_30gb',
         '30': '4vcpu_30gb',
