@@ -5,9 +5,12 @@ density,1020,1045,1022,1030,"kg/m^3",dense,FALSE
 oxygen,0,550,0,550,"uMol/kg",matter,FALSE
 nitrate,0,50,0,30,"uMol",deep,FALSE
 chlorophyll,0,3,0,3,"mg/m^3",tempo,FALSE
+cdom,0,375,0,375,"ppb",tempo,FALSE
+backscatter,0,3,0,3,"m-1",tempo,FALSE
 par,0,100,0,100,"par",solar,FALSE
 pco2,200,2000,200,1200,"uMol",matter,FALSE
 ph,6,9,7.4,8.4,"pH",matter,FALSE
+resistivity,0,5,0,5,"volts",matter,FALSE
 spectral_irradiance_412nm,-5,150,-5,150,"uW/m2/nm",thermal,FALSE
 spectral_irradiance_443nm,-5,150,-5,150,"uW/m2/nm",thermal,FALSE
 spectral_irradiance_490nm,-5,150,-5,150,"uW/m2/nm",thermal,FALSE
