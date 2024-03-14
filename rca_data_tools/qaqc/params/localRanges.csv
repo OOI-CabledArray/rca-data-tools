@@ -47,4 +47,4 @@ RS01SLBS-LJ01A-10-ADCPTE101,,,,,,,,,,,,,,,,,"{'local_profile':[-0.3,0.3]}","{'lo
 RS01SUM2-MJ01B-12-ADCPSK101,,,,,,,,,,,,,,,,,"{'local_profile':[-2.5,2.5]}","{'local_profile':[-2,2]}","{'local_profile':[-0.8,0.8]}","{'local_profile':[0,100]}",,,
 RS03INT1-MJ03C-07-D1000A301,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,,,,
 RS03INT1-MJ03C-10-TRHPHA301,,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,"{'local':[0,5]}",,
-RS03INT1-MJ03C-10-TRHPHA302,,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,"{'local':[0,5]}",,
+RS03INT1-MJ03C-09-TRHPHA302,,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,"{'local':[0,5]}",,
