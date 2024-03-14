@@ -12,11 +12,11 @@ RS03AXPS-PC03A-4A-CTDPFA303,"{'local':[6.4,8]}","{'local':[33.5,34]}","{'local':
 RS01SBPS-SF01A-2A-CTDPFA102,"{'local_profile':[6.75,18]}","{'local_profile':[30,33.85]}","{'local_profile':[1021.9,1027.6]}","{'local_profile':[60,330]}",,,,,,,,,,,,,,,,,,,
 CE04OSPS-SF01B-2A-CTDPFA107,"{'local_profile':[6.5,17]}","{'local_profile':[30,34.5]}","{'local_profile':[1022.2,1027.6]}","{'local_profile':[10,300]}",,,,,,,,,,,,,,,,,,,
 RS03AXPS-SF03A-2A-CTDPFA302,"{'local_profile':[5,19]}","{'local_profile':[31,34]}","{'local_profile':[1022,1027.5]}","{'local_profile':[75,325]}",,,,,,,,,,,,,,,,,,,
-RS01SBPS-PC01A-4C-FLORDD103,,,,,,"{'local':[0,25]}",,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
-RS03AXPS-PC03A-4C-FLORDD303,,,,,,"{'local':[0,40]}",,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
-CE04OSPS-SF01B-3A-FLORTD104,,,,,,"{'local_profile':[0,40]}",,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
-RS01SBPS-SF01A-3A-FLORTD101,,,,,,"{'local_profile':[0,40]}",,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
-RS03AXPS-SF03A-3A-FLORTD301,,,,,,"{'local_profile':[0,40]}",,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
+RS01SBPS-PC01A-4C-FLORDD103,,,,,,"{'local':[0,25]}",,,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
+RS03AXPS-PC03A-4C-FLORDD303,,,,,,"{'local':[0,40]}",,,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
+CE04OSPS-SF01B-3A-FLORTD104,,,,,,"{'local_profile':[0,40]}",,,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
+RS01SBPS-SF01A-3A-FLORTD101,,,,,,"{'local_profile':[0,40]}",,,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
+RS03AXPS-SF03A-3A-FLORTD301,,,,,,"{'local_profile':[0,40]}",,,,,,,,,,,,,,,,"{'local':[0,300]}","{'local':[0,3]}"
 CE04OSPS-SF01B-4A-NUTNRA102,,,,,"{'local_profile':[0,36]}",,,,,,,,,,,,,,,,,,
 RS01SBPS-SF01A-4A-NUTNRA101,,,,,"{'local_profile':[0,40]}",,,,,,,,,,,,,,,,,,
 RS03AXPS-SF03A-4A-NUTNRA301,,,,,"{'local_profile':[0,34]}",,,,,,,,,,,,,,,,,,
@@ -46,5 +46,5 @@ RS03AXPS-SF03A-4B-VELPTD302,,,,,,,,,,,,,,,,,"{'local_profile':[-1.25,1.25]}","{'
 RS01SLBS-LJ01A-10-ADCPTE101,,,,,,,,,,,,,,,,,"{'local_profile':[-0.3,0.3]}","{'local_profile':[-0.3,0.3]}","{'local_profile':[-0.08,0.08]}","{'local_profile':[0,100]}",,,
 RS01SUM2-MJ01B-12-ADCPSK101,,,,,,,,,,,,,,,,,"{'local_profile':[-2.5,2.5]}","{'local_profile':[-2,2]}","{'local_profile':[-0.8,0.8]}","{'local_profile':[0,100]}",,,
 RS03INT1-MJ03C-07-D1000A301,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,,,,
-RS03INT1-MJ03C-10-TRHPHA301,,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,,"{'local':[0,5]}",,
-RS03INT1-MJ03C-10-TRHPHA302,,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,,"{'local':[0,5]}",,
+RS03INT1-MJ03C-10-TRHPHA301,,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,"{'local':[0,5]}",,
+RS03INT1-MJ03C-10-TRHPHA302,,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,"{'local':[0,5]}",,
