@@ -1,5 +1,5 @@
 parameter,variableNames
-temperature,"""sea_water_temperature,temperature1,temperature2,temperature3,ref_temp_degc,resistivity_temp_degc,trhph_thermistor_temp,vent_fluid_temperature"""
+temperature,"""sea_water_temperature,temperature1,temperature2,temperature3"""
 conductivity,"""sea_water_electrical_conductivity"""
 pressure,"""sea_water_pressure,int_ctd_pressure,bin_depths"""
 density,"""sea_water_density"""
@@ -24,3 +24,4 @@ velocity_east,"""velpt_d_eastward_velocity,eastward_seawater_velocity"""
 velocity_north,"""velpt_d_northward_velocity,northward_seawater_velocity"""
 velocity_up,"""velpt_d_upward_velocity,upward_seawater_velocity"""
 percent_good_beam,"""percent_good_beam1,percent_good_beam2,percent_good_beam3,percent_good_beam4"""
+vent_temperature,"""vent_fluid_temperature"""
