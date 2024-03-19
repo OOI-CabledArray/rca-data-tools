@@ -48,4 +48,5 @@ RS01SUM2-MJ01B-12-ADCPSK101,ADCP-PROFILER,RS01SUM2-MJ01B-12-ADCPSK101-streamed-a
 RS03INT1-MJ03C-07-D1000A301,D1000-FIXED,RS03INT1-MJ03C-07-D1000A301-streamed-d1000_sample,None,"""time,temperature1,temperature2,temperature3""",Single,None,1
 RS03INT1-MJ03C-10-TRHPHA301,TRHPH-FIXED,RS03INT1-MJ03C-10-TRHPHA301-streamed-trhph_sample,None,"""time,resistivity_5,resistivity_x1,resistivity_x5,,vent_fluid_temperature""",Single,None,1
 RS03INT1-MJ03C-09-TRHPHA302,TRHPH-FIXED,RS03INT1-MJ03C-09-TRHPHA302-streamed-trhph_sample,None,"""time,resistivity_5,resistivity_x1,resistivity_x5,vent_fluid_temperature""",Single,None,1
-
+RS03AXBS-MJ03A-06-PRESTA301,PRESTA-FIXED,RS03AXBS-MJ03A-06-PRESTA301-streamed-prest_real_time,None,"""seafloor_pressure,seawater_temperature""",Single,None,0
+RS01SLBS-MJ01A-06-PRESTA101,PRESTA-FIXED,RS01SLBS-MJ01A-06-PRESTA101-streamed-prest_real_time,None,"""seafloor_pressure,seawater_temperature""",Single,None,0
