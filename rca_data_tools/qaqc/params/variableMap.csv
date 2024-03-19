@@ -1,7 +1,7 @@
 parameter,variableNames
 temperature,"""sea_water_temperature,temperature1,temperature2,temperature3,seawater_temperature"""
 conductivity,"""sea_water_electrical_conductivity"""
-pressure,"""sea_water_pressure,int_ctd_pressure,bin_depths,seafloor_pressure"""
+pressure,"""sea_water_pressure,int_ctd_pressure,bin_depths"""
 density,"""sea_water_density"""
 oxygen,"""dissolved_oxygen,corrected_dissolved_oxygen"""
 salinity,"""sea_water_practical_salinity"""
@@ -25,3 +25,4 @@ velocity_north,"""velpt_d_northward_velocity,northward_seawater_velocity"""
 velocity_up,"""velpt_d_upward_velocity,upward_seawater_velocity"""
 percent_good_beam,"""percent_good_beam1,percent_good_beam2,percent_good_beam3,percent_good_beam4"""
 vent_temperature,"""vent_fluid_temperature"""
+seafloor_pressure,"""seafloor_pressure"""
