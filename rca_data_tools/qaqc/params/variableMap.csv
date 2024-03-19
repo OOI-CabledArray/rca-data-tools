@@ -1,7 +1,7 @@
 parameter,variableNames
-temperature,"""sea_water_temperature,temperature1,temperature2,temperature3"""
+temperature,"""sea_water_temperature,temperature1,temperature2,temperature3,seawater_temperature"""
 conductivity,"""sea_water_electrical_conductivity"""
-pressure,"""sea_water_pressure,int_ctd_pressure,bin_depths"""
+pressure,"""sea_water_pressure,int_ctd_pressure,bin_depths,seafloor_pressure"""
 density,"""sea_water_density"""
 oxygen,"""dissolved_oxygen,corrected_dissolved_oxygen"""
 salinity,"""sea_water_practical_salinity"""
