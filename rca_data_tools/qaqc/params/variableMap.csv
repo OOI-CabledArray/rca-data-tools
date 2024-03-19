@@ -1,5 +1,5 @@
 parameter,variableNames
-temperature,"""sea_water_temperature,temperature1,temperature2,temperature3,seawater_temperature"""
+temperature,"""sea_water_temperature,temperature1,temperature2,temperature3,pressure_temp"""
 conductivity,"""sea_water_electrical_conductivity"""
 pressure,"""sea_water_pressure,int_ctd_pressure,bin_depths"""
 density,"""sea_water_density"""
