@@ -904,66 +904,78 @@ def plotProfilesGrid(
                         method='linear',
                     )
                     climDiff = zi - clim_zi
-                    maxLim = max(
-                        abs(np.nanmin(climDiff)), abs(np.nanmax(climDiff))
-                    )
-                    # plot filled contours
-                    climParams = {}
-                    climParams['range'] = 'na'
-                    climParams['norm'] = 'no'
-                    climParams['vmin'] = -maxLim
-                    climParams['vmax'] = maxLim
-                    climPlot = plotter(xiDT, yi, climDiff, 'clim', 'cmo.balance', 'no', climParams)
-                    if 'deploy' in spanString:
-                        plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                    fileName = fileName_base + '_' + spanString + '_' + 'clim'
-                    plt.savefig(fileName + '_full.png', dpi=300)
-                    fileNameList.append(fileName + '_full.png')
-
-                    climDiffMin = np.nanmin(climDiff)
-                    climDiffMax = np.nanmax(climDiff)
-                    logger.info(f"climDiffMin: {climDiffMin} climDiffMax: {climDiffMax}")
-                    if climDiffMax < 0:
-                        climDiffMax = 0
-                        colorMapStandard = balanceBlue
-                        divColor = 'no'
-                    elif climDiffMin > 0:
-                        climDiffMin = 0
-                        colorMapStandard = 'cmo.amp'
-                        divColor = 'no'
+                    if np.isnan(climDiff).all():
+                        logger.info('error gridding climatology, all nans in climDiff!')
+                        params = {'range':'full'}
+                        profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'Error gridding climatology data', params)
+                        fileName = fileName_base + '_' + spanString + '_' + 'clim'
+                        profilePlot.savefig(fileName + '_full.png', dpi=300)
+                        fileNameList.append(fileName + '_full.png')
+                        profilePlot.savefig(fileName + '_standard.png', dpi=300)
+                        fileNameList.append(fileName + '_standard.png')
+                        profilePlot.savefig(fileName + '_local.png', dpi=300)
+                        fileNameList.append(fileName + '_local.png')
                     else:
-                        colorMapStandard = 'cmo.balance'
-                        divColor = 'yes'
-                    if 'yes' in divColor:
-                    #    divnorm = colors.TwoSlopeNorm(
-                    #        vmin=climDiffMin, vcenter=0, vmax=climDiffMax
-                    #    )
-                        # plot filled contours
-                        climParams = {}
-                        climParams['range'] = 'na'
-                        climParams['norm'] = 'yes'
-                        ###climParams['norm']['divnorm'] = divnorm
-                        climParams['vmin'] = climDiffMin
-                        climParams['vmax'] = climDiffMax
-                        climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams)
-
-                    else:
+                        maxLim = max(
+                            abs(np.nanmin(climDiff)), abs(np.nanmax(climDiff))
+                        )
                         # plot filled contours
                         climParams = {}
                         climParams['range'] = 'na'
                         climParams['norm'] = 'no'
-                        climParams['vmin'] = climDiffMin
-                        climParams['vmax'] = climDiffMax
-                        logger.info("entering climPlot plotter")
-                        climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams)
-                        logger.info("climPlot successful")
+                        climParams['vmin'] = -maxLim
+                        climParams['vmax'] = maxLim
+                        climPlot = plotter(xiDT, yi, climDiff, 'clim', 'cmo.balance', 'no', climParams)
+                        if 'deploy' in spanString:
+                            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+                        fileName = fileName_base + '_' + spanString + '_' + 'clim'
+                        plt.savefig(fileName + '_full.png', dpi=300)
+                        fileNameList.append(fileName + '_full.png')
 
-                    if 'deploy' in spanString:
-                        plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                    plt.savefig(fileName + '_standard.png', dpi=300)
-                    fileNameList.append(fileName + '_standard.png')
-                    plt.savefig(fileName + '_local.png', dpi=300)
-                    fileNameList.append(fileName + '_local.png')
+                        climDiffMin = np.nanmin(climDiff)
+                        climDiffMax = np.nanmax(climDiff)
+                        logger.info(f"climDiffMin: {climDiffMin} climDiffMax: {climDiffMax}")
+                        if climDiffMax < 0:
+                            climDiffMax = 0
+                            colorMapStandard = balanceBlue
+                            divColor = 'no'
+                        elif climDiffMin > 0:
+                            climDiffMin = 0
+                            colorMapStandard = 'cmo.amp'
+                            divColor = 'no'
+                        else:
+                            colorMapStandard = 'cmo.balance'
+                            divColor = 'yes'
+                        if 'yes' in divColor:
+                        #    divnorm = colors.TwoSlopeNorm(
+                        #        vmin=climDiffMin, vcenter=0, vmax=climDiffMax
+                        #    )
+                            # plot filled contours
+                            climParams = {}
+                            climParams['range'] = 'na'
+                            climParams['norm'] = 'yes'
+                            ###climParams['norm']['divnorm'] = divnorm
+                            climParams['vmin'] = climDiffMin
+                            climParams['vmax'] = climDiffMax
+                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams)
+
+                        else:
+                            # plot filled contours
+                            climParams = {}
+                            climParams['range'] = 'na'
+                            climParams['norm'] = 'no'
+                            climParams['vmin'] = climDiffMin
+                            climParams['vmax'] = climDiffMax
+                            logger.info("entering climPlot plotter")
+                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams)
+                            logger.info("climPlot successful")
+
+                        if 'deploy' in spanString:
+                            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+                        plt.savefig(fileName + '_standard.png', dpi=300)
+                        fileNameList.append(fileName + '_standard.png')
+                        plt.savefig(fileName + '_local.png', dpi=300)
+                        fileNameList.append(fileName + '_local.png')
 
                 else:
                     logger.info('climatology is empty!')
