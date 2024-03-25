@@ -143,4 +143,11 @@ localRange_dict = (
     .T.to_dict('series')
 )
 
+# create a dictonary of sites with partially active coordinates for current deployment
+deployedRange_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('deployedRanges.csv'))
+    .set_index('refDes')
+    .T.to_dict('series')
+)
+
 plotDir = str(PLOT_DIR) + '/'

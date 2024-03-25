@@ -27,6 +27,7 @@ from rca_data_tools.qaqc.constants import (
     variable_paramDict,
     multiParameter_dict,
     localRange_dict,
+    deployedRange_dict,
     plotDir, PLOT_DIR
 )
 
@@ -98,6 +99,14 @@ def run_dashboard_creation(
     # drop un-used variables from dataset
     dropList = [item for item in allVar if item not in fileParams]
     siteData = siteData.drop(dropList)
+    # some instruments have inactive bins for current deployment - ie ADCPs
+    if site in deployedRange_dict.keys():
+        sliceCoord = deployedRange_dict[site]['sliceCoord']
+        siteData = siteData.sel(
+            {sliceCoord: slice(deployedRange_dict[site]['lowerB'],
+                               deployedRange_dict[site]['upperB'])})
+        logger.warning(f'Not all {sliceCoord} coords of {site}'
+            'are active on current deployment. Dataset is being subset to active coords.')
 
     logger.info(f"site date array: {siteData}")
     # extract parameters from multi-dimensional array
