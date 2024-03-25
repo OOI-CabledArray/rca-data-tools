@@ -74,7 +74,7 @@ COMPUTE_EXCEPTIONS = {
     },
 }
 
-
+# visual data constants
 CAM_URL_DICT = {
     'RS01SUM2-MJ01B-05-CAMDSB103': 'https://rawdata.oceanobservatories.org/files/RS01SUM2/MJ01B/CAMDSB103_10.33.7.5/',
     'RS03INT1-MJ03C-05-CAMDSB303': 'https://rawdata.oceanobservatories.org/files/RS03INT1/MJ03C/CAMDSB303_10.31.8.5/',
@@ -86,10 +86,8 @@ CAM_URL_DICT = {
 N_EXPECTED_IMGS = 145
 
 S3_BUCKET = 'ooi-rca-qaqc-prod'
-#SPAN_DICT = {'1': 'day', '7': 'week', '30': 'month', '365': 'year'}
 
 # CSV config constants 
-
 HERE = Path(__file__).parent.absolute()
 PARAMS_DIR = HERE.joinpath('params')
 PLOT_DIR = Path('QAQC_plots')
