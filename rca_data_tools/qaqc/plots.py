@@ -132,7 +132,7 @@ def run_dashboard_creation(
     elif sites_dict[site]['decimationAlgo'] == 'coarsen': # use a cruder method for ADCP etc
         if int(span) in [30, 365]:
             if len(siteData['time']) > decimationThreshold:
-                window = (len(siteData['time']) / decimationThreshold)
+                window = (int(len(siteData['time']) / decimationThreshold))
                 logger.info(f'{site} unable to be decimated using LTTB. Using xr.coarsen instead')
                 siteData = siteData.coarsen(time=5, boundary="trim").mean()
                 logger.info(f'Succesfully coarsened time with window of *{window}*.')
