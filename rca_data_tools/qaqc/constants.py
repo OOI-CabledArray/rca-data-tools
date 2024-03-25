@@ -53,6 +53,9 @@ COMPUTE_EXCEPTIONS = {
         '30': '8vcpu_60gb',
         '7': '4vcpu_30gb',
     },
+    'RS03AXBS-LJ03A-10-ADCPTE303':{
+        '30': '4vcpu_30gb',
+    },
     # parad
     'RS03AXPS-SF03A-3C-PARADA301':{
         '365': '4vcpu_30gb',
