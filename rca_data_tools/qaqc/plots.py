@@ -115,18 +115,27 @@ def run_dashboard_creation(
             siteData, plotInstrument, multiParameter_dict, fileParams
         )
 
-    if int(span) == 365:
-        if len(siteData['time']) > decimationThreshold:
-            # decimate data
-            siteData_df = decimate.downsample(
-                siteData, decimationThreshold, logger=logger
-            )
-            # turn dataframe into dataset
-            del siteData
-            gc.collect()
-            siteData = xr.Dataset.from_dataframe(siteData_df, sparse=False)
-            siteData = siteData.swap_dims({'index': 'time'})
-            siteData = siteData.reset_coords()
+    if sites_dict[site]['decimationAlgo'] == 'lttb': # lttb is prefered to preserve points of interest
+        if int(span) == 365:
+            if len(siteData['time']) > decimationThreshold:
+                # decimate data
+                siteData_df = decimate.downsample(
+                    siteData, decimationThreshold, logger=logger
+                )
+                # turn dataframe into dataset
+                del siteData
+                gc.collect()
+                siteData = xr.Dataset.from_dataframe(siteData_df, sparse=False)
+                siteData = siteData.swap_dims({'index': 'time'})
+                siteData = siteData.reset_coords()
+    
+    elif sites_dict[site]['decimationAlgo'] == 'coarsen': # use a cruder method for ADCP etc
+        if int(span) in [30, 365]:
+            if len(siteData['time']) > decimationThreshold:
+                window = (len(siteData['time']) / decimationThreshold)
+                logger.info(f'{site} unable to be decimated using LTTB. Using xr.coarsen instead')
+                siteData = siteData.coarsen(time=5, boundary="trim").mean()
+                logger.info(f'Succesfully coarsened time with window of *{window}*.')
 
     for param in paramList:
         logger.info(f"parameter: {param}")
