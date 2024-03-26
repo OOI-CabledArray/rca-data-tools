@@ -571,17 +571,17 @@ def plotProfilesGrid(
         
         if 'contour' in plotType:
             if 'full' in params['range']:
-                if plotFunction == 'meshgrid': #TODO better way to do this
-                    graph = ax.pcolormesh(Xx, Yy, Zz, cmap=colorBar)
+                if plotFunction == 'meshgrid':
+                    graph = ax.pcolormesh(Xx, Yy, Zz, cmap=colorBar, rasterized=True)
                 else:
                     graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar)
                     for a in graph.collections:
                         a.set_edgecolor("face")
             else:
                 colorRange = params['vmax'] - params['vmin']
-                cbarticks = np.arange(params['vmin'],params['vmax'],colorRange/50)
-                if plotFunction == 'meshgrid': #TODO better way to do this
-                    graph = ax.pcolormesh(Xx, Yy, Zz, vmax=params['vmax'], vmin=params['vmin'], cmap=colorBar)
+                cbarticks = np.arange(params['vmin'], params['vmax'], colorRange / 50)
+                if plotFunction == 'meshgrid':
+                    graph = ax.pcolormesh(Xx, Yy, Zz, vmax=params['vmax'], vmin=params['vmin'], cmap=colorBar, rasterized=True)
                 else:
                     graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar)
                     for a in graph.collections:

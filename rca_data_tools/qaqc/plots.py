@@ -105,7 +105,7 @@ def run_dashboard_creation(
         siteData = siteData.sel(
             {sliceCoord: slice(deployedRange_dict[site]['lowerB'],
                                deployedRange_dict[site]['upperB'])})
-        logger.warning(f'Not all {sliceCoord} coords of {site}'
+        logger.warning(f'Not all {sliceCoord} coords of {site} '
             'are active on current deployment. Dataset is being subset to active coords.')
 
     logger.info(f"site date array: {siteData}")
