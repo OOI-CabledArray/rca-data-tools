@@ -55,3 +55,4 @@ RS03INT1-MJ03C-10-TRHPHA301,TRHPH-FIXED,RS03INT1-MJ03C-10-TRHPHA301-streamed-trh
 RS03INT1-MJ03C-09-TRHPHA302,TRHPH-FIXED,RS03INT1-MJ03C-09-TRHPHA302-streamed-trhph_sample,None,"""time,resistivity_5,resistivity_x1,resistivity_x5,vent_fluid_temperature""",Single,None,1,lttb
 RS03AXBS-MJ03A-06-PRESTA301,PRESTA-FIXED,RS03AXBS-MJ03A-06-PRESTA301-streamed-prest_real_time,None,"""seafloor_pressure,pressure_temp""",Single,None,1,lttb
 RS01SLBS-MJ01A-06-PRESTA101,PRESTA-FIXED,RS01SLBS-MJ01A-06-PRESTA101-streamed-prest_real_time,None,"""seafloor_pressure,pressure_temp""",Single,None,1,lttb
+RS03AXBS-LJ03A-05-HPIESA301,HPIES-FIXED,RS03AXBS-LJ03A-05-HPIESA301-streamed-echo_sounding,None,"""hpies_pressure,hpies_temperature""",Single,None,1,lttb
