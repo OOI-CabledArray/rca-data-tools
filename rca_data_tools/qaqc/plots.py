@@ -134,7 +134,7 @@ def run_dashboard_creation(
             if len(siteData['time']) > decimationThreshold:
                 window = (int(len(siteData['time']) / decimationThreshold))
                 logger.info(f'{site} unable to be decimated using LTTB. Using xr.coarsen instead')
-                siteData = siteData.coarsen(time=5, boundary="trim").mean()
+                siteData = siteData.coarsen(time=window, boundary="trim").mean()
                 logger.info(f'Succesfully coarsened time with window of *{window}*.')
 
     for param in paramList:
