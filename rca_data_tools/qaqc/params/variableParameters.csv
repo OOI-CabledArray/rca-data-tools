@@ -24,4 +24,3 @@ velocity_up,-4,4,-4,4,m/s,balance,FALSE
 percent_good_beam,0,100,0,100,percent,matter,TRUE
 vent_temperature,0,400,0,400,degrees C,thermal,FALSE
 seafloor_pressure,2000,3500,2000,3500,dbar,thermal,FALSE
-hpies_pressure,2.000,3.500,2.000,3.500,0.001 dbar,thermal,FALSE
