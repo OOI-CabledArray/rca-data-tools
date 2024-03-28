@@ -23,6 +23,6 @@ velocity_north,-2.5,2.5,-2.5,2.5,m/s,balance,FALSE
 velocity_up,-4,4,-4,4,m/s,balance,FALSE
 percent_good_beam,0,100,0,100,percent,matter,TRUE
 corrected_echo_intensity,10,80,10,80,dB,haline,FALSE
-correlation_magnitude,0,255,0,255,"",solar,TRUE
+correlation_magnitude,0,255,0,255," ",solar,TRUE
 vent_temperature,0,400,0,400,degrees C,thermal,FALSE
 seafloor_pressure,2000,3500,2000,3500,dbar,thermal,FALSE
