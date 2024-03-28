@@ -412,6 +412,8 @@ def annoXnormalize(startDate,endDate,annoMinDate,annoMaxDate):
 
 
 def saveAnnos_SVG(annoLines,fileObject,fileName):
+    logger = select_logger()
+    logger.warning(f'annolines: {annoLines}')
     et.register_namespace("", "http://www.w3.org/2000/svg")
     # Create XML tree from the SVG file.
     tree, xmlid = et.XMLID(fileObject.getvalue())
