@@ -117,9 +117,7 @@ stage3_dict = (
 )
 
 # create dictionary of parameter vs variable Name
-variable_dict = pd.read_csv(
-    PARAMS_DIR.joinpath('variableMap.csv'), index_col=0, squeeze=True
-).to_dict()
+variable_dict = pd.read_csv(PARAMS_DIR.joinpath('variableMap.csv'), index_col=0).iloc[:, 0].to_dict()
 
 # create dictionary of instrumet key for plot parameters
 instrument_dict = (
