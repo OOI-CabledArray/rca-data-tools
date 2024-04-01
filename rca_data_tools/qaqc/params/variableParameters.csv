@@ -27,3 +27,4 @@ correlation_magnitude,0,255,0,255," ",solar,TRUE
 error_seawater_velocity,-0.2,0.2,-0.2,0.2,m/s,balance,FALSE
 vent_temperature,0,400,0,400,degrees C,thermal,FALSE
 seafloor_pressure,2000,3500,2000,3500,dbar,thermal,FALSE
+seawater_pressure_mbar,0,700000,0,700000,mbar,thermal,FALSE
