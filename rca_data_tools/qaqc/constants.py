@@ -36,7 +36,7 @@ COMPUTE_EXCEPTIONS = {
     },
     # vel3d
     'CE04OSBP-LJ01C-07-VEL3DC107':{
-        '365': '16vcpu_80gb', #TODO testing only for VEL3DC107
+        '365': '16vcpu_100gb',
         '30': '16vcpu_80gb',
         '7': '16vcpu_80gb',
         '1': '16vcpu_80gb',
