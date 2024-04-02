@@ -36,10 +36,10 @@ COMPUTE_EXCEPTIONS = {
     },
     # vel3d
     'CE04OSBP-LJ01C-07-VEL3DC107':{
-        '365': '8vcpu_60gb',
-        '30': '8vcpu_60gb',
-        '7': '8vcpu_60gb',
-        '1': '8vcpu_60gb',
+        '365': '16vcpu_80gb', #TODO testing only for VEL3DC107
+        '30': '16vcpu_80gb',
+        '7': '16vcpu_80gb',
+        '1': '16vcpu_80gb',
     },
     # ctdbpo
     'CE04OSBP-LJ01C-06-CTDBPO108':{
