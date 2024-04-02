@@ -27,7 +27,8 @@ from rca_data_tools.qaqc.constants import (
     multiParameter_dict,
     localRange_dict,
     deployedRange_dict,
-    plotDir, PLOT_DIR
+    plotDir,
+    PLOT_DIR,
 )
 
 # load status dictionary
@@ -35,26 +36,21 @@ statusDict = dashboard.loadStatus()
 
 
 def extractMulti(ds, inst, multi_dict, fileParams):
-    multiParam = multi_dict[inst]['parameter']
-    subParams = multi_dict[inst]['subParameters'].strip('"').split(',')
+    multiParam = multi_dict[inst]["parameter"]
+    subParams = multi_dict[inst]["subParameters"].strip('"').split(",")
     for i in range(0, len(subParams)):
-        newParam = multiParam + '_' + subParams[i]
+        newParam = multiParam + "_" + subParams[i]
         ds[newParam] = ds[multiParam][:, i]
         fileParams.append(newParam)
     return ds, fileParams
 
 
-def map_concurrency(
-    func, iterator, func_args=(), func_kwargs={}, max_workers=10
-):
+def map_concurrency(func, iterator, func_args=(), func_kwargs={}, max_workers=10):
     results = []
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers
-    ) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Start the load operations and mark each future with its URL
         future_to_url = {
-            executor.submit(func, i, *func_args, **func_kwargs): i
-            for i in iterator
+            executor.submit(func, i, *func_args, **func_kwargs): i for i in iterator
         }
         for future in concurrent.futures.as_completed(future_to_url):
             data = future.result()
@@ -72,7 +68,7 @@ def run_dashboard_creation(
     stageDict,
 ):
     logger = select_logger()
-    plt.switch_backend('Agg') # run locally without changing anything else?
+    plt.switch_backend("Agg")  # run locally without changing anything else?
 
     if isinstance(timeRef, str):
         timeRef = parser.parse(timeRef)
@@ -90,23 +86,34 @@ def run_dashboard_creation(
     siteData = dashboard.loadData(site, stageDict)
     siteData = coerce_qartod_executed_to_int(siteData)
 
-    fileParams = stageDict[site]['dataParameters'].strip('"').split(',')
+    fileParams = stageDict[site]["dataParameters"].strip('"').split(",")
     allVar = list(siteData.keys())
     # add qartod and qc flags to fileParams list
-    qcStrings = ['_qartod_','_qc_']
-    qcParams = [var for var in allVar if any(sub in var for sub in fileParams) if any(qc in var for qc in qcStrings)]
+    qcStrings = ["_qartod_", "_qc_"]
+    qcParams = [
+        var
+        for var in allVar
+        if any(sub in var for sub in fileParams)
+        if any(qc in var for qc in qcStrings)
+    ]
     fileParams = fileParams + qcParams
     # drop un-used variables from dataset
     dropList = [item for item in allVar if item not in fileParams]
     siteData = siteData.drop(dropList)
     # some instruments have inactive bins for current deployment - ie ADCPs
     if site in deployedRange_dict.keys():
-        sliceCoord = deployedRange_dict[site]['sliceCoord']
+        sliceCoord = deployedRange_dict[site]["sliceCoord"]
         siteData = siteData.sel(
-            {sliceCoord: slice(deployedRange_dict[site]['lowerB'],
-                               deployedRange_dict[site]['upperB'])})
-        logger.warning(f'Not all {sliceCoord} coords of {site} '
-            'are active on current deployment. Dataset is being subset to active coords.')
+            {
+                sliceCoord: slice(
+                    deployedRange_dict[site]["lowerB"], deployedRange_dict[site]["upperB"]
+                )
+            }
+        )
+        logger.warning(
+            f"Not all {sliceCoord} coords of {site} "
+            "are active on current deployment. Dataset is being subset to active coords."
+        )
 
     logger.info(f"site date array: {siteData}")
     # extract parameters from multi-dimensional array
@@ -115,72 +122,72 @@ def run_dashboard_creation(
             siteData, plotInstrument, multiParameter_dict, fileParams
         )
 
-    if stageDict[site]['decimationAlgo'] == 'lttb': # lttb is prefered to preserve points of interest
+    if (
+        stageDict[site]["decimationAlgo"] == "lttb"
+    ):  # lttb is prefered to preserve points of interest
         if int(span) == 365:
-            if len(siteData['time']) > decimationThreshold:
+            if len(siteData["time"]) > decimationThreshold:
                 # decimate data
-                siteData_df = decimate.downsample(
-                    siteData, decimationThreshold, logger=logger
-                )
+                siteData_df = decimate.downsample(siteData, decimationThreshold, logger=logger)
                 # turn dataframe into dataset
                 del siteData
                 gc.collect()
                 siteData = xr.Dataset.from_dataframe(siteData_df, sparse=False)
-                siteData = siteData.swap_dims({'index': 'time'})
+                siteData = siteData.swap_dims({"index": "time"})
                 siteData = siteData.reset_coords()
-    
-    elif stageDict[site]['decimationAlgo'] == 'coarsen': # use a cruder method for ADCP etc
+
+    elif stageDict[site]["decimationAlgo"] == "coarsen":  # use a cruder method for ADCP etc
         if int(span) in [30, 365]:
-            if len(siteData['time']) > decimationThreshold:
-                window = (int(len(siteData['time']) / decimationThreshold))
-                logger.info(f'{site} unable to be decimated using LTTB. Using xr.coarsen instead')
+            if len(siteData["time"]) > decimationThreshold:
+                window = int(len(siteData["time"]) / decimationThreshold)
+                logger.info(
+                    f"{site} unable to be decimated using LTTB. Using xr.coarsen instead"
+                )
                 siteData = siteData.coarsen(time=window, boundary="trim").mean()
-                logger.info(f'Succesfully coarsened time with window of *{window}*.')
+                logger.info(f"Succesfully coarsened time with window of *{window}*.")
 
     for param in paramList:
         logger.info(f"parameter: {param}")
-        variableParams = variable_dict[param].strip('"').split(',')
-        parameterList = [
-            value for value in variableParams if value in fileParams
-        ]
+        variableParams = variable_dict[param].strip('"').split(",")
+        parameterList = [value for value in variableParams if value in fileParams]
         if len(parameterList) == 0:
             logger.warning(f"Error retriving parameter: {param} from the xarray...")
         else:
-            for Yparam in parameterList: # the parameters actually in xarray (in most cases 1)
-                #Yparam = parameterList[0]
+            for Yparam in parameterList:  # the parameters actually in xarray (in most cases 1)
+                # Yparam = parameterList[0]
                 # set up plotting parameters
                 if len(parameterList) > 1:
-                    imageName_base = plotDir + site + '_' + Yparam
-                    plotTitle = site + ' ' + Yparam
+                    imageName_base = plotDir + site + "_" + Yparam
+                    plotTitle = site + " " + Yparam
                 else:
-                    imageName_base = plotDir + site + '_' + param
-                    plotTitle = site + ' ' + param
+                    imageName_base = plotDir + site + "_" + param
+                    plotTitle = site + " " + param
                 logger.info(imageName_base)
-                paramMin = float(variable_paramDict[param]['min'])
-                paramMax = float(variable_paramDict[param]['max'])
-                profile_paramMin = float(variable_paramDict[param]['profileMin'])
-                profile_paramMax = float(variable_paramDict[param]['profileMax'])
+                paramMin = float(variable_paramDict[param]["min"])
+                paramMax = float(variable_paramDict[param]["max"])
+                profile_paramMin = float(variable_paramDict[param]["profileMin"])
+                profile_paramMax = float(variable_paramDict[param]["profileMax"])
                 # default local range to standard range if not defined
                 paramMin_local = paramMin
                 paramMax_local = paramMax
                 profile_paramMin_local = profile_paramMin
                 profile_paramMax_local = profile_paramMax
                 localRanges = str(localRange_dict[site][param])
-                if not 'nan' in localRanges:
+                if not "nan" in localRanges:
                     localRange = literal_eval(localRanges)
-                    if 'local' in localRange:
-                        paramMin_local = localRange['local'][0]
-                        paramMax_local = localRange['local'][1]
-                    if 'local_profile' in localRange:
-                        profile_paramMin_local = localRange['local_profile'][0]
-                        profile_paramMax_local = localRange['local_profile'][1]
+                    if "local" in localRange:
+                        paramMin_local = localRange["local"][0]
+                        paramMax_local = localRange["local"][1]
+                    if "local_profile" in localRange:
+                        profile_paramMin_local = localRange["local_profile"][0]
+                        profile_paramMax_local = localRange["local_profile"][1]
 
-                yLabel = variable_paramDict[param]['label']
+                yLabel = variable_paramDict[param]["label"]
 
                 # Load overlayData
                 overlayData_clim = {}
                 overlayData_grossRange = {}
-                sensorType = site.split('-')[3][0:5].lower()
+                sensorType = site.split("-")[3][0:5].lower()
                 (overlayData_grossRange, overlayData_clim) = dashboard.loadQARTOD(
                     site, Yparam, sensorType, logger=logger
                 )
@@ -190,11 +197,9 @@ def run_dashboard_creation(
                 overlayData_anno = {}
                 overlayData_anno = dashboard.loadAnnotations(site)
 
-                if 'PROFILER' in plotInstrument:
+                if "PROFILER" in plotInstrument:
                     profileList = dashboard.loadProfiles(site)
-                    pressureParams = (
-                        variable_dict['pressure'].strip('"').split(',')
-                    )
+                    pressureParams = variable_dict["pressure"].strip('"').split(",")
                     pressureParamList = [
                         value for value in pressureParams if value in fileParams
                     ]
@@ -202,21 +207,19 @@ def run_dashboard_creation(
                         logger.info("Error retriving pressure parameter!")
                     else:
                         pressParam = pressureParamList[0]
-                        paramData = siteData[[Yparam, pressParam]].chunk('auto')
+                        paramData = siteData[[Yparam, pressParam]].chunk("auto")
                         flagParams = [item for item in qcParams if Yparam in item]
                         flagParams.extend((Yparam, pressParam))
-                        overlayData_flag = siteData[flagParams].chunk('auto')
-                        colorMap = 'cmo.' + variable_paramDict[param]['colorMap']
-                        depthMinMax = (
-                            stageDict[site]['depthMinMax'].strip('"').split(',')
-                        )
-                        if 'None' not in depthMinMax:
+                        overlayData_flag = siteData[flagParams].chunk("auto")
+                        colorMap = "cmo." + variable_paramDict[param]["colorMap"]
+                        depthMinMax = stageDict[site]["depthMinMax"].strip('"').split(",")
+                        if "None" not in depthMinMax:
                             yMin = int(depthMinMax[0])
                             yMax = int(depthMinMax[1])
                         plots = dashboard.plotProfilesGrid(
                             Yparam,
                             pressParam,
-                            param, # short parameter name - see variableMap.csv
+                            param,  # short parameter name - see variableMap.csv
                             paramData,
                             plotTitle,
                             yLabel,
@@ -240,7 +243,7 @@ def run_dashboard_creation(
                             plotInstrument,
                         )
                         plotList.append(plots)
-                        if 'ADCP' not in plotInstrument: #TODO try to minimize new if blocks
+                        if "ADCP" not in plotInstrument:  # TODO try to minimize new if blocks
                             plots = dashboard.plotProfilesScatter(
                                 Yparam,
                                 pressParam,
@@ -263,15 +266,12 @@ def run_dashboard_creation(
                                 site,
                             )
                             plotList.append(plots)
-                            depths = stageDict[site]['depths'].strip('"').split(',')
-                            if 'Single' not in depths:
+                            depths = stageDict[site]["depths"].strip('"').split(",")
+                            if "Single" not in depths:
                                 for profileDepth in depths:
                                     paramData_depth = paramData[Yparam].where(
                                         (int(profileDepth) < paramData[pressParam])
-                                        & (
-                                            paramData[pressParam]
-                                            < (int(profileDepth) + 0.5)
-                                        )
+                                        & (paramData[pressParam] < (int(profileDepth) + 0.5))
                                     )
                                     overlayData_flag_extract = overlayData_flag.where(
                                         (int(profileDepth) < overlayData_flag[pressParam])
@@ -281,16 +281,14 @@ def run_dashboard_creation(
                                         )
                                     )
                                     plotTitle_depth = (
-                                        plotTitle + ': ' + profileDepth + ' meters'
+                                        plotTitle + ": " + profileDepth + " meters"
                                     )
                                     imageName_base_depth = (
-                                        imageName_base + '_' + profileDepth + 'meters'
+                                        imageName_base + "_" + profileDepth + "meters"
                                     )
                                     if overlayData_clim:
-                                        overlayData_clim_extract = (
-                                            dashboard.extractClim(
-                                                timeRef, profileDepth, overlayData_clim
-                                            )
+                                        overlayData_clim_extract = dashboard.extractClim(
+                                            timeRef, profileDepth, overlayData_clim
                                         )
                                     else:
                                         overlayData_clim_extract = pd.DataFrame()
@@ -309,7 +307,7 @@ def run_dashboard_creation(
                                         overlayData_clim_extract,
                                         overlayData_flag_extract,
                                         overlayData_near,
-                                        'medium',
+                                        "medium",
                                         span,
                                         spanString,
                                         statusDict,
@@ -320,11 +318,11 @@ def run_dashboard_creation(
                     paramData = siteData[Yparam]
                     flagParams = [item for item in qcParams if Yparam in item]
                     flagParams.append(Yparam)
-                    overlayData_flag = siteData[flagParams].chunk('auto')
+                    overlayData_flag = siteData[flagParams].chunk("auto")
 
                     if overlayData_clim:
                         overlayData_clim_extract = dashboard.extractClim(
-                            timeRef, '0', overlayData_clim
+                            timeRef, "0", overlayData_clim
                         )
                     else:
                         overlayData_clim_extract = pd.DataFrame()
@@ -344,7 +342,7 @@ def run_dashboard_creation(
                         overlayData_clim_extract,
                         overlayData_flag,
                         overlayData_near,
-                        'small',
+                        "small",
                         span,
                         spanString,
                         statusDict,
@@ -362,14 +360,12 @@ def run_dashboard_creation(
     return plotList
 
 
-def organize_images(
-    sync_to_s3=False, bucket_name='ooi-rca-qaqc-prod', fs_kwargs={}
-):
+def organize_images(sync_to_s3=False, bucket_name="ooi-rca-qaqc-prod", fs_kwargs={}):
     for i in PLOT_DIR.iterdir():
         if i.is_file():
-            if i.suffix == '.png' or i.suffix == '.svg':
+            if i.suffix == ".png" or i.suffix == ".svg":
                 fname = i.name
-                subsite = fname.split('-')[0]
+                subsite = fname.split("-")[0]
 
                 subsite_dir = PLOT_DIR / subsite
                 subsite_dir.mkdir(exist_ok=True)
@@ -380,11 +376,10 @@ def organize_images(
                 # Sync to s3
                 if sync_to_s3 is True:
                     import fsspec
-                    S3FS = fsspec.filesystem('s3', **fs_kwargs)
 
-                    fs_path = '/'.join(
-                        [bucket_name, PLOT_DIR.name, subsite_dir.name, fname]
-                    )
+                    S3FS = fsspec.filesystem("s3", **fs_kwargs)
+
+                    fs_path = "/".join([bucket_name, PLOT_DIR.name, subsite_dir.name, fname])
                     if S3FS.exists(fs_path):
                         S3FS.rm(fs_path)
                     S3FS.put(str(destination.absolute()), fs_path)
@@ -396,32 +391,41 @@ def organize_images(
 
 def delete_outdated_images(
     plot_list: List,
-    site: str, # instrument
+    site: str,  # instrument
     span_string: str,
-    sync_to_s3: bool, 
-    bucket_name: str, 
-    s3fs: fsspec.filesystem) -> None: 
+    sync_to_s3: bool,
+    bucket_name: str,
+    s3fs: fsspec.filesystem,
+) -> None:
     # TODO this may not be working when annotation files are involved - are they piped to plot_list?
     logger = select_logger()
 
     if sync_to_s3:
         flat_plot_list = [item for sublist in plot_list for item in sublist]
-        site_prefix = site.split('-')[0]
+        site_prefix = site.split("-")[0]
 
         logger.info("Collecting existing 'profile' image files.")
 
-        existing_instrument_files = s3fs.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
+        existing_instrument_files = s3fs.glob(
+            f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*"
+        )
 
-        existing_profile_files = [f for f in existing_instrument_files if 'profile' in f and span_string in f]
-        new_profile_files = [f for f in flat_plot_list if 'profile' in f and span_string in f]
+        existing_profile_files = [
+            f for f in existing_instrument_files if "profile" in f and span_string in f
+        ]
+        new_profile_files = [f for f in flat_plot_list if "profile" in f and span_string in f]
 
         # Extract only the files name in both types of paths in both lists
         just_file_existing = [f.split("/")[3] for f in existing_profile_files]
         just_file_new = [f.split("/")[1] for f in new_profile_files]
-        logger.info(f"Number of existing files: {len(just_file_existing)}| Number of new files: {len(just_file_new)}")
+        logger.info(
+            f"Number of existing files: {len(just_file_existing)}| Number of new files: {len(just_file_new)}"
+        )
 
         files_to_delete = list(set(just_file_existing) - set(just_file_new))
-        files_to_delete_full_path = [f"{bucket_name}/QAQC_plots/{site_prefix}/{f}" for f in files_to_delete]
+        files_to_delete_full_path = [
+            f"{bucket_name}/QAQC_plots/{site_prefix}/{f}" for f in files_to_delete
+        ]
 
         for f in files_to_delete_full_path:
             s3fs.rm(f)
@@ -433,44 +437,49 @@ def delete_outdated_images(
 
 
 def delete_outdated_annotations(
-    site: str, # instrument
+    site: str,  # instrument
     span_string: str,
-    sync_to_s3: bool, 
-    bucket_name: str, 
-    s3fs: fsspec.filesystem) -> None: 
+    sync_to_s3: bool,
+    bucket_name: str,
+    s3fs: fsspec.filesystem,
+) -> None:
 
     logger = select_logger()
 
     if sync_to_s3:
-        #TODO could turn this an delete_outdated imgs into a single function.
-        site_prefix = site.split('-')[0]
-        existing_instrument_files = s3fs.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*")
+        # TODO could turn this an delete_outdated imgs into a single function.
+        site_prefix = site.split("-")[0]
+        existing_instrument_files = s3fs.glob(
+            f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*"
+        )
 
-        existing_anno_files = [f for f in existing_instrument_files if 'anno' in f and span_string in f]
-        anno_svgs = [os.path.splitext(f)[0] for f in existing_anno_files if 'svg' in f]
-        anno_pngs = [os.path.splitext(f)[0] for f in existing_anno_files if 'png' in f]
+        existing_anno_files = [
+            f for f in existing_instrument_files if "anno" in f and span_string in f
+        ]
+        anno_svgs = [os.path.splitext(f)[0] for f in existing_anno_files if "svg" in f]
+        anno_pngs = [os.path.splitext(f)[0] for f in existing_anno_files if "png" in f]
 
-        anno_files_modified_dict = {} # k=file : v=when it was modified
+        anno_files_modified_dict = {}  # k=file : v=when it was modified
 
         for fpath in existing_anno_files:
-            last_modified = s3fs.info(fpath)['LastModified']
+            last_modified = s3fs.info(fpath)["LastModified"]
             anno_files_modified_dict[fpath] = last_modified
 
         overlapping_files = list(set(anno_svgs) & set(anno_pngs))
 
         outdated_annos_to_delete = []
         for f in overlapping_files:
-            svg_time_created = anno_files_modified_dict[f'{f}.svg']
-            png_time_created = anno_files_modified_dict[f'{f}.png']
+            svg_time_created = anno_files_modified_dict[f"{f}.svg"]
+            png_time_created = anno_files_modified_dict[f"{f}.png"]
 
             if svg_time_created < png_time_created:
-                outdated_annos_to_delete.append(f'{f}.svg')
+                outdated_annos_to_delete.append(f"{f}.svg")
             elif png_time_created < svg_time_created:
-                outdated_annos_to_delete.append(f'{f}.png')
+                outdated_annos_to_delete.append(f"{f}.png")
 
         for f in outdated_annos_to_delete:
             s3fs.rm(f)
 
-        logger.info(f'These outdated files were deleted from s3: {outdated_annos_to_delete}')
+        logger.info(f"These outdated files were deleted from s3: {outdated_annos_to_delete}")
     else:
         logger.info("No s3 sync - no outdated images to delete.")
