@@ -118,6 +118,12 @@ sites_dict = (
 )
 
 # TODO different stage dictonaries now need to be piped, and probably renamed for clarity
+stage2_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('stage2Dictionary.csv'))
+    .set_index('refDes')
+    .T.to_dict('series')
+)
+
 stage3_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('stage3Dictionary.csv'))
     .set_index('refDes')

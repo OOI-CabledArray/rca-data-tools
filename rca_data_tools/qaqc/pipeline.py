@@ -21,6 +21,7 @@ from prefect.deployments import run_deployment
 from rca_data_tools.qaqc.constants import (
     instrument_dict,
     sites_dict,
+    stage2_dict,
     stage3_dict,
     SPAN_DICT,
 )
@@ -28,7 +29,7 @@ from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
 
 now = datetime.datetime.utcnow()
-all_configs_dict = {**sites_dict, **stage3_dict}
+all_configs_dict = {**sites_dict, **stage2_dict, **stage3_dict}
 
 class QAQCPipeline:
     """
@@ -213,7 +214,7 @@ def main():
     if args.stage1 is True:
         run_stage(sites_dict, args)
     if args.stage2 is True:
-        logger.error("No stage 2 instruments currently implimented.")
+        run_stage(stage2_dict, args)
     if args.stage3 is True:
         run_stage(stage3_dict, args)
 
