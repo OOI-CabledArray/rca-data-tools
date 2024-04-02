@@ -21,6 +21,8 @@ from rca_data_tools.qaqc.constants import (
     SPAN_DICT,
     instrument_dict,
     sites_dict,
+    stage2_dict,
+    stage3_dict,
 )
 
 
@@ -29,12 +31,16 @@ def dashboard_creation_task(
     site, 
     timeString, 
     span, 
-    threshold, 
+    threshold,
+    stage,
     ):
     """
     Prefect task for running dashboard creation
     """
-    site_ds = sites_dict[site]
+    stage_map = {1: sites_dict, 2: stage2_dict, 3: stage3_dict}
+    stage_dict = stage_map[stage]
+
+    site_ds = stage_dict[site]
     plotInstrument = site_ds['instrument']
     paramList = (
         instrument_dict[plotInstrument]['plotParameters']
@@ -49,6 +55,7 @@ def dashboard_creation_task(
         plotInstrument,
         span,
         threshold,
+        stage_dict,
     )
     return plotList
         
@@ -110,6 +117,7 @@ def qaqc_pipeline_flow(
     timeString: str,
     span: str='1',
     threshold: int=1000000,
+    stage: int=None,
     # cloud args
     fs_kwargs: dict={},
     sync_to_s3: bool=True,
@@ -138,6 +146,7 @@ def qaqc_pipeline_flow(
             timeString=timeString,
             span=span,
             threshold=threshold,
+            stage=stage,
         )
     # TODO pipe this up, but don't want to break anything before vacation
     fs_kwargs = get_s3_kwargs()

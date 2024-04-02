@@ -41,7 +41,7 @@ class QAQCPipeline:
         site=None,
         time=now.strftime("%Y-%m-%d"),
         span='1',
-        threshold=1_000_000,
+        threshold=5_000_000,
         cloud_run=True,
         s3_bucket=S3_BUCKET,
         s3_sync=True,
@@ -51,6 +51,7 @@ class QAQCPipeline:
         self.time = time
         self.span = span
         self.threshold = threshold
+        self.stage = self._lookup_stage()
         self._cloud_run = cloud_run
         self.s3_bucket = s3_bucket
         self.s3_sync = s3_sync
@@ -81,10 +82,19 @@ class QAQCPipeline:
             self._params_valid = False
 
         self.name = f"{self.site}--{self.span}"
+    
+    def _lookup_stage(self):
+        # instance needs to be aware of what stage its instrument is
+        if self.site in sites_dict.keys():
+            return 1
+        elif self.site in stage2_dict.keys():
+            return 2
+        elif self.site in stage3_dict.keys():
+            return 3
 
     def __repr__(self):
         return f"<{self.name}>"
-
+    
     @property
     def cloud_run(self):
         return self._cloud_run
@@ -92,7 +102,6 @@ class QAQCPipeline:
     @cloud_run.setter
     def cloud_run(self, cr):
         self._cloud_run = cr
-        #self.__setup_flow()
 
     @property
     def parameters(self):
@@ -115,6 +124,7 @@ class QAQCPipeline:
             'timeString': self.time,
             'span': self.span,
             'threshold': self.threshold,
+            'stage': self.stage,
             'fs_kwargs': self.s3fs_kwargs,
             'sync_to_s3': self.s3_sync,
             's3_bucket': self.s3_bucket,

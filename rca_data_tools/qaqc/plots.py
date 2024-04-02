@@ -22,7 +22,6 @@ from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_i
 
 from rca_data_tools.qaqc.constants import (
     SPAN_DICT,
-    sites_dict,
     variable_dict,
     variable_paramDict,
     multiParameter_dict,
@@ -70,6 +69,7 @@ def run_dashboard_creation(
     plotInstrument,
     span,
     decimationThreshold,
+    stageDict,
 ):
     logger = select_logger()
     plt.switch_backend('Agg') # run locally without changing anything else?
@@ -87,10 +87,10 @@ def run_dashboard_creation(
 
     spanString = SPAN_DICT[span]
     # load data for site
-    siteData = dashboard.loadData(site, sites_dict)
+    siteData = dashboard.loadData(site, stageDict)
     siteData = coerce_qartod_executed_to_int(siteData)
 
-    fileParams = sites_dict[site]['dataParameters'].strip('"').split(',')
+    fileParams = stageDict[site]['dataParameters'].strip('"').split(',')
     allVar = list(siteData.keys())
     # add qartod and qc flags to fileParams list
     qcStrings = ['_qartod_','_qc_']
@@ -115,7 +115,7 @@ def run_dashboard_creation(
             siteData, plotInstrument, multiParameter_dict, fileParams
         )
 
-    if sites_dict[site]['decimationAlgo'] == 'lttb': # lttb is prefered to preserve points of interest
+    if stageDict[site]['decimationAlgo'] == 'lttb': # lttb is prefered to preserve points of interest
         if int(span) == 365:
             if len(siteData['time']) > decimationThreshold:
                 # decimate data
@@ -129,7 +129,7 @@ def run_dashboard_creation(
                 siteData = siteData.swap_dims({'index': 'time'})
                 siteData = siteData.reset_coords()
     
-    elif sites_dict[site]['decimationAlgo'] == 'coarsen': # use a cruder method for ADCP etc
+    elif stageDict[site]['decimationAlgo'] == 'coarsen': # use a cruder method for ADCP etc
         if int(span) in [30, 365]:
             if len(siteData['time']) > decimationThreshold:
                 window = (int(len(siteData['time']) / decimationThreshold))
@@ -208,7 +208,7 @@ def run_dashboard_creation(
                         overlayData_flag = siteData[flagParams].chunk('auto')
                         colorMap = 'cmo.' + variable_paramDict[param]['colorMap']
                         depthMinMax = (
-                            sites_dict[site]['depthMinMax'].strip('"').split(',')
+                            stageDict[site]['depthMinMax'].strip('"').split(',')
                         )
                         if 'None' not in depthMinMax:
                             yMin = int(depthMinMax[0])
@@ -263,7 +263,7 @@ def run_dashboard_creation(
                                 site,
                             )
                             plotList.append(plots)
-                            depths = sites_dict[site]['depths'].strip('"').split(',')
+                            depths = stageDict[site]['depths'].strip('"').split(',')
                             if 'Single' not in depths:
                                 for profileDepth in depths:
                                     paramData_depth = paramData[Yparam].where(
