@@ -1,11 +1,10 @@
 from typing import List
-import datetime
 import fsspec
 import pkg_resources
 import os
 
 from prefect import task, flow
-from prefect.states import Failed, Cancelled
+from prefect.states import Cancelled
 from prefect import get_run_logger
 
 from rca_data_tools.qaqc.plots import (
