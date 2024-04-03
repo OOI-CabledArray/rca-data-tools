@@ -53,13 +53,14 @@ def fetch_creds(service_json_path: str = ''):
 def read_logs() -> pd.DataFrame:
     gc = gspread.service_account()
     wks = gc.open("HITL Data QA/QC Log")
-    df_HITL = pd.DataFrame()
+    df_HITL_list = []
     for ws in wks.worksheets():
         df = pd.DataFrame(ws.get_all_records())
         for col in df.columns:
             if 'Unnamed' in col:
                 del df[col]
-        df_HITL = df_HITL.append(df.transpose())
+        df_HITL_list.append(df.transpose())
+    df_HITL = pd.concat(df_HITL_list)
     return df_HITL.apply(lambda x: x.str.replace(',', '.'))
 
 
