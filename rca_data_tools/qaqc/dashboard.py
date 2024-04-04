@@ -574,7 +574,7 @@ def plotProfilesGrid(
                 if plotFunction == 'meshgrid':
                     graph = ax.pcolormesh(Xx, Yy, Zz, cmap=colorBar, rasterized=True)
                 else:
-                    graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar)
+                    graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar, rasterized=True)
                     for a in graph.collections:
                         a.set_edgecolor("face")
             else:
@@ -583,7 +583,7 @@ def plotProfilesGrid(
                 if plotFunction == 'meshgrid':
                     graph = ax.pcolormesh(Xx, Yy, Zz, vmax=params['vmax'], vmin=params['vmin'], cmap=colorBar, rasterized=True)
                 else:
-                    graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar)
+                    graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar, rasterized=True)
                     for a in graph.collections:
                         a.set_edgecolor("face")
             divider = make_axes_locatable(ax)
@@ -614,9 +614,10 @@ def plotProfilesGrid(
                     vmin=params['vmin'], vcenter=0,vmax=params['vmax']
                     )
                 graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar,vmin=params['vmin'],
-                                vmax=params['vmax'],norm=divnorm)
+                                vmax=params['vmax'], norm=divnorm, rasterized=True)
             else:
-                graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar,vmin=params['vmin'],vmax=params['vmax'])
+                graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar,vmin=params['vmin'],
+                                vmax=params['vmax'], rasterized=True)
             m = ScalarMappable(cmap=graph.get_cmap())
             m.set_array(graph.get_array())
             m.set_clim(graph.get_clim())
