@@ -1,2 +1,6 @@
 refDes,instrument,zarrFile,nearestNeighbors,dataParameters,depths,depthMinMax,harvestInterval,decimationAlgo
 CE04OSBP-LJ01C-07-VEL3DC107,VEL3D-FIXED,CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data,None,"""vel3d_c_eastward_turbulent_velocity,vel3d_c_northward_turbulent_velocity,vel3d_c_upward_turbulent_velocity,sea_water_pressure_mbar,correlation_beam_1,correlation_beam_2,correlation_beam_3,amplitude_beam_1,amplitude_beam_2,amplitude_beam_3""",Single,None,1,lttb
+RS01SLBS-MJ01A-12-VEL3DB101,VEL3D-FIXED,RS01SLBS-MJ01A-12-VEL3DB101-streamed-vel3d_b_sample,None,"""eastward_turbulent_velocity,northward_turbulent_velocity,upward_turbulent_velocity""",Single,None,1,lttb
+RS01SUM1-LJ01B-12-VEL3DB104,VEL3D-FIXED,RS01SUM1-LJ01B-12-VEL3DB104-streamed-vel3d_b_sample,None,"""eastward_turbulent_velocity,northward_turbulent_velocity,upward_turbulent_velocity""",Single,None,1,lttb
+RS03AXBS-MJ03A-12-VEL3DB301,VEL3D-FIXED,RS03AXBS-MJ03A-12-VEL3DB301-streamed-vel3d_b_sample,None,"""eastward_turbulent_velocity,northward_turbulent_velocity,upward_turbulent_velocity""",Single,None,1,lttb
+RS03INT2-MJ03D-12-VEL3DB304,VEL3D-FIXED,RS03INT2-MJ03D-12-VEL3DB304-streamed-vel3d_b_sample,None,"""eastward_turbulent_velocity,northward_turbulent_velocity,upward_turbulent_velocity""",Single,None,1,lttb

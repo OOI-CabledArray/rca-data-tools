@@ -59,3 +59,7 @@ RS03AXBS-LJ03A-05-HPIESA301,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,,,,,,,,,"{'loca
 RS01SLBS-LJ01A-05-HPIESA101,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,,,,,,,,,"{'local':[2957,2953]}",
 RS03ASHS-MJ03B-07-TMPSFA301,"{'local':[0,10]}",,,,,,,,,,,,,,,,,,,,,,,,,,,,
 CE04OSBP-LJ01C-07-VEL3DC107,,,,,,,,,,,,,,,,,"{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.2,0.2]}",,"{'local_profile':[40,200]}","{'local_profile':[0,100]}",,,,,,,"{'local':[575000,605000]}"
+RS01SLBS-MJ01A-12-VEL3DB101,,,,,,,,,,,,,,,,,"{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.2,0.2]}",,,,,,,,,,
+RS01SUM1-LJ01B-12-VEL3DB104,,,,,,,,,,,,,,,,,"{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.2,0.2]}",,,,,,,,,,
+RS03AXBS-MJ03A-12-VEL3DB301,,,,,,,,,,,,,,,,,"{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.2,0.2]}",,,,,,,,,,
+RS03INT2-MJ03D-12-VEL3DB304,,,,,,,,,,,,,,,,,"{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.5,0.5]}","{'local_profile':[-0.2,0.2]}",,,,,,,,,,
