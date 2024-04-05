@@ -520,7 +520,7 @@ def plotProfilesGrid(
 
 
 
-    def plotter(Xx, Yy, Zz, plotType, colorBar, annotation, params, plotFunction=None):
+    def plotter(Xx, Yy, Zz, plotType, colorBar, annotation, params, pressLabel, plotFunction=None):
 
         logger.info(f"params:{params}")
         logger.info(f"plot-type: {plotType}")
@@ -532,7 +532,7 @@ def plotProfilesGrid(
         fig.patch.set_facecolor('white')
         plt.title(plotTitle, fontsize=4, loc='left')
         plt.title(statusString, fontsize=4, fontweight=0, color=statusColors[statusString], loc='right', style='italic' )
-        plt.ylabel('Pressure (dbar)', fontsize=4) #TODO not always dbar (meters for ADCP)
+        plt.ylabel(pressLabel, fontsize=4)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
         locator = mdates.AutoDateLocator()
@@ -654,8 +654,10 @@ def plotProfilesGrid(
     if 'ADCP' not in plotInstrument: # colormesh doesn't accept mask for ADCP
         baseDS = baseDS.where(((baseDS[Yparam].notnull()) & (baseDS[pressParam].notnull())).compute(), drop=True)
         plotFunc = None # default function is contourf()
+        pressLabel = "Pressure (dbar)"
     else: 
-        plotFunc = 'meshgrid'
+        plotFunc = "meshgrid" #TODO can we mask out nans for ADCP or are we stuck with the fill behavior?
+        pressLabel = "Depth (m)"
 
     staticParam = variable_paramDict[paramNickname]['static']
     
@@ -699,6 +701,7 @@ def plotProfilesGrid(
                 zMax,
                 zMin_local,
                 zMax_local,
+                pressLabel,
             )
         else: # ADCP routine
             yi = baseDS[pressParam].T #transpose
@@ -719,13 +722,14 @@ def plotProfilesGrid(
                 zMax,
                 zMin_local,
                 zMax_local,
+                pressLabel,
                 plotFunc, # use meshgrid in place of contourf for ADCPs due to data density
                 staticParam,
             )
 
     else:
         params = {'range':'full'}
-        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params)
+        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params, pressLabel)
         fileName = fileName_base + '_' + spanString + '_' + 'none'
         profilePlot.savefig(fileName + '_full.png', dpi=300)
         fileNameList.append(fileName + '_full.png')
@@ -750,7 +754,7 @@ def plotProfilesGrid(
                         if inRange:
                             plotAnnotations[startAnnoLine] = {'endAnnoLine': endAnnoLine, 'annotation': i['annotation']}
                     params = {'range':'full'}
-                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
                     if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                     if plotAnnotations:
@@ -780,7 +784,7 @@ def plotProfilesGrid(
                     params = {'range':'standard'}
                     params['vmin'] = zMin
                     params['vmax'] = zMax
-                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
                     if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                     if plotAnnotations:
@@ -810,7 +814,7 @@ def plotProfilesGrid(
                     params = {'range':'local'}
                     params['vmin'] = zMin_local
                     params['vmax'] = zMax_local
-                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
                     if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                     if plotAnnotations:
@@ -908,7 +912,7 @@ def plotProfilesGrid(
                     if np.isnan(climDiff).all():
                         logger.info('error gridding climatology, all nans in climDiff!')
                         params = {'range':'full'}
-                        profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'Error gridding climatology data', params)
+                        profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'Error gridding climatology data', params, pressLabel)
                         fileName = fileName_base + '_' + spanString + '_' + 'clim'
                         profilePlot.savefig(fileName + '_full.png', dpi=300)
                         fileNameList.append(fileName + '_full.png')
@@ -926,7 +930,7 @@ def plotProfilesGrid(
                         climParams['norm'] = 'no'
                         climParams['vmin'] = -maxLim
                         climParams['vmax'] = maxLim
-                        climPlot = plotter(xiDT, yi, climDiff, 'clim', 'cmo.balance', 'no', climParams)
+                        climPlot = plotter(xiDT, yi, climDiff, 'clim', 'cmo.balance', 'no', climParams, pressLabel)
                         if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                         fileName = fileName_base + '_' + spanString + '_' + 'clim'
@@ -958,7 +962,7 @@ def plotProfilesGrid(
                             ###climParams['norm']['divnorm'] = divnorm
                             climParams['vmin'] = climDiffMin
                             climParams['vmax'] = climDiffMax
-                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams)
+                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams, pressLabel)
 
                         else:
                             # plot filled contours
@@ -968,7 +972,7 @@ def plotProfilesGrid(
                             climParams['vmin'] = climDiffMin
                             climParams['vmax'] = climDiffMax
                             logger.info("entering climPlot plotter")
-                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams)
+                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams, pressLabel)
                             logger.info("climPlot successful")
 
                         if 'deploy' in spanString:
@@ -981,7 +985,7 @@ def plotProfilesGrid(
                 else:
                     logger.info('climatology is empty!')
                     params = {'range':'full'}
-                    profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'No Climatology Data Available', params)
+                    profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'No Climatology Data Available', params, pressLabel)
                     fileName = fileName_base + '_' + spanString + '_' + 'clim'
                     profilePlot.savefig(fileName + '_full.png', dpi=300)
                     fileNameList.append(fileName + '_full.png')
@@ -994,7 +998,7 @@ def plotProfilesGrid(
     else:
         params = {'range':'full'}
         logger.info("saving files and created fileNameList...")
-        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params)
+        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params, pressLabel)
         for overlay in overlays:
             if 'none' not in overlay:
                 fileName = fileName_base + '_' + spanString + '_' + overlay
@@ -1107,16 +1111,17 @@ def plot_and_save_no_overlay_plots(
     zMax,
     zMin_local,
     zMax_local,
+    pressLabel,
     plotFunc=None,
-    staticParam=False
+    staticParam=False,
 ):
 
     if zi.shape[1] > 1:
         if staticParam: # for parameters like percent_beam_good only a single range 0-100 is needed
             params = {'range':'full'}
-            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
             if 'deploy' in spanString:
-                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+                plt.axvline(timeRef_deploy, linewidth=1, color='k', linestyle='-.')
             fileName = fileName_base + '_' + spanString + '_' + 'none'
             profilePlot.savefig(fileName + '_full.png', dpi=300)
             fileNameList.append(fileName + '_full.png')
@@ -1127,7 +1132,7 @@ def plot_and_save_no_overlay_plots(
             emptySlice = 'no'
         else: # for all other parameters
             params = {'range':'full'}
-            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
             if 'deploy' in spanString:
                 plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
             fileName = fileName_base + '_' + spanString + '_' + 'none'
@@ -1136,7 +1141,7 @@ def plot_and_save_no_overlay_plots(
             params = {'range':'standard'}
             params['vmin'] = zMin
             params['vmax'] = zMax
-            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
             if 'deploy' in spanString:
                 plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
             profilePlot.savefig(fileName + '_standard.png', dpi=300)
@@ -1144,7 +1149,7 @@ def plot_and_save_no_overlay_plots(
             params = {'range':'local'}
             params['vmin'] = zMin_local
             params['vmax'] = zMax_local
-            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, plotFunc)
+            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
             if 'deploy' in spanString:
                 plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
             profilePlot.savefig(fileName + '_local.png', dpi=300)
@@ -1152,7 +1157,7 @@ def plot_and_save_no_overlay_plots(
             emptySlice = 'no'
     else:
         params = {'range':'full'}
-        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, plotFunc)
+        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, pressLabel, plotFunc,)
         fileName = fileName_base + '_' + spanString + '_' + 'none'
         profilePlot.savefig(fileName + '_full.png', dpi=300)
         fileNameList.append(fileName + '_full.png')
