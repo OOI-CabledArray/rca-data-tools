@@ -1,6 +1,4 @@
 import os
-import numpy as np
-import fsspec
 
 def select_logger():
     from prefect import get_run_logger
