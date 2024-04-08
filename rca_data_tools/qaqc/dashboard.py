@@ -1919,6 +1919,7 @@ def plotScatter(
             'No Data Available', xy=(0.3, 0.5), xycoords='axes fraction'
         )
         emptySlice = 'yes'
+        plt.xlim(xMin, xMax)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="2%", pad=0.05)
     for axis in ['top','bottom','left','right']:
