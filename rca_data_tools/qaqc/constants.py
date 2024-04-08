@@ -82,6 +82,10 @@ COMPUTE_EXCEPTIONS = {
         '7': '4vcpu_30gb',
         '1': '4vcpu_30gb',
     },
+    # tmpsf
+    'RS03ASHS-MJ03B-07-TMPSFA301':{
+        '365': '4vcpu_30gb',
+    },
 }
 
 # visual data constants
