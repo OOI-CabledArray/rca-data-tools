@@ -22,8 +22,6 @@ from rca_data_tools.qaqc.constants import (
 )
 from rca_data_tools.qaqc.utils import select_logger
 
-# see plots module for directories definitions #TODO neater way to do this?
-
 
 def extract_numeric(value: str, full_url: str):
     try:
