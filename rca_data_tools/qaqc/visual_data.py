@@ -1,6 +1,5 @@
 import humanfriendly
 import requests
-import re
 import pandas as pd
 import numpy as np
 
