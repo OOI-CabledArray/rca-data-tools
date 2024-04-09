@@ -96,6 +96,7 @@ CAM_URL_DICT = {
     'CE02SHBP-MJ01C-08-CAMDSB107': 'https://rawdata.oceanobservatories.org/files/CE02SHBP/MJ01C/CAMDSB107_10.33.13.8/',
     'CE04OSBP-LV01C-06-CAMDSB106': 'https://rawdata.oceanobservatories.org/files/CE04OSBP/LV01C/CAMDSB106_10.33.9.6/',
     'RS01SBPS-PC01A-07-CAMDSC102': 'https://rawdata.oceanobservatories.org/files/RS01SBPS/PC01A/CAMDSC102_10.33.3.146/',
+    'RS03ASHS-PN03B-06-CAMHDA301': 'https://rawdata.oceanobservatories.org/files/RS03ASHS/PN03B/06-CAMHDA301/',
     }
 N_EXPECTED_IMGS = 145
 

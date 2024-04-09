@@ -54,7 +54,7 @@ def create_daily_cam_df(base_url: str, str_date: str, img_size_cutoff: int): #cu
     else:
 
         soup = BeautifulSoup(response.text, "html.parser")
-        camds_a_tags = soup.find_all("a", href=lambda href: href and "CAMDS" in href)
+        camds_a_tags = soup.find_all("a", href=lambda href: href and "CAM" in href)
 
         # extract and print the text content of each matching <a> tag
         for a_tag in camds_a_tags[1:]:
@@ -68,7 +68,11 @@ def create_daily_cam_df(base_url: str, str_date: str, img_size_cutoff: int): #cu
                 size = np.nan
 
             img_data = {"img_name": img_name, "size": size, "date_taken": parsed_date}
-            img_data_list.append(img_data)
+            if 'CAMHD' in base_url: # we don't want md5 and mp4 files in the df
+                if 'mp4' not in img_data["img_name"] and 'md5' not in img_data["img_name"]:
+                    img_data_list.append(img_data)
+            else:
+                img_data_list.append(img_data)
 
         day_df = pd.DataFrame(img_data_list)
         day_df["size_int"] = day_df["size"].apply(extract_numeric, full_url=full_url)
