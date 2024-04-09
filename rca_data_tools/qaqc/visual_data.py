@@ -30,7 +30,9 @@ def extract_numeric(value: str, full_url: str):
     try:
         size_in_bytes = humanfriendly.parse_size(value)
         size_in_mb = size_in_bytes / (1024 * 1024)
-        if size_in_mb > 20:
+        if size_in_mb > 20 and 'CAMDS' in full_url:
+            logger.warning(f"An unusual image size: {value} @ {full_url}")
+        if size_in_mb < 10000 and 'CAMHD' in full_url:
             logger.warning(f"An unusual image size: {value} @ {full_url}")
         return size_in_mb
     except humanfriendly.InvalidSize:
@@ -132,6 +134,7 @@ def make_wide_summary_df(timerange_df, img_size_cutoff):
 
 @task
 def cam_qaqc_stacked_bar(site, time_string, span):
+    plt.switch_backend("Agg")
 
     logger = select_logger()
     PLOT_DIR.mkdir(exist_ok=True)
