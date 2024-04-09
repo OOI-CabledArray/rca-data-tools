@@ -45,7 +45,7 @@ COMPUTE_EXCEPTIONS = {
         '365': '16vcpu_98gb',
         '30': '8vcpu_60gb',
         '7': '8vcpu_60gb',
-        '1': '8vcpu_60gb',
+        '1': '4vcpu_30gb',
     },
     # ctdbpo
     'CE04OSBP-LJ01C-06-CTDBPO108':{
