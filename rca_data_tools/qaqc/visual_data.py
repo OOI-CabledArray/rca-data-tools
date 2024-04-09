@@ -166,8 +166,9 @@ def cam_qaqc_stacked_bar(site, time_string, span):
         color="red",
     )
     plt.title(site)
-    plt.ylabel("Number of Images")
-    plt.axhline(y=N_EXPECTED_IMGS, color="black", linestyle="--")
+    plt.ylabel("Number of Files")
+    if 'CAMDS' in site:
+        plt.axhline(y=N_EXPECTED_IMGS, color="black", linestyle="--")
     plt.axvline(x=end_date, color="black")
 
     # custom labels and handles legend
@@ -176,7 +177,7 @@ def cam_qaqc_stacked_bar(site, time_string, span):
         Line2D([0], [0], color="blue", linewidth=8),
     ]
 
-    labels = [f"Under {str(img_size_cutoff)}MB", f"Over {str(img_size_cutoff)}M"]
+    labels = [f"Under {str(img_size_cutoff)}Mb", f"Over {str(img_size_cutoff)}Mb"]
     plt.legend(handles=handles, labels=labels, loc="upper left")
 
     # saving plot
