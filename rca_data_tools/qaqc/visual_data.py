@@ -1,3 +1,4 @@
+import humanfriendly
 import requests
 import re
 import pandas as pd
@@ -25,17 +26,19 @@ from rca_data_tools.qaqc.utils import select_logger
 # see plots module for directories definitions #TODO neater way to do this?
 
 
-def extract_numeric(value, full_url):
-    match = re.search(r"\d+", value)
-    if match:
-        if int(match.group()) > 40:
+def extract_numeric(value: str, full_url: str):
+    try:
+        size_in_bytes = humanfriendly.parse_size(value)
+        size_in_mb = size_in_bytes / (1024 * 1024)
+        if size_in_mb > 20:
             logger.warning(f"An unusual image size: {value} @ {full_url}")
-        return int(match.group())
-    else:
+        return size_in_mb
+    except humanfriendly.InvalidSize:
+        logger.warning(f"Invalid file size: {value} @ {full_url}")
         return np.nan
 
 
-def create_daily_cam_df(base_url, str_date, img_size_cutoff):
+def create_daily_cam_df(base_url: str, str_date: str, img_size_cutoff: int): #cutoff in Mb
     logger = select_logger()
 
     full_url = f"{base_url}{str_date}"
