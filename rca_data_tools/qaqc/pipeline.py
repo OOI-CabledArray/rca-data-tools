@@ -73,7 +73,7 @@ class QAQCPipeline:
 
         self.plotInstrument = self._site_ds.get('instrument', None)
         if 'CAM' in self.site:
-            self.valid_spans = {'30': 'month', '365': 'year','0': 'deploy'}
+            self.valid_spans = {'7': 'week', '30': 'month', '365': 'year','0': 'deploy'}
 
         if self.span not in self.valid_spans:
             logger.warning(
