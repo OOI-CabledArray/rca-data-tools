@@ -33,3 +33,4 @@ mean_seafloor_depth,500,3000,500,3000,meters,thermal,FALSE
 seafloor_uplift_10m,-0.1,0.1,-0.1,0.1,cm/min,thermal,FALSE
 seafloor_uplift_5m,-0.1,0.1,-0.1,0.1,cm/min,thermal,FALSE
 seafloor_uplift_predicted_tide,-5,15,-5,15,meters,thermal,FALSE
+dark_counts,0,1000,0,1000,counts,thermal,FALSE
