@@ -47,12 +47,17 @@ COMPUTE_EXCEPTIONS = {
         '7': '8vcpu_60gb',
         '1': '8vcpu_60gb',
     },
-    # ctdbpo
+    # ctd
     'CE04OSBP-LJ01C-06-CTDBPO108':{
         '365': '4vcpu_30gb',
     },
-    # ctdpfa
     'CE04OSPS-SF01B-2A-CTDPFA107':{
+        '365': '4vcpu_30gb',
+    },
+    'RS03AXBS-LJ03A-12-CTDPFB301':{
+        '365': '4vcpu_30gb',
+    },
+    'RS01SLBS-LJ01A-12-CTDPFB101':{
         '365': '4vcpu_30gb',
     },
     # adcp
