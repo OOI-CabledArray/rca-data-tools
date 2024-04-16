@@ -143,7 +143,7 @@ class QAQCPipeline:
         
             logger.info(f"parameters set to: {parameters}!")
             if self.cloud_run is True:
-                run_name = "-".join([str(self.site), str(self.time), str(self.span), "flow_run"])
+                run_name = "-".join([str(self.site), str(self.span)])
                 # IMPORTANT run_deployment determines the infrastructure and resources for each flow_run
                 if self.site in COMPUTE_EXCEPTIONS and self.span in COMPUTE_EXCEPTIONS[self.site]:
 
