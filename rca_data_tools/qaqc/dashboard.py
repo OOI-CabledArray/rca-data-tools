@@ -37,9 +37,8 @@ import textwrap as tw
 import xml.etree.ElementTree as et
 
 from rca_data_tools.qaqc.utils import select_logger
-from rca_data_tools.qaqc.constants import variable_paramDict
+from rca_data_tools.qaqc.constants import variable_paramDict, statusColors
 INPUT_BUCKET = "ooi-data/"
-
 
 
 def loadAnnotations(site):
@@ -509,15 +508,6 @@ def plotProfilesGrid(
     one_second = np.timedelta64(1, 's')
 
     statusString = statusDict[site]
-    statusColors = {'OPERATIONAL': 'green',
-                'FAILED': 'red',
-                'TROUBLESHOOTING': 'red',
-                'OFFLINE': 'blue',
-                'UNCABLED': 'blue',
-                'DATA_QUALITY': 'red',
-                'NOT_DEPLOYED': 'blue'
-                }
-
 
 
     def plotter(Xx, Yy, Zz, plotType, colorBar, annotation, params, pressLabel, plotFunction=None):
@@ -1226,15 +1216,6 @@ def plotProfilesScatter(
     one_second = np.timedelta64(1, 's')
 
     statusString = statusDict[site]
-    statusColors = {'OPERATIONAL': 'green',
-                'FAILED': 'red',
-                'TROUBLESHOOTING': 'red',
-                'OFFLINE': 'blue',
-                'UNCABLED': 'blue',
-                'DATA_QUALITY': 'red',
-                'NOT_DEPLOYED': 'blue'
-                }
-
 
 
     def setPlot():
@@ -1818,16 +1799,6 @@ def plotScatter(
     balanceBlue = ListedColormap(balanceBig(np.linspace(0, 0.5, 256)))
 
     statusString = statusDict[site]
-    statusColors = {'OPERATIONAL': 'green',
-                'FAILED': 'red',
-                'TROUBLESHOOTING': 'red',
-                'RECOVERED': 'blue',
-                'PARTIALLY_FUNCTIONAL': 'red',
-                'OFFLINE': 'blue',
-                'UNCABLED': 'blue',
-                'DATA_QUALITY': 'red',
-                'NOT_DEPLOYED': 'blue'
-                }
 
 
     def setPlot():

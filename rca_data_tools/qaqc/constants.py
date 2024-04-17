@@ -126,6 +126,18 @@ SPAN_DICT = {
     '0': 'deploy',
 }
 
+statusColors = {
+    'OPERATIONAL': 'green',
+    'FAILED': 'red',
+    'TROUBLESHOOTING': 'red',
+    'RECOVERED': 'blue',
+    'PARTIALLY_FUNCTIONAL': 'red',
+    'OFFLINE': 'blue',
+    'UNCABLED': 'blue',
+    'DATA_QUALITY': 'red',
+    'NOT_DEPLOYED': 'blue'
+}
+
 # create dictionary of sites key for filePrefix, nearestNeighbors
 sites_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('sitesDictionary.csv'))
