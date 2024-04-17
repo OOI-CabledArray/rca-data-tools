@@ -80,6 +80,13 @@ COMPUTE_EXCEPTIONS = {
         '365': '4vcpu_30gb',
         '30': '4vcpu_30gb',
     },
+    # vadcp
+    'RS01SBPS-PC01A-06-VADCPA101':{
+        '365': '4vcpu_30gb',
+    },
+    'RS03AXPS-PC03A-06-VADCPA301':{
+        '365': '4vcpu_30gb',        
+    },
     # parad
     'RS03AXPS-SF03A-3C-PARADA301':{
         '365': '4vcpu_30gb',
