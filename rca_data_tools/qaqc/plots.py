@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
+from rca_data_tools.qaqc import calculate
 from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
 
 from rca_data_tools.qaqc.constants import (
@@ -27,6 +28,8 @@ from rca_data_tools.qaqc.constants import (
     multiParameter_dict,
     localRange_dict,
     deployedRange_dict,
+    calculate_dict,
+    calculateStrings_dict,
     plotDir,
     PLOT_DIR,
 )
@@ -100,6 +103,17 @@ def run_dashboard_creation(
     # drop un-used variables from dataset
     dropList = [item for item in allVar if item not in fileParams]
     siteData = siteData.drop(dropList)
+    # perform calculations for auxiliary parameters
+    if site in calculate_dict:
+        for calc in calculate_dict[site]['calculations'].strip('"').split(","):
+            if calc in calculateStrings_dict:
+                # perform calculation by evaluating string
+                exec(calculateStrings_dict[calc]['string'])
+                # add new parameter to fileParams list
+                fileParams.append(calculateStrings_dict[calc]['returnParam'])
+            else:
+                logger.info(f"error calculating parameters: {calc}")
+
     # some instruments have inactive bins for current deployment - ie ADCPs
     if site in deployedRange_dict.keys():
         sliceCoord = deployedRange_dict[site]["sliceCoord"]

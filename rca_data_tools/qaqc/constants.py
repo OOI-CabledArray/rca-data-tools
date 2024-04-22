@@ -203,4 +203,18 @@ deployedRange_dict = (
     .T.to_dict('series')
 )
 
+# create a dictonary of auxilliary parameters to be calculated
+calculate_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('calculateParameters.csv'))
+    .set_index('refDes')
+    .T.to_dict('series')
+) 
+
+# create a dictonary of calculations and inputs as executable strings
+calculateStrings_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('calculateStrings.csv'))
+    .set_index('calculation')
+    .T.to_dict()
+)
+
 plotDir = str(PLOT_DIR) + '/'

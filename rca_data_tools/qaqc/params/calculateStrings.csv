@@ -1,0 +1,3 @@
+calculation,string,returnParam
+opt_internal_temp,siteData['int_temp'] = calculate.opt_internal_temp(siteData['internal_temp_raw']),int_temp
+opt_external_temp,siteData['ext_temp'] = calculate.opt_external_temp(siteData['external_temp_raw']),ext_temp
