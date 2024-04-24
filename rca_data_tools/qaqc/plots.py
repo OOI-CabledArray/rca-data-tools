@@ -110,7 +110,9 @@ def run_dashboard_creation(
                 # perform calculation by evaluating string
                 exec(calculateStrings_dict[calc]['string'])
                 # add new parameter to fileParams list
-                fileParams.append(calculateStrings_dict[calc]['returnParam'])
+                returnParams = calculateStrings_dict[calc]['returnParam'].strip('"').split(",")
+                for item in returnParams:
+                    fileParams.append(item)
             else:
                 logger.info(f"error calculating parameters: {calc}")
 

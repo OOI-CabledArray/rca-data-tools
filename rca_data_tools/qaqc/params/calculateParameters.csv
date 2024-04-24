@@ -1,2 +1,3 @@
 refDes,calculations
-RS03AXPS-SF03A-3B-OPTAAD301,"""opt_internal_temp,opt_external_temp"""
+RS03AXPS-SF03A-3B-OPTAAD301,"""opt_internal_temp,opt_external_temp,opt_calculate_ratios"""
+RS03AXBS-LJ03A-11-OPTAAC303,"""opt_internal_temp,opt_external_temp,opt_calculate_ratios"""
