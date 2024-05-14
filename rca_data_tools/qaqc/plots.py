@@ -103,19 +103,6 @@ def run_dashboard_creation(
     # drop un-used variables from dataset
     dropList = [item for item in allVar if item not in fileParams]
     siteData = siteData.drop(dropList)
-    # perform calculations for auxiliary parameters
-    if site in calculate_dict:
-        for calc in calculate_dict[site]['calculations'].strip('"').split(","):
-            if calc in calculateStrings_dict:
-                # perform calculation by evaluating string
-                exec(calculateStrings_dict[calc]['string'])
-                # add new parameter to fileParams list
-                returnParams = calculateStrings_dict[calc]['returnParam'].strip('"').split(",")
-                for item in returnParams:
-                    fileParams.append(item)
-            else:
-                logger.info(f"error calculating parameters: {calc}")
-
     # some instruments have inactive bins for current deployment - ie ADCPs
     if site in deployedRange_dict.keys():
         sliceCoord = deployedRange_dict[site]["sliceCoord"]
@@ -161,6 +148,18 @@ def run_dashboard_creation(
                 )
                 siteData = siteData.coarsen(time=window, boundary="trim").mean()
                 logger.info(f"Succesfully coarsened time with window of *{window}*.")
+    # perform calculations for auxiliary parameters
+    if site in calculate_dict:
+        for calc in calculate_dict[site]['calculations'].strip('"').split(","):
+            if calc in calculateStrings_dict:
+                # perform calculation by evaluating string
+                exec(calculateStrings_dict[calc]['string'])
+                # add new parameter to fileParams list
+                returnParams = calculateStrings_dict[calc]['returnParam'].strip('"').split(",")
+                for item in returnParams:
+                    fileParams.append(item)
+            else:
+                logger.info(f"error calculating parameters: {calc}")
 
     for param in paramList:
         logger.info(f"parameter: {param}")
