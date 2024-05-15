@@ -94,7 +94,11 @@ def make_timerange_df(start_date, end_date, base_url, img_size_cutoff):
         df_list.append(single_day_df)
         date += timedelta(days=1)
 
-    full_month_df = pd.concat(df_list)
+    try:
+        full_month_df = pd.concat(df_list)
+    except ValueError:
+        logger.warning('No images found in the scanned range.')
+        return None
 
     unique_sizes = np.unique(full_month_df["size_int"])
     logger.info(f"Images in the scanned range have the following sizes: {unique_sizes}")
@@ -102,31 +106,33 @@ def make_timerange_df(start_date, end_date, base_url, img_size_cutoff):
 
 
 def make_wide_summary_df(timerange_df, img_size_cutoff):
-    summary_df = timerange_df[["date_taken", "image_status"]]
-    summary_df = (
-        summary_df.groupby(["date_taken", "image_status"])["date_taken"]
-        .count()
-        .reset_index(name="count")
-    )
-
-    wide_df = summary_df.pivot(
-        index="date_taken", columns="image_status", values="count"
-    ).reset_index()
-
-    if "not_blank" not in wide_df.columns:
-        logger.warning(
-            f"no `not_blank` images found at cutoff {img_size_cutoff} - filling wide df column with zeros"
+    if timerange_df is None:
+        logger.warning('No images found in the scanned range.')
+        return None
+    else:
+        summary_df = timerange_df[["date_taken", "image_status"]]
+        summary_df = (
+            summary_df.groupby(["date_taken", "image_status"])["date_taken"]
+            .count()
+            .reset_index(name="count")
         )
-        wide_df["not_blank"] = 0
-    if "possibly_blank" not in wide_df.columns:
-        logger.warning(
-            f"no `possibly_blank` images found at cutoff {img_size_cutoff} - filling wide df column with zeros"
-        )
-        wide_df["possibly_blank"] = 0
 
-    print(wide_df.head())
+        wide_df = summary_df.pivot(
+            index="date_taken", columns="image_status", values="count"
+        ).reset_index()
 
-    return wide_df
+        if "not_blank" not in wide_df.columns:
+            logger.warning(
+                f"no `not_blank` images found at cutoff {img_size_cutoff} - filling wide df column with zeros"
+            )
+            wide_df["not_blank"] = 0
+        if "possibly_blank" not in wide_df.columns:
+            logger.warning(
+                f"no `possibly_blank` images found at cutoff {img_size_cutoff} - filling wide df column with zeros"
+            )
+            wide_df["possibly_blank"] = 0
+
+        return wide_df
 
 
 @task
@@ -155,13 +161,18 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     wide_df = make_wide_summary_df(timerange_df, img_size_cutoff)
 
     plt.figure(figsize=(19, 6))
-    plt.bar(wide_df["date_taken"], wide_df["not_blank"], color="blue")
-    plt.bar(
-        wide_df["date_taken"],
-        wide_df["possibly_blank"],
-        bottom=wide_df["not_blank"],
-        color="red",
-    )
+    if wide_df is not None:
+        plt.bar(wide_df["date_taken"], wide_df["not_blank"], color="blue")
+        plt.bar(
+            wide_df["date_taken"],
+            wide_df["possibly_blank"],
+            bottom=wide_df["not_blank"],
+            color="red",
+        )
+    else:
+        logger.warning("Creating blank plot to flag missing data")
+        plt.text(0.5, 0.5, "No images found in given date range", ha='center', va='center', fontsize=16)
+
     plt.title(site)
     plt.ylabel("Number of Files")
     if 'CAMDS' in site:
@@ -177,7 +188,6 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     labels = [f"Under {str(img_size_cutoff)}Mb", f"Over {str(img_size_cutoff)}Mb"]
     plt.legend(handles=handles, labels=labels, loc="upper left")
 
-    # saving plot
     plt.savefig(file_name)
     plot_list.append(file_name)
 
