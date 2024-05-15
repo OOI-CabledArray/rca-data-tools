@@ -171,13 +171,13 @@ def cam_qaqc_stacked_bar(site, time_string, span):
         )
         if 'CAMDS' in site:
             plt.axhline(y=N_EXPECTED_IMGS, color="black", linestyle="--")
+        plt.axvline(x=end_date, color="black")
     else:
         logger.warning("Creating blank plot to flag missing data")
         plt.text(0.5, 0.5, "No images found in given date range", ha='center', va='center', fontsize=16)
 
     plt.title(site)
     plt.ylabel("Number of Files")
-    plt.axvline(x=end_date, color="black")
 
     # custom labels and handles legend
     handles = [
