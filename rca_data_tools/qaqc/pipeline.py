@@ -9,10 +9,8 @@ Prefect 2 @flow and @task decorated functions are found in flow.py
 
 """
 import datetime
-from typing import Dict
 import argparse
 import time
-from pathlib import Path
 from loguru import logger
 
 from prefect.deployments import run_deployment
