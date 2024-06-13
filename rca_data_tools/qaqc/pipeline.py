@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """pipeline.py
 
 This module contains the qaqc_pipeline entry point: main() and the QAQCPipeline
@@ -25,10 +24,10 @@ from rca_data_tools.qaqc.constants import (
     stage3_dict,
     SPAN_DICT,
 )
-from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS
+from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS, CAM_SPANS, THROTTLE_SPANS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
 
-now = datetime.datetime.utcnow()
+now = datetime.datetime.now(datetime.UTC)
 all_configs_dict = {**sites_dict, **stage2_dict, **stage3_dict}
 
 class QAQCPipeline:
@@ -64,7 +63,7 @@ class QAQCPipeline:
 
     def __setup(self):
         # TODO data filtering/verification should occur in this class
-        self.created_dt = datetime.datetime.utcnow()
+        self.created_dt = datetime.datetime.now(datetime.UTC)
         if self.site not in all_configs_dict:
             raise ValueError(
                 f"{self.site} is not available. Available sites {','.join(list(all_configs_dict.keys()))}"  # noqa
@@ -73,7 +72,9 @@ class QAQCPipeline:
 
         self.plotInstrument = self._site_ds.get('instrument', None)
         if 'CAM' in self.site:
-            self.valid_spans = {'7': 'week', '30': 'month', '365': 'year','0': 'deploy'}
+            self.valid_spans = CAM_SPANS
+        if 'SPKIRA' or 'OPTAA' in self.site:
+            self.valid_spans = THROTTLE_SPANS #FIXME remove once we can reduce runtimes on these
 
         if self.span not in self.valid_spans:
             logger.warning(

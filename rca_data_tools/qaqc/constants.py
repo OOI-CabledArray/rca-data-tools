@@ -133,6 +133,18 @@ SPAN_DICT = {
     '0': 'deploy',
 }
 
+CAM_SPANS = {
+    '7': 'week', 
+    '30': 'month', 
+    '365': 'year',
+    '0': 'deploy'
+}
+
+THROTTLE_SPANS = {
+    '1': 'day',
+    '7': 'week',
+}
+
 statusColors = {
     'OPERATIONAL': 'green',
     'FAILED': 'red',
