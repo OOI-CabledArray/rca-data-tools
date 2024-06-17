@@ -71,7 +71,7 @@ class QAQCPipeline:
         self.plotInstrument = self._site_ds.get('instrument', None)
         if 'CAM' in self.site:
             self.valid_spans = CAM_SPANS
-        if 'SPKIRA' or 'OPTAA' in self.site:
+        if 'SPKIRA' in self.site or 'OPTAA' in self.site:
             self.valid_spans = THROTTLE_SPANS #FIXME remove once we can reduce runtimes on these
 
         if self.span not in self.valid_spans:
