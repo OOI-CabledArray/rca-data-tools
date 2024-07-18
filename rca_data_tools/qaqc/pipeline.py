@@ -25,7 +25,7 @@ from rca_data_tools.qaqc.constants import (
 from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS, CAM_SPANS, THROTTLE_SPANS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
 
-now = datetime.datetime.now(datetime.UTC)
+now = datetime.datetime.utcnow()
 all_configs_dict = {**sites_dict, **stage2_dict, **stage3_dict}
 
 class QAQCPipeline:
@@ -61,7 +61,7 @@ class QAQCPipeline:
 
     def __setup(self):
         # TODO data filtering/verification should occur in this class
-        self.created_dt = datetime.datetime.now(datetime.UTC)
+        self.created_dt = datetime.datetime.utcnow()
         if self.site not in all_configs_dict:
             raise ValueError(
                 f"{self.site} is not available. Available sites {','.join(list(all_configs_dict.keys()))}"  # noqa
