@@ -63,29 +63,36 @@ COMPUTE_EXCEPTIONS = {
     # adcp
     'RS01SLBS-LJ01A-10-ADCPTE101':{
         '30': '4vcpu_30gb',
+        '0': '4vcpu_30gb',
     },
     'RS01SUM2-MJ01B-12-ADCPSK101':{
-        '30': '4vcpu_30gb',
         '365': '4vcpu_30gb',
+        '30': '4vcpu_30gb',
+        '0': '4vcpu_30gb',
     },
     'CE02SHBP-LJ01D-05-ADCPTB104':{
         '30': '4vcpu_30gb',
         '7': '4vcpu_30gb',
+        '0': '4vcpu_30gb',
     },
     'RS03AXBS-LJ03A-10-ADCPTE303':{
         '365': '4vcpu_30gb',
         '30': '4vcpu_30gb',
+        '0': '4vcpu_30gb',
     },
     'CE04OSBP-LJ01C-05-ADCPSI103':{
         '365': '4vcpu_30gb',
         '30': '4vcpu_30gb',
+        '0': '4vcpu_30gb',
     },
     # vadcp
     'RS01SBPS-PC01A-06-VADCPA101':{
         '365': '4vcpu_30gb',
+        '0': '4vcpu_30gb',
     },
     'RS03AXPS-PC03A-06-VADCPA301':{
-        '365': '4vcpu_30gb',        
+        '365': '4vcpu_30gb',
+        '0': '4vcpu_30gb',
     },
     # parad
     'RS03AXPS-SF03A-3C-PARADA301':{
