@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """index.py
 
 This module contains code for creating json index files,
@@ -35,7 +34,7 @@ def create_cloud_index(
 
     plots_index = [
         item for item in plotsmapper.keys() if item.endswith(('.png', '.svg'))
-    ]
+    ] # keys of mapper are all file names under root location
     logger.info(f"Current plot index {plots_index}")
     
     hitl_index = [item for item in hitlmapper.keys() if item.endswith('.csv')]
