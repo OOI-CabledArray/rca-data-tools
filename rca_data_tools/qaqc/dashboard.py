@@ -1783,7 +1783,7 @@ def plotScatter(
     # Data Ranges
     ranges = ['full', 'standard', 'local']
 
-    lineColors = [
+    lineColors = [ # we need to extend this every year or find a more permanent solution
         '#1f78b4',
         '#a6cee3',
         '#b2df8a',
@@ -1794,6 +1794,7 @@ def plotScatter(
         '#fb9a99',
         '#542c2c',
         '#6e409c',
+        '#16f5f5',
     ]
     balanceBig = plt.get_cmap('cmo.balance', 512)
     balanceBlue = ListedColormap(balanceBig(np.linspace(0, 0.5, 256)))
