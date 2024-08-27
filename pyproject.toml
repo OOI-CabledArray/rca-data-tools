@@ -23,7 +23,6 @@ dependencies = [
     "fsspec",
     "gspread<5.2",
     "humanfriendly",
-    "httpx<=0.27.0",
     "loguru",
     "matplotlib",
     "netcdf4",
