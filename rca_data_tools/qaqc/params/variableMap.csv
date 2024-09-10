@@ -28,6 +28,7 @@ echo_intensity,"""corrected_echo_intensity_beam1,corrected_echo_intensity_beam2,
 correlation_magnitude,"""correlation_magnitude_beam1,correlation_magnitude_beam2,correlation_magnitude_beam3,correlation_magnitude_beam4,correlation_beam_1,correlation_beam_2,correlation_beam_3"""
 error_seawater_velocity,"""error_seawater_velocity"""
 vent_temperature,"""vent_fluid_temperature"""
+sea_water_pressure,"""sea_water_pressure"""
 seafloor_pressure,"""seafloor_pressure,hpies_pressure_L1"""
 seawater_pressure_mbar,"""sea_water_pressure_mbar"""
 bottom_pressure_psi,"""bottom_pressure"""
