@@ -1,7 +1,7 @@
 instrument,plotParameters
-CTD-FIXED,"""temperature,salinity,density,oxygen"""
+CTD-FIXED,"""temperature,salinity,density,oxygen,sea_water_pressure"""
 CTD-FIXED-XO2,"""temperature,salinity,density,sea_water_pressure"""
-CTD-PROFILER,"""temperature,salinity,density,oxygen"""
+CTD-PROFILER,"""temperature,salinity,density,oxygen,sea_water_pressure"""
 FLR-PROFILER,"""chlorophyll,cdom,backscatter"""
 FLR-FIXED,"""chlorophyll,cdom,backscatter"""
 NUT-PROFILER,"""nitrate"""
