@@ -162,7 +162,7 @@ def generate_tables(df_HITL: pd.DataFrame) -> None:
                     HITL_NOTES_DIR.joinpath(f"HITL_{page}_{item}.csv"), "w"
                 ) as f:
                     f.write(csvTable)
-    statusList = ['Watchlist', 'Failed', 'Harvest', 'Plotting']
+    statusList = ['Watchlist', 'Failed', 'Harvest', 'Plotting', 'Pending']
     for status in statusList:
         df_statusList = df_HITL[df_HITL[0].str.contains(status,case=False)]
         if not df_statusList.empty:
