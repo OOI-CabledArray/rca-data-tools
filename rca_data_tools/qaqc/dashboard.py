@@ -287,6 +287,10 @@ def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
     # Load climatology and gross range values
 
     githubBaseURL = 'https://raw.githubusercontent.com/oceanobservatories/qc-lookup/master/qartod/'
+
+    if sensorType == 'phsen':
+        param = 'seawater_ph'
+
     clim_URL = (
         githubBaseURL
         + sensorType
