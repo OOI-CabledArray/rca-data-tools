@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
+from rca_data_tools.qaqc import discrete
 from rca_data_tools.qaqc import calculate
 from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
 
@@ -212,6 +213,10 @@ def run_dashboard_creation(
                 overlayData_anno = {}
                 overlayData_anno = dashboard.loadAnnotations(site)
 
+                overlayData_disc = {}
+                if span == 0:
+                    overlayData_disc = extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
+
                 if "PROFILER" in plotInstrument:
                     profileList = dashboard.loadProfiles(site)
                     pressureParams = variable_dict["pressure"].strip('"').split(",")
@@ -265,6 +270,8 @@ def run_dashboard_creation(
                                 paramData,
                                 plotTitle,
                                 timeRef,
+                                yMin,
+                                yMax,
                                 profile_paramMin,
                                 profile_paramMax,
                                 profile_paramMin_local,
@@ -272,6 +279,7 @@ def run_dashboard_creation(
                                 imageName_base,
                                 overlayData_anno,
                                 overlayData_clim,
+                                overlayData_disc,
                                 overlayData_flag,
                                 overlayData_near,
                                 span,
@@ -320,6 +328,7 @@ def run_dashboard_creation(
                                         imageName_base_depth,
                                         overlayData_anno,
                                         overlayData_clim_extract,
+                                        overlayData_disc,
                                         overlayData_flag_extract,
                                         overlayData_near,
                                         "medium",
@@ -355,6 +364,7 @@ def run_dashboard_creation(
                         imageName_base,
                         overlayData_anno,
                         overlayData_clim_extract,
+                        overlayData_disc,
                         overlayData_flag,
                         overlayData_near,
                         "small",

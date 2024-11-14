@@ -1,0 +1,20 @@
+variable,discrete,ctd
+temperature,,"['CTD Temperature 1 [deg C]','CTD Temperature 2 [deg C]']"
+salinity,'Discrete Salinity [psu]',"['CTD Salinity 1 [psu]','CTD Salinity 2 [psu]']"
+density,,
+oxygen,'Discrete Oxygen [mL/L]','CTD Oxygen [mL/L]'
+nitrate,,'Discrete Nitrate [uM]'
+chlorophyll,'Discrete Chlorophyll [ug/L]','CTD Fluorescence [mg/m^3]'
+par,,
+pco2,'Discrete pCO2 [uatm]',
+ph,'Calculated pH','CTD pH'
+spectral_irradiance_412nm,,
+spectral_irradiance_443nm,,
+spectral_irradiance_490nm,,
+spectral_irradiance_510nm,,
+spectral_irradiance_555nm,,
+spectral_irradiance_620nm,,
+spectral_irradiance_683nm,,
+velocity_east,,
+velocity_north,,
+velocity_up,,

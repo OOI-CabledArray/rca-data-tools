@@ -146,7 +146,7 @@ def extractClim(timeRef, profileDepth, overlayData_clim):
 
 
 
-def gridProfiles(ds,pressureName,variableName,profileIndices):
+def gridProfiles(ds,pressureName,variableName,profileIndices,profileDepth,profileDepthGrid):
 
     mask = (profileIndices['start'] > ds.time[0].values) & (profileIndices['end'] <= ds.time[-1].values)
     profileIndices = profileIndices.loc[mask]
@@ -171,7 +171,7 @@ def gridProfiles(ds,pressureName,variableName,profileIndices):
             invert = True
 
         gridX = np.zeros(len(profileIndices))
-        gridY = np.arange(0, 190, 0.5) ### grid points every 0.5 meters
+        gridY = np.arange(0, profileDepth, profileDepthGrid)
         gridZ = np.zeros((len(gridY),len(gridX)))
         for index, row in profileIndices.iterrows():
             startTime = row[start]
@@ -1023,13 +1023,17 @@ def create_interpolation_grid(
     scatterY, 
     scatterZ,
 ):
+    if yMax > 300:
+        profileDepthGrid = 5
+    else:
+        profileDepthGrid = 0.5
     xMinTimestamp = xMin.timestamp()
     xMaxTimestamp = xMax.timestamp()
     if profileList.empty:
         print('profileList empty...interpolating with old method...')
             # x grid in seconds, with points every 1 hour (3600 seconds)
         xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
-        yi_arr = np.arange(yMin, yMax, 0.5)
+        yi_arr = np.arange(yMin, yMax, profileDepthGrid)
         xi, yi = np.meshgrid(xi_arr, yi_arr)
 
         scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
@@ -1048,13 +1052,17 @@ def create_interpolation_grid(
                 gapMask = (xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])
                 zi[gapMask] = np.nan
     else:
-        xi_arr, yi_arr, zi = gridProfiles(baseDS,pressParam,Yparam,profileList)
+        if yMax > 300:
+            profileDepth = yMax
+        else:
+            profileDepth = 190
+        xi_arr, yi_arr, zi = gridProfiles(baseDS,pressParam,Yparam,profileList,profileDepth,profileDepthGrid)
         if xi_arr.shape[0] == 1:
             logger.info('error with gridding profiles...interpolating with old method...')
                 # x grid in seconds, with points every 1 hour (3600 seconds)
             xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
                 # y grid in meters, with points every 1/2 meter
-            yi_arr = np.arange(yMin, yMax, 0.5)
+            yi_arr = np.arange(yMin, yMax, profileDepthGrid)
             xi, yi = np.meshgrid(xi_arr, yi_arr)
 
             scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
@@ -1170,6 +1178,8 @@ def plotProfilesScatter(
     paramData,
     plotTitle,
     timeRef,
+    yMin,
+    yMax,
     profile_paramMin,
     profile_paramMax,
     profile_paramMin_local,
@@ -1177,6 +1187,7 @@ def plotProfilesScatter(
     fileName_base,
     overlayData_anno,
     overlayData_clim,
+    overlayData_disc,
     overlayData_flag,
     overlayData_near,
     span,
@@ -1192,7 +1203,7 @@ def plotProfilesScatter(
     logger=select_logger()
     logger.info("entering plotProfilesScatter")
     # Plot Overlays
-    overlays = ['anno', 'clim', 'flag', 'near', 'none']
+    overlays = ['anno', 'clim', 'disc', 'flag', 'near', 'none']
 
     # Data Ranges
     ranges = ['full', 'standard', 'local']
@@ -1235,9 +1246,7 @@ def plotProfilesScatter(
         plt.ylabel(yLabel, fontsize=4)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
-        yMin = -200
-        yMax = 0
-        ax.set_ylim(yMin, yMax)
+        ax.set_ylim(-yMax, 0)
         
         ax.grid(False)
         return (fig, ax)
@@ -1359,6 +1368,15 @@ def plotProfilesScatter(
             for child in axHandle.get_children():
                 if isinstance(child, matplotlib.lines.Line2D):
                     child.remove()
+         
+        elif 'disc' in overlay:
+            if 'deploy' in spanString:
+                if overlayData_disc:
+                    ################
+                    print('adding discrete sample data to plot')
+
+
+
 
 
         return
@@ -1770,6 +1788,7 @@ def plotScatter(
     fileName_base,
     overlayData_anno,
     overlayData_clim,
+    overlayData_disc,
     overlayData_flag,
     overlayData_near,
     plotMarkerSize,
@@ -1782,7 +1801,7 @@ def plotScatter(
     fileNameList = []
 
     # Plot Overlays
-    overlays = ['anno','clim','flag', 'near', 'time', 'none']
+    overlays = ['anno','clim','disc', 'flag', 'near', 'time', 'none']
 
     # Data Ranges
     ranges = ['full', 'standard', 'local']
@@ -2142,6 +2161,14 @@ def plotScatter(
         if 'near' in overlay:
             # add nearest neighbor data traces
             print('adding nearest neighbor data to plot')
+
+        if 'disc' in overlay:
+            if 'deploy' in spanString: 
+                if overlayData_disc:
+                    ################
+                    print('adding discrete sample data to plot')
+
+
 
         if 'flag' in overlay:
             # highlight flagged data points

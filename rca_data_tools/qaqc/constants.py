@@ -236,4 +236,11 @@ calculateStrings_dict = (
     .T.to_dict()
 )
 
+# create a dictonary of relevant discrete sample types for each variable
+discreteSample_dict = (
+    pd.read_csv(PARAMS_DIR.joinpath('discreteMap.csv'))
+    .set_index('variable')
+    .T.to_dict('series')
+)
+
 plotDir = str(PLOT_DIR) + '/'
