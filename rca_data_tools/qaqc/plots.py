@@ -31,6 +31,7 @@ from rca_data_tools.qaqc.constants import (
     deployedRange_dict,
     calculate_dict,
     calculateStrings_dict,
+    discreteSample_dict,
     plotDir,
     PLOT_DIR,
 )
@@ -214,8 +215,9 @@ def run_dashboard_creation(
                 overlayData_anno = dashboard.loadAnnotations(site)
 
                 overlayData_disc = {}
-                if span == 0:
-                    overlayData_disc = extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
+                if int(span) == 0:
+                    overlayData_disc = discrete.extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
+                    print(overlayData_disc)
 
                 if "PROFILER" in plotInstrument:
                     profileList = dashboard.loadProfiles(site)

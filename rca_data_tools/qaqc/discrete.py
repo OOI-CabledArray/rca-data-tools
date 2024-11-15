@@ -8,19 +8,13 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 from os import path
+import os
 from cmislib.model import CmisClient
 import xarray as xr
-#####from rca_data_tools.qaqc.plots import PARAMS_DIR
+from pathlib import Path
 
-### TODO: Make these credentials a github secret...
-### netrc only works locally
-###
-import netrc
-netrc = netrc.netrc()
-remoteHostName = "alfresco"
-info = netrc.authenticators(remoteHostName)
-USERNAME = info[0]
-TOKEN = info[2]
+HERE = Path(__file__).parent.absolute()
+PARAMS_DIR = HERE.joinpath('params')
 
 def parseDiscrete(io_Object, template):
     try:
@@ -97,7 +91,7 @@ def validateDiscrete(df,template):
 
 def loadDiscreteData():
     
-    client = CmisClient('http://alfresco.oceanobservatories.org/alfresco/s/cmis',USERNAME,TOKEN)
+    client = CmisClient('http://alfresco.oceanobservatories.org/alfresco/s/cmis',os.environ.get("ALF_USER"),os.environ.get("ALF_TOKEN"))
     repo = client.defaultRepository
     results = repo.query("SELECT cmis:name, cmis:objectId FROM cmis:document WHERE CONTAINS('cmis:name:discrete_summary')")
     
