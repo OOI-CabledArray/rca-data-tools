@@ -247,7 +247,7 @@ def loadProfiles(refDes):
 
     if fileNames:
         profiles_partial = []
-        headers = {'User-Agent': 'RCA-profile-fetcher'}
+        headers = {'User-Agent': 'RCA-profile-fetcher'} # so github doesn't block us?
         for file in fileNames:
             profiles_URL = gh_baseURL + file
             logger.info("fetching profiles from github...")
