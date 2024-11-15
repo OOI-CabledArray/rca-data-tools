@@ -247,11 +247,12 @@ def loadProfiles(refDes):
 
     if fileNames:
         profiles_partial = []
+        headers = {'User-Agent': 'RCA-profile-fetcher'}
         for file in fileNames:
             profiles_URL = gh_baseURL + file
             logger.info("fetching profiles from github...")
             logger.info(profiles_URL)
-            download = requests.get(profiles_URL)
+            download = requests.get(profiles_URL, headers=headers)
             logger.info(download)
             logger.info(f"Status code: {download.status_code} - {download.reason}")
             if download.status_code == 200:
