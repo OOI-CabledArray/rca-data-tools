@@ -230,6 +230,7 @@ def loadDeploymentHistory(refDes):
 
 
 def loadProfiles(refDes):
+    logger = select_logger()
 
     profileList = []
     dateColumns = ['start','peak','end']
@@ -248,13 +249,14 @@ def loadProfiles(refDes):
         profiles_partial = []
         for file in fileNames:
             profiles_URL = gh_baseURL + file
-            print(profiles_URL)
+            logger.info("fetching profiles from github...")
+            logger.info(profiles_URL)
             download = requests.get(profiles_URL)
-            print(download)
-            print(download.status_code)
+            logger.info(download)
+            logger.info(download.status_code)
             if download.status_code == 200:
                 data = pd.read_csv(io.StringIO(download.content.decode('utf-8')),parse_dates=dateColumns)
-                print(data)
+                logger.info(data)
                 profiles_partial.append(data)
 
         profileList = pd.concat(profiles_partial, ignore_index=True)
