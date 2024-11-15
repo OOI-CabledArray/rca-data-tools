@@ -18,6 +18,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "bs4",
+    "cmislib3",
     "cmocean",
     "dask",
     "fsspec",
