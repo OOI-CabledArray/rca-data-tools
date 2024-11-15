@@ -253,7 +253,7 @@ def loadProfiles(refDes):
             logger.info(profiles_URL)
             download = requests.get(profiles_URL)
             logger.info(download)
-            logger.info(download.status_code)
+            logger.info(f"Status code: {download.status_code} - {download.reason}")
             if download.status_code == 200:
                 data = pd.read_csv(io.StringIO(download.content.decode('utf-8')),parse_dates=dateColumns)
                 logger.info(data)
