@@ -248,9 +248,13 @@ def loadProfiles(refDes):
         profiles_partial = []
         for file in fileNames:
             profiles_URL = gh_baseURL + file
+            print(profiles_URL)
             download = requests.get(profiles_URL)
+            print(download)
+            print(download.status_code)
             if download.status_code == 200:
                 data = pd.read_csv(io.StringIO(download.content.decode('utf-8')),parse_dates=dateColumns)
+                print(data)
                 profiles_partial.append(data)
 
         profileList = pd.concat(profiles_partial, ignore_index=True)
