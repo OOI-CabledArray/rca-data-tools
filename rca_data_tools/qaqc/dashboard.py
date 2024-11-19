@@ -248,16 +248,12 @@ def loadProfiles(refDes):
     if fileNames:
         profiles_partial = []
         headers = {'User-Agent': 'RCA-profile-fetcher'} # so github doesn't block us?
+        logger.info("fetching profiles from github...")
         for file in fileNames:
             profiles_URL = gh_baseURL + file
-            logger.info("fetching profiles from github...")
-            logger.info(profiles_URL)
             download = requests.get(profiles_URL, headers=headers)
-            logger.info(download)
-            logger.info(f"Status code: {download.status_code} - {download.reason}")
             if download.status_code == 200:
                 data = pd.read_csv(io.StringIO(download.content.decode('utf-8')),parse_dates=dateColumns)
-                logger.info(data)
                 profiles_partial.append(data)
 
         profileList = pd.concat(profiles_partial, ignore_index=True)
