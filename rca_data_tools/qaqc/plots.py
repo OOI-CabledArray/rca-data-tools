@@ -214,10 +214,9 @@ def run_dashboard_creation(
                 overlayData_anno = {}
                 overlayData_anno = dashboard.loadAnnotations(site)
 
-                overlayData_disc = {}
+                overlayData_disc = pd.DataFrame()
                 if int(span) == 0:
                     overlayData_disc = discrete.extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
-                    print(overlayData_disc)
 
                 if "PROFILER" in plotInstrument:
                     profileList = dashboard.loadProfiles(site)
@@ -268,6 +267,7 @@ def run_dashboard_creation(
                         if "ADCP" not in plotInstrument:  # TODO try to minimize new if blocks
                             plots = dashboard.plotProfilesScatter(
                                 Yparam,
+                                param,
                                 pressParam,
                                 paramData,
                                 plotTitle,
@@ -319,6 +319,7 @@ def run_dashboard_creation(
                                         overlayData_clim_extract = pd.DataFrame()
                                     plots = dashboard.plotScatter(
                                         Yparam,
+                                        param,
                                         paramData_depth,
                                         plotTitle_depth,
                                         yLabel,

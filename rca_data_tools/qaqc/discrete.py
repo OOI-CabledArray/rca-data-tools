@@ -5,10 +5,13 @@ This module contains code for compiling and processing discrete bottle samples.
 
 """
 import datetime as dt
+import io
 import numpy as np
 import pandas as pd
 from os import path
 import os
+import re
+import requests
 from cmislib.model import CmisClient
 import xarray as xr
 from pathlib import Path
@@ -128,12 +131,55 @@ def loadDiscreteData():
     return df_discrete
   
 
+
+def loadDiscreteData_github():
+
+    # URL on the Github where the csv files are stored
+    github_url = 'https://github.com/OOI-CabledArray/discreteSummaries/tree/main/FinalSummaries' 
+    gh_baseURL = 'https://raw.githubusercontent.com/OOI-CabledArray/discreteSummaries/refs/heads/main/FinalSummaries/'
+
+    template = pd.read_csv(PARAMS_DIR.joinpath('discreteSummary_template.csv'), dtype=str)
+    
+    pathKeys_ALL=['Cruise Data','Water Sampling']
+    pathKeys_ANY=['Ship Data','Ship_Data','Shipboard Data']
+
+    page = requests.get(github_url).text
+    fileNames = list(set(re.findall('Cabled-[^"]*_Discrete_Summary\.csv',page)))
+    print(fileNames)
+
+    df_data = []
+    if fileNames:
+        for file in fileNames:
+            discrete_URL = gh_baseURL + file
+            download = requests.get(discrete_URL)
+            if download.status_code == 200:
+                df = pd.read_csv(io.StringIO(download.content.decode('utf-8')),na_values=['-9999999'])
+                for header in df.keys():  
+                    if 'Cruise' in header:
+                        print('fix this file header eventually...', header)
+                        df.rename(columns={header: 'Cruise'},inplace=True)
+                df_data.append(df)
+        
+    df_discrete = pd.concat(df_data, ignore_index=True)
+
+    startTime_year = []
+    for timeEntry in df_discrete['Start Time [UTC]']:
+        startTime = np.datetime64(dt.datetime.strptime(timeEntry,'%Y-%m-%dT%H:%M:%S.%fZ'))
+        startTime_year.append(startTime.astype(object).year)
+    
+    df_discrete['sampleYear'] = startTime_year
+        
+    
+    return df_discrete
+     
+
+
 def extractDiscreteOverlay(site,year,discreteSample_dict,variable):
-    allDiscrete = loadDiscreteData()
+    allDiscrete = loadDiscreteData_github()
     baseSite = site.split('-')[0]
-    if pd.isnull(discreteSample_dict[variable]['discrete']) & pd.isnull(discreteSample_dict[variable]['ctd']):
+    if pd.isnull(discreteSample_dict[variable]['discreteColumn']):
         overlayData_disc = {}
     else:
-        overlayData_disc = allDiscrete[(allDiscrete['sampleYear'] == year) and (allDiscrete['Target Asset'].str.contains(baseSite,case=False))]
+        overlayData_disc = allDiscrete[(allDiscrete['sampleYear'] == year) & (allDiscrete['Target Asset'].str.contains(baseSite,case=False))]
     
     return overlayData_disc

@@ -239,7 +239,7 @@ calculateStrings_dict = (
 discreteSample_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('discreteMap.csv'))
     .set_index('variable')
-    .T.to_dict('series')
+    .T.to_dict()
 )
 
 plotDir = str(PLOT_DIR) + '/'
