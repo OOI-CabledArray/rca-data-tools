@@ -356,6 +356,7 @@ def run_dashboard_creation(
                     # PLOT
                     plots = dashboard.plotScatter(
                         Yparam,
+                        param,
                         paramData,
                         plotTitle,
                         yLabel,
