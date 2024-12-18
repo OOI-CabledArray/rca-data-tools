@@ -43,9 +43,9 @@ COMPUTE_EXCEPTIONS = {
     },
     'CE02SHBP-LJ01D-07-VEL3DC108':{
         '365': '16vcpu_98gb',
-        '30': '8vcpu_60gb',
-        '7': '8vcpu_60gb',
-        '1': '8vcpu_60gb',
+        '30': '16vcpu_98gb',
+        '7': '16vcpu_98gb',
+        '1': '16vcpu_98gb',
     },
     # ctd
     'CE04OSBP-LJ01C-06-CTDBPO108':{
