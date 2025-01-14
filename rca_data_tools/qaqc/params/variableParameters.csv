@@ -1,5 +1,6 @@
 variable,min,max,profileMin,profileMax,label,colorMap,static
 temperature,0,15,5,20,degrees C,thermal,FALSE
+conductivity,3,4,3,4,s/m,haline,FALSE
 salinity,31,35,30,35,psu,haline,FALSE
 density,1020,1045,1022,1030,kg/m^3,dense,FALSE
 oxygen,0,550,0,550,uMol/kg,matter,FALSE
