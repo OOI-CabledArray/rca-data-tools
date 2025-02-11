@@ -73,6 +73,7 @@ COMPUTE_EXCEPTIONS = {
     'CE02SHBP-LJ01D-05-ADCPTB104':{
         '30': '4vcpu_30gb',
         '7': '4vcpu_30gb',
+        '1': '4vcpu_30gb',
         '0': '8vcpu_60gb',
     },
     'RS03AXBS-LJ03A-10-ADCPTE303':{
