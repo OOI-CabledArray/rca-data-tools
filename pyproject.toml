@@ -31,7 +31,7 @@ dependencies = [
     "numpy",
     "pandas>2",
     "pathlib",
-    "prefect>2",
+    "prefect>=2,<3",
     "prefect-aws",
     "requests",
     "s3fs",
