@@ -116,13 +116,13 @@ COMPUTE_EXCEPTIONS = {
 
 # visual data constants
 CAM_URL_DICT = {
-    'RS01SUM2-MJ01B-05-CAMDSB103': 'https://rawdata.oceanobservatories.org/files/RS01SUM2/MJ01B/CAMDSB103_10.33.7.5/',
-    'RS03INT1-MJ03C-05-CAMDSB303': 'https://rawdata.oceanobservatories.org/files/RS03INT1/MJ03C/CAMDSB303_10.31.8.5/',
-    'RS03AXPS-PC03A-07-CAMDSC302': 'https://rawdata.oceanobservatories.org/files/RS03AXPS/PC03A/CAMDSC302_10.31.3.146/',
-    'CE02SHBP-MJ01C-08-CAMDSB107': 'https://rawdata.oceanobservatories.org/files/CE02SHBP/MJ01C/CAMDSB107_10.33.13.8/',
-    'CE04OSBP-LV01C-06-CAMDSB106': 'https://rawdata.oceanobservatories.org/files/CE04OSBP/LV01C/CAMDSB106_10.33.9.6/',
-    'RS01SBPS-PC01A-07-CAMDSC102': 'https://rawdata.oceanobservatories.org/files/RS01SBPS/PC01A/CAMDSC102_10.33.3.146/',
-    'RS03ASHS-PN03B-06-CAMHDA301': 'https://rawdata.oceanobservatories.org/files/RS03ASHS/PN03B/06-CAMHDA301/',
+    'RS01SUM2-MJ01B-05-CAMDSB103': 'https://rawdata.oceanobservatories.org/files/RS01SUM2/MJ01B/CAMDSB103/',
+    'RS03INT1-MJ03C-05-CAMDSB303': 'https://rawdata.oceanobservatories.org/files/RS03INT1/MJ03C/CAMDSB303/',
+    'RS03AXPS-PC03A-07-CAMDSC302': 'https://rawdata.oceanobservatories.org/files/RS03AXPS/PC03A/CAMDSC302/',
+    'CE02SHBP-MJ01C-08-CAMDSB107': 'https://rawdata.oceanobservatories.org/files/CE02SHBP/MJ01C/CAMDSB107/',
+    'CE04OSBP-LV01C-06-CAMDSB106': 'https://rawdata.oceanobservatories.org/files/CE04OSBP/LV01C/CAMDSB106/',
+    'RS01SBPS-PC01A-07-CAMDSC102': 'https://rawdata.oceanobservatories.org/files/RS01SBPS/PC01A/CAMDSC102/',
+    'RS03ASHS-PN03B-06-CAMHDA301': 'https://rawdata.oceanobservatories.org/files/RS03ASHS/PN03B/CAMHDA301/',
     }
 N_EXPECTED_IMGS = 145
 
