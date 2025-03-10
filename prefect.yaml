@@ -88,7 +88,7 @@ deployments:
       memory: 98304
   schedule:
   is_schedule_active: true
-- name: 16vcpu_106gb
+- name: 16vcpu_104gb
   version:
   tags: []
   description:
@@ -99,7 +99,7 @@ deployments:
     work_queue_name:
     job_variables:
       cpu: 16384
-      memory: 98304
+      memory: 106496
   schedule:
   is_schedule_active: true
 - name: 16vcpu_120gb
