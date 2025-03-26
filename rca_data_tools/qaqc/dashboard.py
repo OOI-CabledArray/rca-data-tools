@@ -571,18 +571,14 @@ def plotProfilesGrid(
                 if plotFunction == 'meshgrid':
                     graph = ax.pcolormesh(Xx, Yy, Zz, cmap=colorBar, rasterized=True)
                 else:
-                    graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar, rasterized=True)
-                    for a in graph.collections:
-                        a.set_edgecolor("face")
+                    graph = ax.contourf(Xx, Yy, Zz, 50, cmap=colorBar, rasterized=True, linewidths=0)
             else:
                 colorRange = params['vmax'] - params['vmin']
                 cbarticks = np.arange(params['vmin'], params['vmax'], colorRange / 50)
                 if plotFunction == 'meshgrid':
                     graph = ax.pcolormesh(Xx, Yy, Zz, vmax=params['vmax'], vmin=params['vmin'], cmap=colorBar, rasterized=True)
                 else:
-                    graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar, rasterized=True)
-                    for a in graph.collections:
-                        a.set_edgecolor("face")
+                    graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar, rasterized=True, linewidths=0)
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="2%", pad=0.05)
             cbar = plt.colorbar(graph, cax=cax)
