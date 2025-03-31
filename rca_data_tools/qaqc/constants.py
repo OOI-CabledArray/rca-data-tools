@@ -31,6 +31,9 @@ COMPUTE_EXCEPTIONS = {
     'RS01SBPS-SF01A-4B-VELPTD102':{
         '365': '4vcpu_30gb',
     },
+    'CE04OSPS-SF01B-4B-VELPTD106':{
+        '365': '4vcpu_30gb',
+    },
     'RS03AXPS-SF03A-4B-VELPTD302':{
         '365': '4vcpu_30gb',
     },
