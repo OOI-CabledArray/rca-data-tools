@@ -47,6 +47,9 @@ COMPUTE_EXCEPTIONS = {
         '7': '16vcpu_80gb',
         '1': '16vcpu_80gb',
     },
+    'RS03AXBS-MJ03A-12-VEL3DB301':{
+        '365': '4vcpu_30gb',
+    },
     'RS03INT2-MJ03D-12-VEL3DB304':{
         '365': '8vcpu_60gb',
     },
