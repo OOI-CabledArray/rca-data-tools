@@ -66,10 +66,16 @@ COMPUTE_EXCEPTIONS = {
     'CE04OSBP-LJ01C-06-CTDBPO108':{
         '365': '4vcpu_30gb',
     },
+    'RS01SBPS-SF01A-2A-CTDPFA102':{
+        '365': '4vcpu_30gb',
+    },
     'RS01SBPS-PC01A-4A-CTDPFA103':{
         '365': '4vcpu_30gb',
     },
     'CE04OSPS-SF01B-2A-CTDPFA107':{
+        '365': '4vcpu_30gb',
+    },
+    'RS03AXPS-SF03A-2A-CTDPFA302':{
         '365': '4vcpu_30gb',
     },
     'RS03AXPS-PC03A-4A-CTDPFA303':{
