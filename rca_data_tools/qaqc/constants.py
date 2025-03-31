@@ -133,6 +133,9 @@ COMPUTE_EXCEPTIONS = {
         '7': '8vcpu_60gb',
         '1': '8vcpu_60gb',
     },
+    'CE04OSPS-SF01B-3C-PARADA102':{
+        '365': '4vcpu_30gb',
+    },
     # tmpsf
     'RS03ASHS-MJ03B-07-TMPSFA301':{
         '365': '4vcpu_30gb',
