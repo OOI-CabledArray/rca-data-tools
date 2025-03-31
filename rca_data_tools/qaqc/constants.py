@@ -35,6 +35,9 @@ COMPUTE_EXCEPTIONS = {
         '365': '4vcpu_30gb',
     },
     # vel3d
+    'RS01SLBS-MJ01A-12-VEL3DB101':{
+        '365': '4vcpu_30gb',
+    },
     'RS01SUM1-LJ01B-12-VEL3DB104':{
         '365': '4vcpu_30gb',
     },
