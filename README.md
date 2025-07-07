@@ -1,6 +1,6 @@
 # Regional Cabled Array Data Tools
 
-Utilities for working with Regional Cabled Array Data.
+Utilities for working with Regional Cabled Array Data. QAQC Dashboard back-end.
 
 ![MIT License](https://badgen.net/badge/license/MIT/blue)
 
