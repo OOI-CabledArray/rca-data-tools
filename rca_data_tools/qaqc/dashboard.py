@@ -764,7 +764,7 @@ def plotProfilesGrid(
                                        bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
                                        zorder = 1, clip_on=True
                             )
-                            annoText.set_gid(f'label_{i}')              
+                            annoText.set_gid(f'label_{i}')
                             i += 1
                         f=io.BytesIO()
                         plt.savefig(f, format="svg",dpi=300)
@@ -824,7 +824,7 @@ def plotProfilesGrid(
                                        bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
                                        zorder = 1, clip_on=True
                             )
-                            annoText.set_gid(f'label_{i}')         
+                            annoText.set_gid(f'label_{i}')
                             i += 1
                         f=io.BytesIO()
                         plt.savefig(f, format="svg",dpi=300)
@@ -2017,8 +2017,6 @@ def plotScatter(
                                        zorder = 20, clip_on=True
                             )
                             annoText.set_gid(f'label_{i}')
-                            print(annoText.get_gid())
-                            print(annotationString, k, plotYmin, i)
                             i += 1
                         f=io.BytesIO()
                         plt.savefig(f, format="svg",dpi=300)
