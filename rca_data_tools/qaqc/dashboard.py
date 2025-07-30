@@ -1212,10 +1212,8 @@ def plotProfilesScatter(
     descentSamples = ['pco2_seawater','ph_seawater']
     
     # Drop nans
-    logger.info("dropping nans in paramData")
     logger.info(paramData)
     #paramData = paramData.where(paramData[Xparam].notnull().compute(),drop=True) #TODO mem bug?
-    logger.info("nans dropped!")
 
     # yLabel
     yLabel = 'pressure, m'
@@ -1596,7 +1594,7 @@ def plotProfilesScatter(
                 profiles = profileList.loc[mask]
                 dataDict = {}
                 if len(profiles) > 0:
-                    for index,profile in profiles.iterrows():
+                    for index, profile in profiles.iterrows():
                         dataSlice = baseDS.sel(time=slice(profile[profileStart], profile[profileEnd]))
                         dataDict[profile['peak']] = {}
                         dataDict[profile['peak']]['scatterX'] = dataSlice[Xparam].values
