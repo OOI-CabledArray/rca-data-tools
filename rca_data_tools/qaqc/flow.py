@@ -1,11 +1,11 @@
 from typing import List
 import fsspec
-import pkg_resources
 import os
 
 from prefect import task, flow
 from prefect.states import Cancelled
 from prefect import get_run_logger
+from importlib.metadata import distributions
 
 from rca_data_tools.qaqc.plots import (
     organize_images,
@@ -126,7 +126,7 @@ def qaqc_pipeline_flow(
     logger = get_run_logger()
 
     # log python package versions on cloud machine
-    installed_packages = {p.project_name: p.version for p in pkg_resources.working_set}
+    installed_packages = {dist.metadata["Name"]: dist.version for dist in distributions()}
     logger.info(f"Installed packages: {installed_packages}")
     logger.info(f"Available cpu cores on runner machine: {os.cpu_count()}")
 
