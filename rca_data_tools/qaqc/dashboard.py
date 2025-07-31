@@ -494,7 +494,6 @@ def plotProfilesGrid(
     plotInstrument,
 ):
     logger = select_logger()
-    logger.info(f"=== Entering plotProfilesGrid for {paramNickname} ===")
 
     ### QC check for grid...this will be replaced with a new range for "gross range"
     if 'pco2' in Yparam:
@@ -1005,7 +1004,6 @@ def plotProfilesGrid(
                 profilePlot.savefig(fileName + '_local.png', dpi=300)
                 fileNameList.append(fileName + '_local.png')
 
-    logger.info(f" === Exiting plotProfilesGrid for {paramNickname} ===")
     return fileNameList
 
 
@@ -1174,7 +1172,7 @@ def plot_and_save_no_overlay_plots(
     
     return emptySlice, ax
 
-
+@task
 def plotProfilesScatter(
     Xparam,
     param,
@@ -1203,18 +1201,13 @@ def plotProfilesScatter(
     
     # Initiate fileName list
     fileNameList = []
-    
     logger=select_logger()
-    logger.info("entering plotProfilesScatter")
     # Plot Overlays
     overlays = ['anno', 'clim', 'disc', 'flag', 'near', 'none']
-
     # Data Ranges
     ranges = ['full', 'standard', 'local']
-    
     # Descent Sensors
     descentSamples = ['pco2_seawater','ph_seawater']
-    
     # Drop nans
     logger.info(paramData)
     #paramData = paramData.where(paramData[Xparam].notnull().compute(),drop=True) #TODO mem bug?
@@ -1254,8 +1247,7 @@ def plotProfilesScatter(
         return (fig, ax)
 
 
-
-    def plotOverlays(overlay,figureHandle,axHandle,fileName,timeSpan):
+    def plotOverlays(overlay, figureHandle,  axHandle, fileName, timeSpan):
         fileName = fileName.replace('none',overlay)
         if 'anno' in overlay:
             if overlayData_anno:
