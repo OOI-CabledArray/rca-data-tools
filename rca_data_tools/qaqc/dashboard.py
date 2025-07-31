@@ -10,9 +10,10 @@ import matplotlib
 #matplotlib.use("TkAgg")
 
 import ast
-from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from dateutil import parser
+from prefect import task
+
 import gc
 import io
 import json
@@ -465,6 +466,7 @@ def saveAnnos_SVG(annoLines,fileObject,fileName):
     tree.insert(0, et.XML(script))
     et.ElementTree(tree).write(fileName + '.svg')
 
+@task
 def plotProfilesGrid(
     Yparam, # variable of interest
     pressParam, # pressure parameter
@@ -492,6 +494,7 @@ def plotProfilesGrid(
     plotInstrument,
 ):
     logger = select_logger()
+    logger.info(f"=== Entering plotProfilesGrid for {paramNickname} ===")
 
     ### QC check for grid...this will be replaced with a new range for "gross range"
     if 'pco2' in Yparam:
@@ -1002,6 +1005,7 @@ def plotProfilesGrid(
                 profilePlot.savefig(fileName + '_local.png', dpi=300)
                 fileNameList.append(fileName + '_local.png')
 
+    logger.info(f" === Exiting plotProfilesGrid for {paramNickname} ===")
     return fileNameList
 
 
