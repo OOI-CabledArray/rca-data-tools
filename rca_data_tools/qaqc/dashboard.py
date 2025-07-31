@@ -1609,7 +1609,7 @@ def plotProfilesScatter(
                 ### Plot all profiles on one plot
                 fig, ax = setPlot()
                 plotOverlay = False
-                if plot_all:
+                if plot_all and len(scatterZ) > 0:
                     if len(profiles) == 1:
                         plt.plot(scatterX,scatterY,'.',color='#1f78b4',markersize=1, rasterized=True)
                     else:
