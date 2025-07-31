@@ -37,7 +37,7 @@ from scipy.interpolate import griddata
 import textwrap as tw
 import xml.etree.ElementTree as et
 
-from rca_data_tools.qaqc.utils import select_logger
+from rca_data_tools.qaqc.utils import select_logger, save_fig
 from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict
 INPUT_BUCKET = "ooi-data/"
 
@@ -1160,7 +1160,7 @@ def plot_and_save_no_overlay_plots(
             emptySlice = 'no'
     else:
         params = {'range':'full'}
-        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, pressLabel, plotFunc,)
+        profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, pressLabel, plotFunc,)
         fileName = fileName_base + '_' + spanString + '_' + 'none'
         profilePlot.savefig(fileName + '_full.png', dpi=300)
         fileNameList.append(fileName + '_full.png')

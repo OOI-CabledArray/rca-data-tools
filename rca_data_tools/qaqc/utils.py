@@ -32,3 +32,8 @@ def get_s3_kwargs():
     
     s3_kwargs = {'key': aws_key, 'secret': aws_secret}
     return s3_kwargs
+
+
+def save_fig(fig, fileNameList, fileName, dpi, imgTag):
+    fileNameList.append(fileName + imgTag)
+    fig.savefig(fileName + imgTag, dpi=dpi)
