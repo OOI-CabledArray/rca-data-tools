@@ -1837,6 +1837,7 @@ def plotScatter(
         '#542c2c',
         '#6e409c',
         '#16f5f5',
+        '#A19D9C',
     ]
     balanceBig = plt.get_cmap('cmo.balance', 512)
     balanceBlue = ListedColormap(balanceBig(np.linspace(0, 0.5, 256)))
