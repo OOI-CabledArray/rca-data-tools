@@ -1765,8 +1765,7 @@ def plotProfilesScatter(
 
 
 
-
-
+@task
 def plotScatter(
     Yparam,
     param,
