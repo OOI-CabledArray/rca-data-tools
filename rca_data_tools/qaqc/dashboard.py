@@ -1200,7 +1200,7 @@ def plotProfilesScatter(
     ):
     
     plt.ioff()
-    dpi=300
+    dpi=200
     fileNameList = []
     logger=select_logger()
     # Plot Overlays
