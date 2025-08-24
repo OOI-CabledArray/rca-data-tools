@@ -34,6 +34,8 @@ def get_s3_kwargs():
     return s3_kwargs
 
 
-def save_fig(fig, fileNameList, fileName, dpi, imgTag):
-    fileNameList.append(fileName + imgTag)
-    fig.savefig(fileName + imgTag, dpi=dpi)
+def save_fig(fig, fileNameList, fileName, dpi, imgTagList):
+    for imgTag in imgTagList:
+        imgTag = imgTag + '.png'
+        fileNameList.append(fileName + imgTag)
+        fig.savefig(fileName + imgTag, dpi=dpi)

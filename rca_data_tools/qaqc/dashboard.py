@@ -1200,6 +1200,7 @@ def plotProfilesScatter(
     ):
     
     # Initiate fileName list
+    dpi=300
     fileNameList = []
     logger=select_logger()
     # Plot Overlays
@@ -1282,7 +1283,7 @@ def plotProfilesScatter(
                         annoText.set_gid(f'label_{i}')
                         i += 1
                     f=io.BytesIO()
-                    figureHandle.savefig(f, format="svg",dpi=300)
+                    figureHandle.savefig(f, format="svg",dpi=dpi)
                     saveAnnos_SVG(annoLines,f,fileName)
                     fileNameList.append(fileName + '.svg')
                     for child in axHandle.get_children():
@@ -1291,7 +1292,7 @@ def plotProfilesScatter(
                         if isinstance(child, matplotlib.lines.Line2D):
                             child.remove()
                 else:
-                    figureHandle.savefig(fileName + '.png', dpi=300)
+                    figureHandle.savefig(fileName + '.png', dpi=dpi)
                     fileNameList.append(fileName + '.png')
 
         elif 'clim' in overlay:
@@ -1310,7 +1311,7 @@ def plotProfilesScatter(
                     climLine = plt.plot(climatology[str(climMonth)]['climData'],climDepth,
                         '-.',color='r',alpha=0.4,linewidth=0.25)
                 plt.xlim(xLimits[0], xLimits[1])
-                figureHandle.savefig(fileName + '.png', dpi=300)
+                figureHandle.savefig(fileName + '.png', dpi=dpi)
                 fileNameList.append(fileName + '.png')
                 for child in axHandle.get_children():
                     if isinstance(child, matplotlib.lines.Line2D):
@@ -1356,7 +1357,7 @@ def plotProfilesScatter(
                             markersize=1,linewidth=0,label=label)
                     )
             legend = ax.legend(handles=patches, loc="upper right", fontsize=3)
-            figureHandle.savefig(fileName + '.png', dpi=300)
+            figureHandle.savefig(fileName + '.png', dpi=dpi)
             fileNameList.append(fileName + '.png')
             legend.remove()
             for child in axHandle.get_children():
@@ -1389,7 +1390,7 @@ def plotProfilesScatter(
                                 markersize=1,linewidth=0,label=label)
                             )
                         legend = ax.legend(handles=patches, loc="upper right", fontsize=3)
-                        figureHandle.savefig(fileName + '.png', dpi=300)
+                        figureHandle.savefig(fileName + '.png', dpi=dpi)
                         fileNameList.append(fileName + '.png')
                         legend.remove()
                         for child in axHandle.get_children():
@@ -1410,12 +1411,7 @@ def plotProfilesScatter(
             'No Profile Indices Available', xy=(0.3, 0.5), xycoords='axes fraction'
         )
         fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-        fig.savefig(fileName + '_full.png', dpi=300)
-        fileNameList.append(fileName + '_full.png')
-        fig.savefig(fileName + '_standard.png', dpi=300)
-        fileNameList.append(fileName + '_standard.png')
-        fig.savefig(fileName + '_local.png', dpi=300)
-        fileNameList.append(fileName + '_local.png')
+        save_fig(fig, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
 
     else:
         if 'deploy' in spanString:
@@ -1491,8 +1487,7 @@ def plotProfilesScatter(
             
             logger.info("saving scatter plots")
             fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-            fileNameList.append(fileName + '_full.png')
-            fig.savefig(fileName + '_full.png', dpi=300)
+            save_fig(fig, fileNameList, fileName, dpi, ['_full'])
             if plot_pre and plot_post:
                 timeSpan = [scatterZ_pre[0],scatterZ_post[-1]]
                 plotOverlay = True
@@ -1507,15 +1502,13 @@ def plotProfilesScatter(
                 for overlay in overlays:
                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
             ax.set_xlim(profile_paramMin, profile_paramMax)
-            fig.savefig(fileName + '_standard.png', dpi=300)
-            fileNameList.append(fileName + '_standard.png')
+            save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
             if plotOverlay:
                 overlayFileName = fileName + '_standard'
                 for overlay in overlays:
                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
             ax.set_xlim(profile_paramMin_local, profile_paramMax_local)
-            fig.savefig(fileName + '_local.png', dpi=300)
-            fileNameList.append(fileName + '_local.png')
+            save_fig(fig, fileNameList, fileName, dpi, ['_local'])
             if plotOverlay:
                 overlayFileName = fileName + '_local'
                 for overlay in overlays:
@@ -1557,20 +1550,17 @@ def plotProfilesScatter(
                             plt.text(.01, .99, timeString, size=4, color='#1f78b4', ha='left', va='top', transform=ax.transAxes)
 
                 fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-                fileNameList.append(fileName + '_full.png')
-                fig.savefig(fileName + '_full.png', dpi=300)
+                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                 overlayFileName = fileName + '_full'
                 for overlay in overlays:
                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                 ax.set_xlim(profile_paramMin, profile_paramMax)
-                fig.savefig(fileName + '_standard.png', dpi=300)
-                fileNameList.append(fileName + '_standard.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                 overlayFileName = fileName + '_standard'
                 for overlay in overlays:
                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                 ax.set_xlim(profile_paramMin_local, profile_paramMax_local)
-                fig.savefig(fileName + '_local.png', dpi=300)
-                fileNameList.append(fileName + '_local.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                 overlayFileName = fileName + '_local'
                 for overlay in overlays:
                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
@@ -1622,23 +1612,20 @@ def plotProfilesScatter(
                     
                 
                 fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-                fig.savefig(fileName + '_full.png', dpi=300)
-                fileNameList.append(fileName + '_full.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                 if plotOverlay:
                     timeSpan = [scatterZ[0], scatterZ[-1]]
                     overlayFileName = fileName + '_full'
                     for overlay in overlays:
                         plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                 ax.set_xlim(profile_paramMin, profile_paramMax)
-                fig.savefig(fileName + '_standard.png', dpi=300)
-                fileNameList.append(fileName + '_standard.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                 if plotOverlay:
                     overlayFileName = fileName + '_standard'
                     for overlay in overlays:
                         plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                 ax.set_xlim(profile_paramMin_local, profile_paramMax_local)
-                fig.savefig(fileName + '_local.png', dpi=300)
-                fileNameList.append(fileName + '_local.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                 if plotOverlay:
                     overlayFileName = fileName + '_local'
                     for overlay in overlays:
@@ -1654,21 +1641,18 @@ def plotProfilesScatter(
                                 timeString = key.strftime("%Y-%m-%d %H:%M")
                                 plt.text(.01, .99, timeString, size=4, color='#1f78b4', ha='left', va='top', transform=ax.transAxes)
                                 fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-                                fig.savefig(fileName + '_full.png', dpi=300)
-                                fileNameList.append(fileName + '_full.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                                 timeSpan = [dataDict[key]['scatterZ'][0],dataDict[key]['scatterZ'][-1]]
                                 overlayFileName = fileName + '_full'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin, profile_paramMax)
-                                fig.savefig(fileName + '_standard.png', dpi=300)
-                                fileNameList.append(fileName + '_standard.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                                 overlayFileName = fileName + '_standard'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin_local, profile_paramMax_local)
-                                fig.savefig(fileName + '_local.png', dpi=300)
-                                fileNameList.append(fileName + '_local.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                                 overlayFileName = fileName + '_local'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
@@ -1687,21 +1671,18 @@ def plotProfilesScatter(
                                 timeString = np.datetime_as_string(scatterZ_sub[0],unit='D')
                                 plt.text(.01, .99, timeString, size=4, color='#1f78b4', ha='left', va='top', transform=ax.transAxes)
                                 fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-                                fig.savefig(fileName + '_full.png', dpi=300)
-                                fileNameList.append(fileName + '_full.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                                 timeSpan = [scatterZ_sub[0],scatterZ_sub[-1]]
                                 overlayFileName = fileName + '_full'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin, profile_paramMax)
-                                fig.savefig(fileName + '_standard.png', dpi=300)
-                                fileNameList.append(fileName + '_standard.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                                 overlayFileName = fileName + '_standard'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin_local, profile_paramMax_local)
-                                fig.savefig(fileName + '_local.png', dpi=300)
-                                fileNameList.append(fileName + '_local.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                                 overlayFileName = fileName + '_local'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
@@ -1721,21 +1702,18 @@ def plotProfilesScatter(
                                 timeString = timeString.replace('T',' ') 
                                 plt.text(.01, .99, timeString, size=4, color='#1f78b4', ha='left', va='top', transform=ax.transAxes)
                                 fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-                                fig.savefig(fileName + '_full.png', dpi=300)
-                                fileNameList.append(fileName + '_full.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                                 timeSpan = [scatterZ_sub[0],scatterZ_sub[-1]]
                                 overlayFileName = fileName + '_full'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin, profile_paramMax)
-                                fig.savefig(fileName + '_standard.png', dpi=300)
-                                fileNameList.append(fileName + '_standard.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                                 overlayFileName = fileName + '_standard'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin_local, profile_paramMax_local)
-                                fig.savefig(fileName + '_local.png', dpi=300)
-                                fileNameList.append(fileName + '_local.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                                 overlayFileName = fileName + '_local'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
@@ -1755,21 +1733,18 @@ def plotProfilesScatter(
                                 timeString = timeString.replace('T',' ') 
                                 plt.text(.01, .99, timeString, size=4, color='#1f78b4', ha='left', va='top', transform=ax.transAxes)
                                 fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-                                fig.savefig(fileName + '_full.png', dpi=300)
-                                fileNameList.append(fileName + '_full.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                                 timeSpan = [scatterZ_sub[0],scatterZ_sub[-1]]
                                 overlayFileName = fileName + '_full'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin, profile_paramMax)
-                                fig.savefig(fileName + '_standard.png', dpi=300)
-                                fileNameList.append(fileName + '_standard.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                                 overlayFileName = fileName + '_standard'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
                                 ax.set_xlim(profile_paramMin_local, profile_paramMax_local)
-                                fig.savefig(fileName + '_local.png', dpi=300)
-                                fileNameList.append(fileName + '_local.png')
+                                save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                                 overlayFileName = fileName + '_local'
                                 for overlay in overlays:
                                     plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
@@ -1780,12 +1755,7 @@ def plotProfilesScatter(
                     'No Data Available', xy=(0.3, 0.5), xycoords='axes fraction'
                 )
                 fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_' + 'none'
-                fig.savefig(fileName + '_full.png', dpi=300)
-                fileNameList.append(fileName + '_full.png')
-                fig.savefig(fileName + '_standard.png', dpi=300)
-                fileNameList.append(fileName + '_standard.png')
-                fig.savefig(fileName + '_local.png', dpi=300)
-                fileNameList.append(fileName + '_local.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
 
     return fileNameList
 
