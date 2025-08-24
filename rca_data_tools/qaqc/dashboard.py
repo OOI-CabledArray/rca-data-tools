@@ -1199,7 +1199,7 @@ def plotProfilesScatter(
     site,
     ):
     
-    # Initiate fileName list
+    plt.ioff()
     dpi=300
     fileNameList = []
     logger=select_logger()
@@ -1222,9 +1222,6 @@ def plotProfilesScatter(
     else:
         profileStart = 'start'
         profileEnd = 'peak'
-
-    unix_epoch = np.datetime64(0, 's')
-    one_second = np.timedelta64(1, 's')
 
     statusString = statusDict[site]
 
