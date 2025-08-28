@@ -723,11 +723,13 @@ def plotProfilesGrid(
                     plotFunc, # use meshgrid in place of contourf for ADCPs due to data density
                     staticParam,
                 )
-            except ValueError as e: # handle NaN coordinates being handled to meshgrid
+            except ValueError as e: # handle nan coordinates being handled to meshgrid
                 logger.warning(f"NaNs encountered in coordinate values: {e}")
                 yi = baseDS[pressParam].T 
-                zi = baseDS[Yparam].T 
-                xiDT_masked = np.ma.masked_invalid(baseDS.time)
+                zi = baseDS[Yparam].T
+                # mask and remove nans in time coordinates
+                nan_mask = ~np.isnan(baseDS.time)
+                xiDT_masked = baseDS.time[nan_mask]
 
                 emptySlice, ax = plot_and_save_no_overlay_plots(
                     plotter,
