@@ -728,14 +728,16 @@ def plotProfilesGrid(
                 yi = baseDS[pressParam].T 
                 zi = baseDS[Yparam].T
                 # mask and remove nans in time coordinates
-                nan_mask = ~np.isnan(baseDS.time)
-                xiDT_masked = baseDS.time[nan_mask]
+                x_mask = ~np.isnan(baseDS.time)
+                y_mask = ~np.isnan(yi)
+                xiDT_clean = baseDS.time[x_mask]
+                yi_clean = yi[y_mask]
 
                 emptySlice, ax = plot_and_save_no_overlay_plots(
                     plotter,
-                    yi,
+                    yi_clean,
                     zi,
-                    xiDT_masked,
+                    xiDT_clean,
                     colorMap,
                     spanString,
                     timeRef_deploy,
