@@ -651,7 +651,7 @@ def plotProfilesGrid(
         plotFunc = None # default function is contourf()
         pressLabel = "Pressure (dbar)"
     else: 
-        plotFunc = "meshgrid" #TODO can we mask out nans for ADCP or are we stuck with the fill behavior?
+        plotFunc = "meshgrid"
         pressLabel = "Depth (m)"
 
     staticParam = variable_paramDict[paramNickname]['static']
@@ -699,28 +699,54 @@ def plotProfilesGrid(
                 pressLabel,
             )
         else: # ADCP routine
-            yi = baseDS[pressParam].T #transpose
-            zi = baseDS[Yparam].T #transpose
-            xiDT = baseDS.time
 
-            emptySlice, ax = plot_and_save_no_overlay_plots(
-                plotter,
-                yi,
-                zi,
-                xiDT,
-                colorMap,
-                spanString,
-                timeRef_deploy,
-                fileName_base,
-                fileNameList,
-                zMin,
-                zMax,
-                zMin_local,
-                zMax_local,
-                pressLabel,
-                plotFunc, # use meshgrid in place of contourf for ADCPs due to data density
-                staticParam,
-            )
+            try:
+                yi = baseDS[pressParam].T #transpose
+                zi = baseDS[Yparam].T #transpose
+                xiDT = baseDS.time
+
+                emptySlice, ax = plot_and_save_no_overlay_plots(
+                    plotter,
+                    yi,
+                    zi,
+                    xiDT,
+                    colorMap,
+                    spanString,
+                    timeRef_deploy,
+                    fileName_base,
+                    fileNameList,
+                    zMin,
+                    zMax,
+                    zMin_local,
+                    zMax_local,
+                    pressLabel,
+                    plotFunc, # use meshgrid in place of contourf for ADCPs due to data density
+                    staticParam,
+                )
+            except ValueError as e: # handle NaN coordinates being handled to meshgrid
+                logger.warning(f"NaNs encountered in coordinate values: {e}")
+                yi = baseDS[pressParam].T 
+                zi = baseDS[Yparam].T 
+                xiDT_masked = np.ma.masked_invalid(baseDS.time)
+
+                emptySlice, ax = plot_and_save_no_overlay_plots(
+                    plotter,
+                    yi,
+                    zi,
+                    xiDT_masked,
+                    colorMap,
+                    spanString,
+                    timeRef_deploy,
+                    fileName_base,
+                    fileNameList,
+                    zMin,
+                    zMax,
+                    zMin_local,
+                    zMax_local,
+                    pressLabel,
+                    plotFunc,
+                    staticParam,
+                )
 
     else:
         params = {'range':'full'}
@@ -1207,13 +1233,12 @@ def plotProfilesScatter(
     overlays = ['anno', 'clim', 'disc', 'flag', 'near', 'none']
     # Data Ranges
     ranges = ['full', 'standard', 'local']
-    # Descent Sensors
+    # Descent Sensors (only on descent)
     descentSamples = ['pco2_seawater','ph_seawater']
     # Drop nans
     logger.info(paramData)
     #paramData = paramData.where(paramData[Xparam].notnull().compute(),drop=True) #TODO mem bug?
 
-    # yLabel
     yLabel = 'pressure, m'
     
     if Xparam in descentSamples:
