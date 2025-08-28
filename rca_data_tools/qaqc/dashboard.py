@@ -700,7 +700,6 @@ def plotProfilesGrid(
             )
         else: # ADCP routine
 
-            try:
                 yi = baseDS[pressParam].T #transpose
                 zi = baseDS[Yparam].T #transpose
                 xiDT = baseDS.time
@@ -709,7 +708,7 @@ def plotProfilesGrid(
                     plotter,
                     yi,
                     zi,
-                    xiDT,
+                    xiDT, #TODO deal with nans in x and y coords going to meshgrid
                     colorMap,
                     spanString,
                     timeRef_deploy,
@@ -721,34 +720,6 @@ def plotProfilesGrid(
                     zMax_local,
                     pressLabel,
                     plotFunc, # use meshgrid in place of contourf for ADCPs due to data density
-                    staticParam,
-                )
-            except ValueError as e: # handle nan coordinates being handled to meshgrid
-                logger.warning(f"NaNs encountered in coordinate values: {e}")
-                yi = baseDS[pressParam].T 
-                zi = baseDS[Yparam].T
-                # mask and remove nans in time coordinates
-                x_mask = ~np.isnan(baseDS.time)
-                y_mask = ~np.isnan(yi)
-                xiDT_clean = baseDS.time[x_mask]
-                yi_clean = yi[y_mask]
-
-                emptySlice, ax = plot_and_save_no_overlay_plots(
-                    plotter,
-                    yi_clean,
-                    zi,
-                    xiDT_clean,
-                    colorMap,
-                    spanString,
-                    timeRef_deploy,
-                    fileName_base,
-                    fileNameList,
-                    zMin,
-                    zMax,
-                    zMin_local,
-                    zMax_local,
-                    pressLabel,
-                    plotFunc,
                     staticParam,
                 )
 
