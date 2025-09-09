@@ -1450,7 +1450,7 @@ def plotProfilesScatter(
                 mask_post = (profileList['start'] > maskStart_post) & (profileList['end'] <= maskEnd_post)
                 profiles_post = profileList.loc[mask_post]
                 if len(profiles_post) > 0:
-                    for index,profile in profiles_post.iterrows():
+                    for index, profile in profiles_post.iterrows():
                         dataSlice = baseDS_post.sel(time=slice(profile[profileStart], profile[profileEnd]))
                         dataDict_post[profile['peak']] = {}
                         dataDict_post[profile['peak']]['scatterX'] = dataSlice[Xparam].values
@@ -1535,9 +1535,13 @@ def plotProfilesScatter(
                         plt.text(.01, .99, timeString, size=4, color='#12541f', ha='left', va='top', transform=ax.transAxes)
                         preText = True
                 if plot_post:
-                    scatterX_post = np.concatenate( [ dataDict_post[i]['scatterX'] for i in dataDict_post.keys() if (i.week == spanIter) ] )
-                    scatterY_post = np.concatenate( [ dataDict_post[i]['scatterY'] for i in dataDict_post.keys() if (i.week == spanIter) ] )
-                    scatterZ_post = np.concatenate( [ dataDict_post[i]['scatterZ'] for i in dataDict_post.keys() if (i.week == spanIter) ] )
+                    try:
+                        scatterX_post = np.concatenate( [ dataDict_post[i]['scatterX'] for i in dataDict_post.keys() if (i.week == spanIter) ] )
+                        scatterY_post = np.concatenate( [ dataDict_post[i]['scatterY'] for i in dataDict_post.keys() if (i.week == spanIter) ] )
+                        scatterZ_post = np.concatenate( [ dataDict_post[i]['scatterZ'] for i in dataDict_post.keys() if (i.week == spanIter) ] )
+                    except ValueError as e:
+                        logger.warning(f'ValueError concatenating post-deploy data for week {spanIter}: {e}')
+                        scatterX_post = []
                     if len(scatterX_post) > 0:
                         plt.scatter(scatterX_post,scatterY_post, s=1, c=scatterZ_post,cmap='Blues', rasterized=True)
                         timeString = np.datetime_as_string(scatterZ_post[0],unit='D')
