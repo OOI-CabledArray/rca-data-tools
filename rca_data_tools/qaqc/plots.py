@@ -214,9 +214,9 @@ def run_dashboard_creation(
                 overlayData_anno = {}
                 overlayData_anno = dashboard.loadAnnotations(site)
 
-                overlayData_disc = pd.DataFrame()
-                if int(span) == 0:
-                    overlayData_disc = discrete.extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
+                overlayData_disc = pd.DataFrame() #TODO clean up after we descide of final discrete data solution
+                # if int(span) == 0:
+                #     overlayData_disc = discrete.extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
 
                 if "PROFILER" in plotInstrument:
                     profileList = dashboard.loadProfiles(site)
