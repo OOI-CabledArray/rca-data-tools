@@ -1526,9 +1526,13 @@ def plotProfilesScatter(
                 fig, ax = setPlot()
                 plotOverlay = False
                 if plot_pre:
-                    scatterX_pre = np.concatenate( [ dataDict_pre[i]['scatterX'] for i in dataDict_pre.keys() if (i.week == spanIter) ] )
-                    scatterY_pre = np.concatenate( [ dataDict_pre[i]['scatterY'] for i in dataDict_pre.keys() if (i.week == spanIter) ] )
-                    scatterZ_pre = np.concatenate( [ dataDict_pre[i]['scatterZ'] for i in dataDict_pre.keys() if (i.week == spanIter) ] )
+                    try:
+                        scatterX_pre = np.concatenate( [ dataDict_pre[i]['scatterX'] for i in dataDict_pre.keys() if (i.week == spanIter) ] )
+                        scatterY_pre = np.concatenate( [ dataDict_pre[i]['scatterY'] for i in dataDict_pre.keys() if (i.week == spanIter) ] )
+                        scatterZ_pre = np.concatenate( [ dataDict_pre[i]['scatterZ'] for i in dataDict_pre.keys() if (i.week == spanIter) ] )
+                    except ValueError as e:
+                        logger.warning(f'ValueError concatenating pre-deploy data for week {spanIter}: {e}')
+                        scatterX_pre = []
                     if len(scatterX_pre) > 0:
                         plt.scatter(scatterX_pre,scatterY_pre, s=1, c=scatterZ_pre,cmap='Greens', rasterized=True)
                         timeString = np.datetime_as_string(scatterZ_pre[0],unit='D')
