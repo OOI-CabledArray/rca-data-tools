@@ -49,12 +49,14 @@ COMPUTE_EXCEPTIONS = {
         '30': '16vcpu_88gb',
         '7': '16vcpu_88gb',
         '1': '16vcpu_88gb',
+        '0': '16vcpu_88gb',
     },
     'CE02SHBP-LJ01D-07-VEL3DC108':{
         '365': '16vcpu_96gb',
         '30': '16vcpu_80gb',
         '7': '16vcpu_80gb',
         '1': '16vcpu_80gb',
+        '0': '16vcpu_80gb',
     },
     'RS03AXBS-MJ03A-12-VEL3DB301':{
         '365': '4vcpu_30gb',
@@ -137,15 +139,18 @@ COMPUTE_EXCEPTIONS = {
         '30': '8vcpu_60gb',
         '7': '8vcpu_60gb',
         '1': '8vcpu_60gb',
+        '0': '8vcpu_60gb',
     },
     'RS01SBPS-SF01A-3C-PARADA101':{
         '365': '8vcpu_60gb',
         '30': '8vcpu_60gb',
         '7': '8vcpu_60gb',
         '1': '8vcpu_60gb',
+        '0': '8vcpu_60gb',
     },
     'CE04OSPS-SF01B-3C-PARADA102':{
         '365': '4vcpu_30gb',
+        
     },
     # tmpsf
     'RS03ASHS-MJ03B-07-TMPSFA301':{
