@@ -133,7 +133,7 @@ COMPUTE_EXCEPTIONS = {
         '0': '4vcpu_30gb',
     },
     'RS03AXPS-PC03A-05-ADCPTD302':{
-        '0': '4vcpu_30gb',
+        '0': '8vcpu_60gb',
     },
     # vadcp
     'RS01SBPS-PC01A-06-VADCPB101':{
