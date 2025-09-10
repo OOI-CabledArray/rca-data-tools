@@ -110,7 +110,7 @@ COMPUTE_EXCEPTIONS = {
     'RS01SUM2-MJ01B-12-ADCPSK101':{
         '365': '4vcpu_30gb',
         '30': '4vcpu_30gb',
-        '0': '4vcpu_30gb',
+        '0': '8vcpu_60gb',
     },
     'CE02SHBP-LJ01D-05-ADCPTB104':{
         '365': '4vcpu_30gb',
@@ -122,11 +122,17 @@ COMPUTE_EXCEPTIONS = {
     'RS03AXBS-LJ03A-10-ADCPTE303':{
         '365': '4vcpu_30gb',
         '30': '4vcpu_30gb',
-        '0': '4vcpu_30gb',
+        '0': '8vcpu_60gb',
     },
     'CE04OSBP-LJ01C-05-ADCPSI103':{
         '365': '4vcpu_30gb',
         '30': '4vcpu_30gb',
+        '0': '8vcpu_60gb',
+    },
+    'RS01SBPS-PC01A-05-ADCPTD102':{
+        '0': '4vcpu_30gb',
+    },
+    'RS03AXPS-PC03A-05-ADCPTD302':{
         '0': '4vcpu_30gb',
     },
     # vadcp
@@ -163,6 +169,7 @@ COMPUTE_EXCEPTIONS = {
     'RS03ASHS-MJ03B-07-TMPSFA301':{
         '365': '4vcpu_30gb',
     },
+    
 }
 
 # visual data constants
