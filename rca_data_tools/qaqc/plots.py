@@ -24,6 +24,7 @@ from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_i
 
 from rca_data_tools.qaqc.constants import (
     SPAN_DICT,
+    S3_BUCKET,
     variable_dict,
     variable_paramDict,
     multiParameter_dict,
@@ -389,7 +390,7 @@ def run_dashboard_creation(
     return plotList
 
 
-def organize_images(sync_to_s3=False, bucket_name="ooi-rca-qaqc-prod", fs_kwargs={}):
+def organize_images(sync_to_s3=False, bucket_name=S3_BUCKET, fs_kwargs={}):
     for i in PLOT_DIR.iterdir():
         if i.is_file():
             if i.suffix == ".png" or i.suffix == ".svg":
