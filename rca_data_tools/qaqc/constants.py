@@ -130,7 +130,7 @@ COMPUTE_EXCEPTIONS = {
         '0': '8vcpu_60gb',
     },
     'RS01SBPS-PC01A-05-ADCPTD102':{
-        '0': '4vcpu_30gb',
+        '0': '8vcpu_60gb',
     },
     'RS03AXPS-PC03A-05-ADCPTD302':{
         '0': '8vcpu_60gb',
