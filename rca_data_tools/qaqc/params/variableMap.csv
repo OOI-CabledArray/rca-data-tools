@@ -9,7 +9,7 @@ chlorophyll,"""fluorometric_chlorophyll_a,flntu_x_mmp_cds_fluorometric_chlorophy
 cdom,"""fluorometric_cdom,flcdr_x_mmp_cds_fluorometric_cdom"""
 backscatter,"""optical_backscatter,flntu_x_mmp_cds_bback_total"""
 total_volume_scattering,"""flntu_x_mmp_cds_total_volume_scattering_coefficient"""
-nitrate,"""nitrate_concentration"""
+nitrate,"""nitrate_concentration,salinity_corrected_nitrate"""
 par,"""par_counts_output"""
 pco2,"""pco2_seawater"""
 ph,"""ph_seawater"""
