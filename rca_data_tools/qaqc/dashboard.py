@@ -147,7 +147,26 @@ def extractClim(timeRef, profileDepth, overlayData_clim):
 
 
 
-def gridProfiles(ds,pressureName,variableName,profileIndices,profileDepth,profileDepthGrid):
+def gridProfiles(ds, pressureName, variableName, profileIndices, profileDepth, profileDepthGrid):
+    """
+    Interpolate profiles onto a pressure grid for contour plotting.
+
+    Args:
+        ds (xarray.Dataset): Input dataset containing profile data.
+        pressureName (str): Name of the pressure variable in `ds`.
+        variableName (str): Name of the data variable in `ds` to interpolate.
+        profileIndices (pandas.DataFrame): DataFrame of profile indices 
+            (start, peak, end) for each profile.
+        profileDepth (float): Maximum depth of profiles at the site.
+        profileDepthGrid (float): Grid spacing for the depth axis 
+            (e.g., 0.5 m shallow, 5 m deep).
+    
+    Returns:
+        tuple: A tuple containing three elements:
+            - gridX (numpy.ndarray): 1D array of time values the length of the number of profiles.
+            - gridY (numpy.ndarray): 1D array of depth values for the pressure grid.
+            - gridZ (numpy.ndarray): 2D array of interpolated variable values on the (depth, time) grid.
+    """
 
     mask = (profileIndices['start'] > ds.time[0].values) & (profileIndices['end'] <= ds.time[-1].values)
     profileIndices = profileIndices.loc[mask]
@@ -202,7 +221,7 @@ def gridProfiles(ds,pressureName,variableName,profileIndices,profileDepth,profil
             else:
                 gridZ[:,index] = np.nan
 
-    return(gridX,gridY,gridZ)
+    return(gridX, gridY, gridZ)
 
     
 def loadDeploymentHistory(refDes):
@@ -1028,7 +1047,7 @@ def create_interpolation_grid(
     if yMax > 300:
         profileDepthGrid = 5
     else:
-        profileDepthGrid = 0.5
+        profileDepthGrid = 0.5 # half meter spacing for depth axis on shallow profilers
     xMinTimestamp = xMin.timestamp()
     xMaxTimestamp = xMax.timestamp()
     if profileList.empty:
@@ -1058,7 +1077,7 @@ def create_interpolation_grid(
             profileDepth = yMax
         else:
             profileDepth = 190
-        xi_arr, yi_arr, zi = gridProfiles(baseDS,pressParam,Yparam,profileList,profileDepth,profileDepthGrid)
+        xi_arr, yi_arr, zi = gridProfiles(baseDS, pressParam, Yparam, profileList, profileDepth, profileDepthGrid)
         if xi_arr.shape[0] == 1:
             logger.info('error with gridding profiles...interpolating with old method...')
                 # x grid in seconds, with points every 1 hour (3600 seconds)

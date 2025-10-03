@@ -265,7 +265,7 @@ def run_dashboard_creation(
                             plotInstrument,
                         )
                         plotList.append(plots)
-                        if "ADCP" not in plotInstrument:  # TODO try to minimize new if blocks
+                        if "ADCP" not in plotInstrument:
                             plots = dashboard.plotProfilesScatter(
                                 Yparam,
                                 param,
