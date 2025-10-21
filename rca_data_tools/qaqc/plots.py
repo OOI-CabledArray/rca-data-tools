@@ -11,6 +11,7 @@ from dateutil import parser
 import gc
 import os
 import fsspec
+import time
 import pandas as pd
 from typing import List
 import xarray as xr
@@ -467,7 +468,7 @@ def delete_outdated_images(
 
 
 def delete_outdated_annotations(
-    site: str,  # instrument
+    site: str,
     span_string: str,
     sync_to_s3: bool,
     bucket_name: str,
@@ -475,9 +476,9 @@ def delete_outdated_annotations(
 ) -> None:
 
     logger = select_logger()
+    time.sleep(1) # allow s3 time to reflect newly updated files
 
     if sync_to_s3:
-        # TODO could turn this an delete_outdated imgs into a single function.
         site_prefix = site.split("-")[0]
         existing_instrument_files = s3fs.glob(
             f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*"
