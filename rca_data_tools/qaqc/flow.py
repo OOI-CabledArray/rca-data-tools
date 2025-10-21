@@ -115,7 +115,7 @@ def qaqc_pipeline_flow(
     site: str,
     timeString: str,
     span: str='1',
-    threshold: int=1000000,
+    threshold: int=5000000,
     stage: int=None,
     # cloud args
     fs_kwargs: dict={},
