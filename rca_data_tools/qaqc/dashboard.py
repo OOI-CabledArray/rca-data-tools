@@ -37,7 +37,7 @@ from scipy.interpolate import griddata
 import textwrap as tw
 import xml.etree.ElementTree as et
 
-from rca_data_tools.qaqc.utils import select_logger, save_fig
+from rca_data_tools.qaqc.utils import select_logger, save_fig, get_s3_kwargs
 from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict
 INPUT_BUCKET = "ooi-data/"
 
@@ -45,7 +45,7 @@ INPUT_BUCKET = "ooi-data/"
 def loadAnnotations(site):
     logger = select_logger()
     anno = {}
-    fs = s3fs.S3FileSystem()
+    fs = s3fs.S3FileSystem(**get_s3_kwargs())
     annoFile = INPUT_BUCKET + 'annotations/' + site + '.json'
     if fs.exists(annoFile):
         anno_store = fs.open(annoFile)
@@ -393,7 +393,7 @@ def loadStatus():
 
 
 def loadData(site, sites_dict):
-    fs = s3fs.S3FileSystem()
+    fs = s3fs.S3FileSystem(**get_s3_kwargs())
     zarrDir = INPUT_BUCKET + sites_dict[site]['zarrFile']
     zarr_store = fs.get_mapper(zarrDir)
     # TODO: only request parameters listed in sites_dict[site][dataParameters]?
