@@ -45,7 +45,7 @@ INPUT_BUCKET = "ooi-data/"
 def loadAnnotations(site):
     logger = select_logger()
     anno = {}
-    fs = s3fs.S3FileSystem(anon=True)
+    fs = s3fs.S3FileSystem()
     annoFile = INPUT_BUCKET + 'annotations/' + site + '.json'
     if fs.exists(annoFile):
         anno_store = fs.open(annoFile)
@@ -393,7 +393,7 @@ def loadStatus():
 
 
 def loadData(site, sites_dict):
-    fs = s3fs.S3FileSystem(anon=True)
+    fs = s3fs.S3FileSystem()
     zarrDir = INPUT_BUCKET + sites_dict[site]['zarrFile']
     zarr_store = fs.get_mapper(zarrDir)
     # TODO: only request parameters listed in sites_dict[site][dataParameters]?
