@@ -56,7 +56,7 @@ def create_local_index():
     plotsmapper = fsspec.get_mapper(str(PLOTSDIR))
     hitlmapper = fsspec.get_mapper(str(HITLDIR))
     plots_index = [
-        item for item in plotsmapper.keys() if item.endswith('.png', 'svg')
+        item for item in plotsmapper.keys() if item.endswith(('.png', 'svg'))
     ]
     hitl_index = [item for item in hitlmapper.keys() if item.endswith('.csv')]
 
