@@ -1218,7 +1218,7 @@ def plotProfilesScatter(
     statusDict,
     site,
     ):
-    
+    """Scatter plots for the dashboard's profiler views"""
     plt.ioff()
     dpi=200
     fileNameList = []
@@ -1816,7 +1816,7 @@ def plotScatter(
     statusDict,
     site,
 ):
-    # Initiate fileName list
+    """Scatter plots for the dashboard's fixed depth and colormap (default) view"""
     fileNameList = []
 
     # Plot Overlays
