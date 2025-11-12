@@ -752,9 +752,9 @@ def plotProfilesGrid(
         fileNameList.append(fileName + '_standard.png')
         profilePlot.savefig(fileName + '_local.png', dpi=300)
         fileNameList.append(fileName + '_local.png')
-        emptySlice = 'yes'
+        emptySlice = True
 
-    if 'no' in emptySlice:
+    if not emptySlice:
         for overlay in overlays:
             if 'anno' in overlay:
                 if overlayData_anno:
@@ -1152,7 +1152,7 @@ def plot_and_save_no_overlay_plots(
             fileNameList.append(fileName + '_standard.png')
             profilePlot.savefig(fileName + '_local.png', dpi=300)
             fileNameList.append(fileName + '_local.png')
-            emptySlice = 'no'
+            emptySlice = False
         else: # for all other parameters
             params = {'range':'full'}
             profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
@@ -1177,7 +1177,7 @@ def plot_and_save_no_overlay_plots(
                 plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
             profilePlot.savefig(fileName + '_local.png', dpi=300)
             fileNameList.append(fileName + '_local.png')
-            emptySlice = 'no'
+            emptySlice = False
     else:
         params = {'range':'full'}
         profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, pressLabel, plotFunc,)
@@ -1188,7 +1188,7 @@ def plot_and_save_no_overlay_plots(
         fileNameList.append(fileName + '_standard.png')
         profilePlot.savefig(fileName + '_local.png', dpi=300)
         fileNameList.append(fileName + '_local.png')
-        emptySlice = 'yes'
+        emptySlice = True
     
     return emptySlice, ax
 
@@ -1917,7 +1917,7 @@ def plotScatter(
     if ('small' in plotMarkerSize) & (len(scatterX) < 1000):
         plotMarkerSize = 'medium'
     fig, ax = setPlot()
-    emptySlice = 'no'
+    emptySlice = False
     if 'large' in plotMarkerSize:
         plt.plot(scatterX, scatterY, '.', color=lineColors[0], markersize=2)
     elif 'medium' in plotMarkerSize:
@@ -1933,7 +1933,7 @@ def plotScatter(
         plt.annotate(
             'No Data Available', xy=(0.3, 0.5), xycoords='axes fraction'
         )
-        emptySlice = 'yes'
+        emptySlice = True
         plt.xlim(xMin, xMax)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="2%", pad=0.05)
@@ -1964,7 +1964,7 @@ def plotScatter(
                 plotYmin = plotYranges[plotRange]['yMin']
                 plotYmax = plotYranges[plotRange]['yMax']
                 fig, ax = setPlot()
-                if 'no' in emptySlice:
+                if not emptySlice:
                     if 'large' in plotMarkerSize:
                         plt.plot(scatterX, scatterY, '.', color=lineColors[0], markersize=2, rasterized=True)
                     elif 'medium' in plotMarkerSize:
@@ -1974,7 +1974,7 @@ def plotScatter(
                     if 'deploy' in spanString:
                         plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.', rasterized=True)
                     plt.xlim(xMin, xMax)
-                if 'yes' in emptySlice:
+                if emptySlice:
                     plt.annotate(
                         'No Data Available', xy=(0.3, 0.5), xycoords='axes fraction'
                     )
@@ -2117,7 +2117,7 @@ def plotScatter(
         if 'clim' in overlay:
             # add climatology trace
             print('adding climatology trace to plot')
-            if 'no' in emptySlice:
+            if not emptySlice:
                 fig, ax = setPlot()
                 plt.xlim(xMin, xMax)
                 if not overlayData_clim.empty:
@@ -2232,7 +2232,7 @@ def plotScatter(
         if 'flag' in overlay:
             # highlight flagged data points
             print('adding flagged data overlay to plot')
-            if 'no' in emptySlice:
+            if not emptySlice:
                 fig, ax = setPlot()
                 plt.xlim(xMin, xMax)
                 legendString = 'all data'
