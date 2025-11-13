@@ -393,7 +393,7 @@ def loadData(site, sites_dict):
     fs = s3fs.S3FileSystem(**get_s3_kwargs())
     zarrDir = INPUT_BUCKET + sites_dict[site]['zarrFile']
     zarr_store = fs.get_mapper(zarrDir)
-    # TODO: only request parameters listed in sites_dict[site][dataParameters]?
+    # NOTE: in future only request parameters listed in sites_dict[site][dataParameters]?
     # requestParams = sites_dict[site]['dataParameters'].strip('"').split(',')
     ds = xr.open_zarr(zarr_store, consolidated=True)
 
@@ -725,7 +725,7 @@ def plotProfilesGrid(
                     plotter,
                     yi,
                     zi,
-                    xiDT, #TODO deal with nans in x and y coords going to meshgrid
+                    xiDT, # can cause problems if nans in x and y coords go into meshgrid
                     colorMap,
                     spanString,
                     timeRef_deploy,
@@ -1203,7 +1203,8 @@ def plotProfilesScatter(
     descentSamples = ['pco2_seawater','ph_seawater']
     # Drop nans
     logger.info(paramData)
-    #paramData = paramData.where(paramData[Xparam].notnull().compute(),drop=True) #TODO mem bug?
+    #paramData = paramData.where(paramData[Xparam].notnull().compute(),drop=True) #TODO 
+    # this was commented out for mem bug ask Wendi about bringing in back + consequences?
 
     yLabel = 'pressure, m'
     
@@ -1308,6 +1309,7 @@ def plotProfilesScatter(
         elif 'flag' in overlay:
             qcDS = overlayData_flag.sel(time=slice(timeSpan[0], timeSpan[1]))
             qcDS = retrieve_qc(qcDS)
+             # TODO if homebrew_qartod: block goes here, overwriting qcDS with homebrew qartod array
             flags = {
                     'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
                     'qartod_climatology':{'symbol':'x','param':'_qartod_executed_climatology_test'},
@@ -2223,6 +2225,7 @@ def plotScatter(
                 print(qcDS)
                 # retrieve flags
                 qcDS = retrieve_qc(qcDS)
+                # TODO if homebrew_qartod: block goes here, overwriting qcDS with homebrew qartod array
                 flags = {
                     'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
                     'qartod_climatology':{'symbol':'x','param':'_qartod_executed_climatology_test'},

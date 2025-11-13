@@ -241,3 +241,21 @@ def opt_estimate_chl_poc(optaa, coeffs, chl_line_height=0.020):
 
     return optaa
 
+
+class QartodRunner:
+    def __init__(
+        self,
+        ds,
+        qartod_ds, # passsed from dashboard.retrieve_qc to model what qartod output arrays should look like 
+        qc_flags, # flags ie {'qartod_grossRange': {'symbol': '+', 'param': '_qartod_executed_gross_range_test'}, 'qartod_climatology': {'symbol': 'x', 'param': '_qartod_executed_climatology_test'}, 'qc': {'symbol': 's', 'param': '_qc_summary_flag'
+
+    ):
+        #pseudocode 
+        # take in param ds and live qartod ds 
+        # read in qartod tables from RCA qartod staging 
+        # run the actual tests with those staging values from qartod-staging 
+        # output an array that looks like qartod_ds but maybe without qc flags vars (just qartod)
+        # then return a qartod_ds da with the homebrewed qartod results, 
+        # plop in an alternate bucket? 
+        # view with alternate deployment of frontend that requires VPN #TODO
+        pass

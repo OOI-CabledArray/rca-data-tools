@@ -427,7 +427,7 @@ def delete_outdated_images(
     bucket_name: str,
     s3fs: fsspec.filesystem,
 ) -> None:
-    # TODO this may not be working when annotation files are involved - are they piped to plot_list?
+    # NOTE this may not be working when annotation files are involved - are they piped to plot_list?
     logger = select_logger()
 
     if sync_to_s3:

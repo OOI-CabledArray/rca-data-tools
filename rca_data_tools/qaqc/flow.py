@@ -147,7 +147,7 @@ def qaqc_pipeline_flow(
             threshold=threshold,
             stage=stage,
         )
-    # TODO pipe this up, but don't want to break anything before vacation
+        
     fs_kwargs = get_s3_kwargs()
     S3FS = fsspec.filesystem('s3', **fs_kwargs)
     # Delete outdated profile and annotation images
