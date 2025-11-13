@@ -522,7 +522,7 @@ def plotProfilesGrid(
 
     # Initiate fileName list
     fileNameList = []
-   
+    dpi = 300
     # Plot Overlays
     overlays = ['clim', 'anno', 'none']
 
@@ -716,6 +716,7 @@ def plotProfilesGrid(
                 zMin_local,
                 zMax_local,
                 pressLabel,
+                dpi,
             )
         else: # ADCP routine
 
@@ -738,20 +739,16 @@ def plotProfilesGrid(
                     zMin_local,
                     zMax_local,
                     pressLabel,
+                    dpi,
                     plotFunc, # use meshgrid in place of contourf for ADCPs due to data density
                     staticParam,
                 )
 
     else:
         params = {'range':'full'}
-        profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params, pressLabel)
+        profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params, pressLabel)
         fileName = fileName_base + '_' + spanString + '_' + 'none'
-        profilePlot.savefig(fileName + '_full.png', dpi=300)
-        fileNameList.append(fileName + '_full.png')
-        profilePlot.savefig(fileName + '_standard.png', dpi=300)
-        fileNameList.append(fileName + '_standard.png')
-        profilePlot.savefig(fileName + '_local.png', dpi=300)
-        fileNameList.append(fileName + '_local.png')
+        save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
         emptySlice = True
 
     if not emptySlice:
@@ -929,12 +926,8 @@ def plotProfilesGrid(
                         params = {'range':'full'}
                         profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'Error gridding climatology data', params, pressLabel)
                         fileName = fileName_base + '_' + spanString + '_' + 'clim'
-                        profilePlot.savefig(fileName + '_full.png', dpi=300)
-                        fileNameList.append(fileName + '_full.png')
-                        profilePlot.savefig(fileName + '_standard.png', dpi=300)
-                        fileNameList.append(fileName + '_standard.png')
-                        profilePlot.savefig(fileName + '_local.png', dpi=300)
-                        fileNameList.append(fileName + '_local.png')
+                        save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
+              
                     else:
                         maxLim = max(
                             abs(np.nanmin(climDiff)), abs(np.nanmax(climDiff))
@@ -1002,12 +995,7 @@ def plotProfilesGrid(
                     params = {'range':'full'}
                     profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'No Climatology Data Available', params, pressLabel)
                     fileName = fileName_base + '_' + spanString + '_' + 'clim'
-                    profilePlot.savefig(fileName + '_full.png', dpi=300)
-                    fileNameList.append(fileName + '_full.png')
-                    profilePlot.savefig(fileName + '_standard.png', dpi=300)
-                    fileNameList.append(fileName + '_standard.png')
-                    profilePlot.savefig(fileName + '_local.png', dpi=300)
-                    fileNameList.append(fileName + '_local.png')
+                    save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
 
 
     else:
@@ -1017,12 +1005,7 @@ def plotProfilesGrid(
         for overlay in overlays:
             if 'none' not in overlay:
                 fileName = fileName_base + '_' + spanString + '_' + overlay
-                profilePlot.savefig(fileName + '_full.png', dpi=300)
-                fileNameList.append(fileName + '_full.png')
-                profilePlot.savefig(fileName + '_standard.png', dpi=300)
-                fileNameList.append(fileName + '_standard.png')
-                profilePlot.savefig(fileName + '_local.png', dpi=300)
-                fileNameList.append(fileName + '_local.png')
+                save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
 
     return fileNameList
 
@@ -1135,6 +1118,7 @@ def plot_and_save_no_overlay_plots(
     zMin_local,
     zMax_local,
     pressLabel,
+    dpi,
     plotFunc=None,
     staticParam=False,
 ):
@@ -1146,13 +1130,9 @@ def plot_and_save_no_overlay_plots(
             if 'deploy' in spanString:
                 plt.axvline(timeRef_deploy, linewidth=1, color='k', linestyle='-.')
             fileName = fileName_base + '_' + spanString + '_' + 'none'
-            profilePlot.savefig(fileName + '_full.png', dpi=300)
-            fileNameList.append(fileName + '_full.png')
-            profilePlot.savefig(fileName + '_standard.png', dpi=300)
-            fileNameList.append(fileName + '_standard.png')
-            profilePlot.savefig(fileName + '_local.png', dpi=300)
-            fileNameList.append(fileName + '_local.png')
+            save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
             emptySlice = False
+
         else: # for all other parameters
             params = {'range':'full'}
             profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
@@ -1182,12 +1162,7 @@ def plot_and_save_no_overlay_plots(
         params = {'range':'full'}
         profilePlot, ax = plotter(0, 0, 0, 'empty', colorMap, 'Insufficient Profiles Found For Gridding', params, pressLabel, plotFunc,)
         fileName = fileName_base + '_' + spanString + '_' + 'none'
-        profilePlot.savefig(fileName + '_full.png', dpi=300)
-        fileNameList.append(fileName + '_full.png')
-        profilePlot.savefig(fileName + '_standard.png', dpi=300)
-        fileNameList.append(fileName + '_standard.png')
-        profilePlot.savefig(fileName + '_local.png', dpi=300)
-        fileNameList.append(fileName + '_local.png')
+        save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
         emptySlice = True
     
     return emptySlice, ax
