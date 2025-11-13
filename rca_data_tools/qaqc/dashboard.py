@@ -1818,7 +1818,7 @@ def plotScatter(
 ):
     """Scatter plots for the dashboard's fixed depth and colormap (default) view"""
     fileNameList = []
-
+    dpi = 300
     # Plot Overlays
     overlays = ['anno','clim','disc', 'flag', 'near', 'time', 'none']
 
@@ -1942,14 +1942,11 @@ def plotScatter(
     cax.set_xticks([])
     cax.set_yticks([])
     fileName = fileName_base + '_' + spanString + '_' + 'none'
-    fig.savefig(fileName + '_full.png', dpi=300)
-    fileNameList.append(fileName + '_full.png')
+    save_fig(fig, fileNameList, fileName, dpi, ['_full'])
     ax.set_ylim(yMin, yMax)
-    fig.savefig(fileName + '_standard.png', dpi=300)
-    fileNameList.append(fileName + '_standard.png')
+    save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
     ax.set_ylim(yMin_local, yMax_local)
-    fig.savefig(fileName + '_local.png', dpi=300)
-    fileNameList.append(fileName + '_local.png')
+    save_fig(fig, fileNameList, fileName, dpi, ['_local'])
 
     plotYranges={}
     plotYranges['full']={'yMin': ylim_full[0], 'yMax':ylim_full[1]}
@@ -2014,15 +2011,15 @@ def plotScatter(
                             annoText.set_gid(f'label_{i}')
                             i += 1
                         f=io.BytesIO()
-                        plt.savefig(f, format="svg",dpi=300)
+                        plt.savefig(f, format="svg",dpi=dpi)
                         fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
                         saveAnnos_SVG(annoLines,f,fileName)
                     else:
                         fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
-                        plt.savefig(fileName + '.png', dpi=300)
+                        plt.savefig(fileName + '.png', dpi=dpi)
                 else:
                     fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
-                    plt.savefig(fileName + '.png', dpi=300)
+                    plt.savefig(fileName + '.png', dpi=dpi)
 
 
         if 'time' in overlay:
@@ -2105,14 +2102,11 @@ def plotScatter(
             cax.set_xticks([])
             cax.set_yticks([])
             fileName = fileName_base + '_' + spanString + '_' + overlay
-            fig.savefig(fileName + '_full.png', dpi=300)
-            fileNameList.append(fileName + '_full.png')
+            save_fig(fig, fileNameList, fileName, dpi, ['_full'])
             ax.set_ylim(yMin, yMax)
-            fig.savefig(fileName + '_standard.png', dpi=300)
-            fileNameList.append(fileName + '_standard.png')
+            save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
             ax.set_ylim(yMin_local, yMax_local)
-            fig.savefig(fileName + '_local.png', dpi=300)
-            fileNameList.append(fileName + '_local.png')
+            save_fig(fig, fileNameList, fileName, dpi, ['_local'])
 
         if 'clim' in overlay:
             # add climatology trace
@@ -2169,14 +2163,11 @@ def plotScatter(
                 cax.set_xticks([])
                 cax.set_yticks([])
                 fileName = fileName_base + '_' + spanString + '_' + 'clim'
-                fig.savefig(fileName + '_full.png', dpi=300)
-                fileNameList.append(fileName + '_full.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                 ax.set_ylim(yMin, yMax)
-                fig.savefig(fileName + '_standard.png', dpi=300)
-                fileNameList.append(fileName + '_standard.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                 ax.set_ylim(yMin_local, yMax_local)
-                fig.savefig(fileName + '_local.png', dpi=300)
-                fileNameList.append(fileName + '_local.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_local'])
 
         if 'near' in overlay:
             # add nearest neighbor data traces
@@ -2217,15 +2208,11 @@ def plotScatter(
                             cax.set_xticks([])
                             cax.set_yticks([])
                         fileName = fileName_base + '_' + spanString + '_' + 'disc' 
-                        fig.savefig(fileName + '_full.png', dpi=300)
-                        fileNameList.append(fileName + '_full.png')
+                        save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                         ax.set_ylim(yMin, yMax)
-                        fig.savefig(fileName + '_standard.png', dpi=300)   
-                        fileNameList.append(fileName + '_standard.png')
+                        save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                         ax.set_ylim(yMin_local, yMax_local)
-                        fig.savefig(fileName + '_local.png', dpi=300)
-                        fileNameList.append(fileName + '_local.png')
-
+                        save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                         
 
 
@@ -2259,7 +2246,7 @@ def plotScatter(
                 elif 'small' in plotMarkerSize:
                     flagMarker = 0.25
                     plt.plot(scatterX, scatterY, ',', color=lineColors[0], label='%s' % legendString,)
-                # slice overlayData_flag
+                # slice overlayData_flag so we're not working on whole dataset
                 qcDS = overlayData_flag.sel(time=slice(startDate, endDate))
                 print(qcDS)
                 # retrieve flags
@@ -2274,18 +2261,18 @@ def plotScatter(
                     flagString = Yparam + flags[flagType]['param']
                     print(flagString)
                     if flagString in qcDS:
-                        print('paramters found for ',flagString)
+                        print(f'paramters found for {flagString}')
                         flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'y'}}
                         for level in flagStatus.keys():
-                            flaggedDS = qcDS.where((qcDS[flagString] == flagStatus[level]['value']).compute(), drop=True)
-                            flag_X = flaggedDS.time.values
+                            flaggedDS = qcDS.where((qcDS[flagString] == flagStatus[level]['value']).compute(), drop=True) # find where the flags DS matches a certain flag status
+                            flag_X = flaggedDS.time.values # flagged times
                             if len(flag_X) > 0:
                                 n = len(flag_X)
                                 legendString = f'{flagType} {level}: {n} points'
                                 flag_Y = flaggedDS[Yparam].values
                                 plt.plot(
-                                    flag_X,
-                                    flag_Y,
+                                    flag_X, # flagged times 
+                                    flag_Y, # flagged parameter values
                             	    flags[flagType]['symbol'],
                             	    color=flagStatus[level]['color'],
                             	    markersize=flagMarker,
@@ -2327,14 +2314,11 @@ def plotScatter(
                 cax.set_xticks([])
                 cax.set_yticks([])
                 fileName = fileName_base + '_' + spanString + '_' + 'flag'
-                fig.savefig(fileName + '_full.png', dpi=300)
-                fileNameList.append(fileName + '_full.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                 ax.set_ylim(yMin, yMax)
-                fig.savefig(fileName + '_standard.png', dpi=300)
-                fileNameList.append(fileName + '_standard.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                 ax.set_ylim(yMin_local, yMax_local)
-                fig.savefig(fileName + '_local.png', dpi=300)
-                fileNameList.append(fileName + '_local.png')
+                save_fig(fig, fileNameList, fileName, dpi, ['_local'] )
 
     return fileNameList
 
