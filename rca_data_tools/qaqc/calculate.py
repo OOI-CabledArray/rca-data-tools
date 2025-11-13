@@ -250,6 +250,10 @@ class QartodRunner:
         qc_flags, # flags ie {'qartod_grossRange': {'symbol': '+', 'param': '_qartod_executed_gross_range_test'}, 'qartod_climatology': {'symbol': 'x', 'param': '_qartod_executed_climatology_test'}, 'qc': {'symbol': 's', 'param': '_qc_summary_flag'
 
     ):
+        self.ds = ds
+        self.qartod_ds = qartod_ds
+        self.qc_flags = qc_flags
+
         #pseudocode 
         # take in param ds and live qartod ds 
         # read in qartod tables from RCA qartod staging 
@@ -258,4 +262,6 @@ class QartodRunner:
         # then return a qartod_ds da with the homebrewed qartod results, 
         # plop in an alternate bucket? 
         # view with alternate deployment of frontend that requires VPN #TODO
+
+        
         pass
