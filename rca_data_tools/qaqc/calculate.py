@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """calculate.py
 
 This module contains code for creating data products 

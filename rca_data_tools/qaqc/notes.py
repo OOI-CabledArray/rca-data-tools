@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """notes.py
 
 This module contains code for reading HITL notes from

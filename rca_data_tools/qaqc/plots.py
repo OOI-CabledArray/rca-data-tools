@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """plots.py
 
 This module contains code for plot creations from various instruments.

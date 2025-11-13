@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """discrete.py
 
 This module contains code for compiling and processing discrete bottle samples.

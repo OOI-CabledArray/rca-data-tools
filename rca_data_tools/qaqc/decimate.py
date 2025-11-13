@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """decimate.py
 
 This module contains code for performing LTTB decimation.
