@@ -242,6 +242,8 @@ stage3_dict = (
     .T.to_dict('series')
 )
 
+all_configs_dict = {**sites_dict, **stage2_dict, **stage3_dict}
+
 # create dictionary of parameter vs variable Name
 variable_dict = pd.read_csv(PARAMS_DIR.joinpath('variableMap.csv'), index_col=0).iloc[:, 0].to_dict()
 
