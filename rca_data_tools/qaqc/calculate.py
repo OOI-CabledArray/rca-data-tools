@@ -7,6 +7,8 @@ through OOI/M2M.
 """
 
 import numpy as np
+from rca_data_tools.qaqc.qartod import loadStagedQARTOD
+from rca_data_tools.qaqc.constants import all_configs_dict
 
 ### OPTAA functions
 
@@ -245,6 +247,8 @@ def opt_estimate_chl_poc(optaa, coeffs, chl_line_height=0.020):
 class QartodRunner:
     def __init__(
         self,
+        refdes,
+        param,
         ds,
         qartod_ds, # passsed from dashboard.retrieve_qc to model what qartod output arrays should look like 
         qc_flags, # flags ie {'qartod_grossRange': {'symbol': '+', 'param': '_qartod_executed_gross_range_test'}, 'qartod_climatology': {'symbol': 'x', 'param': '_qartod_executed_climatology_test'}, 'qc': {'symbol': 's', 'param': '_qc_summary_flag'
@@ -254,6 +258,15 @@ class QartodRunner:
         self.qartod_ds = qartod_ds
         self.qc_flags = qc_flags
 
+        if "FIXED" in all_configs_dict[refdes]['instrument']:
+            self.table_type = "fixed"
+        elif "PROFILER" in all_configs_dict[refdes]['instrument']:
+            self.table_type = "binned"
+
+        self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
+
+        
+        print("joes qartod class")
         #pseudocode 
         # take in param ds and live qartod ds 
         # read in qartod tables from RCA qartod staging 
@@ -265,3 +278,5 @@ class QartodRunner:
 
         
         pass
+
+ 

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
 from rca_data_tools.qaqc import discrete
-from rca_data_tools.qaqc import calculate
+from rca_data_tools.qaqc.qartod import loadQARTOD
 from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
 
 from rca_data_tools.qaqc.constants import (
@@ -206,7 +206,7 @@ def run_dashboard_creation(
                 overlayData_clim = {}
                 overlayData_grossRange = {}
                 sensorType = site.split("-")[3][0:5].lower()
-                (overlayData_grossRange, overlayData_clim) = dashboard.loadQARTOD(
+                (overlayData_grossRange, overlayData_clim) = loadQARTOD(
                     site, Yparam, sensorType, logger=logger
                 )
                 overlayData_near = {}
