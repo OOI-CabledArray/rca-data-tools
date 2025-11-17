@@ -265,7 +265,9 @@ class QartodRunner:
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
 
-        
+        def run_gross_range(self):
+            pass
+
         print("joes qartod class")
         #pseudocode 
         # take in param ds and live qartod ds 
@@ -275,7 +277,11 @@ class QartodRunner:
         # then return a qartod_ds da with the homebrewed qartod results, 
         # plop in an alternate bucket? 
         # view with alternate deployment of frontend that requires VPN #TODO
+        
 
+        # profileers need to have integrated tables for gross range, binned for climatology 
+        # skip binned gross range for now
+        # fixed instruments are just fixed for both 
         
         pass
 

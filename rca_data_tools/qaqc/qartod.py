@@ -4,7 +4,6 @@ import json
 import pandas as pd 
 
 from rca_data_tools.qaqc.utils import select_logger
-from rca_data_tools.qaqc.constants import all_configs_dict
 
 def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
 
