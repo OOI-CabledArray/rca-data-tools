@@ -7,7 +7,7 @@ frontend application.
 
 """
 
-import argparse
+import click
 import json
 import fsspec
 from rca_data_tools.qaqc.plots import PLOT_DIR as PLOTSDIR
@@ -18,7 +18,7 @@ INDEX_FILE = 'index.json'
 
 
 def create_cloud_index(
-    bucket_url=f"s3://{S3_BUCKET}",
+    bucket_url,
     storage_options={},
     logger=None,
 ):
@@ -64,19 +64,13 @@ def create_local_index():
     hitl_json.write_text(json.dumps(hitl_index))
 
 
-def parse_args():
-    arg_parser = argparse.ArgumentParser(description='QAQC Index Creator')
-
-    arg_parser.add_argument('--cloud', action="store_true")
-
-    return arg_parser.parse_args()
-
-
-def main():
+@click.command()
+@click.option('--cloud', is_flag=True, help='Create cloud index if set.')
+@click.option('--bucket', default=S3_BUCKET, help='Bucket name for cloud index if not default. (ie staging/test buckets)')
+def main(cloud, bucket):
     from loguru import logger
 
-    args = parse_args()
-    if args.cloud is True:
-        create_cloud_index(logger=logger)
+    if cloud:
+        create_cloud_index(bucket_url=f"s3://{bucket}", logger=logger)
     else:
         create_local_index()
