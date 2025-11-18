@@ -8,7 +8,7 @@ csv files to be displayed in the QAQC Dashboard.
 
 import os
 from datetime import datetime
-import argparse
+import click
 import gspread
 import pandas as pd
 import fsspec
@@ -20,7 +20,7 @@ from .pipeline import S3_BUCKET
 HITL_NOTES_DIR = Path('HITL_notes')
 
 
-def sync_s3(s3_bucket=f"s3://{S3_BUCKET}", storage_options={}):
+def sync_s3(s3_bucket, storage_options={}):
     fmap = fsspec.get_mapper(
         f"{s3_bucket}/{HITL_NOTES_DIR.name}", **storage_options
     )
@@ -172,21 +172,15 @@ def generate_tables(df_HITL: pd.DataFrame) -> None:
             ) as f:
                 f.write(csvTable)
 
-def parse_args():
-    arg_parser = argparse.ArgumentParser(
-        description='QAQC HITL Notes Generator'
-    )
-    arg_parser.add_argument('--service-json-path', type=str, required=True)
-    arg_parser.add_argument('--s3-sync', action="store_true")
 
-    return arg_parser.parse_args()
-
-
-def main():
-    args = parse_args()
+@click.command()
+@click.option('--service-json-path', type=str, required=True, help='Path to the service JSON file')
+@click.option('--s3-sync', is_flag=True, help='Enable S3 sync')
+@click.option('--bucket', default=S3_BUCKET, help='Bucket name for cloud index if not default. (ie staging/test buckets)')
+def main(service_json_path, s3_sync, bucket):
     logger.add("logfile_generate_tables_{time}.log")
     logger.info('HITL notes generation initiated')
-    fetch_creds(args.service_json_path)
+    fetch_creds(service_json_path)
     now = datetime.utcnow()
     logger.info("======= Generation started at: {} ======", now.isoformat())
     logger.info('Fetching logs from Google Sheets ...')
@@ -195,8 +189,8 @@ def main():
     HITL_NOTES_DIR.mkdir(exist_ok=True)
     logger.info('Writing csv files for HITL notes ...')
     generate_tables(df_HITL)
-    if args.s3_sync is True:
-        sync_s3()
+    if s3_sync:
+        sync_s3(s3_bucket=f"s3://{bucket}")
     end = datetime.utcnow()
     logger.info(
         "======= Generation finished at: {}. Time elapsed ({}) ======",
