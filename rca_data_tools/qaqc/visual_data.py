@@ -17,7 +17,7 @@ from rca_data_tools.qaqc.constants import (
     CAM_URL_DICT,
     N_EXPECTED_IMGS,
     PLOT_DIR,
-    plotDir,
+    plot_dir,
     stage3_dict,
 )
 from rca_data_tools.qaqc.utils import select_logger

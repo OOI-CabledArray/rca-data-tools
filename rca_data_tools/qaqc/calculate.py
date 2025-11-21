@@ -58,8 +58,8 @@ def opt_internal_temp(traw):
     c = 0.000000125741
 
     log_res = np.log(res)
-    degC = (1. / (a + b * log_res + c * log_res**3)) - 273.15
-    return degC
+    deg_c = (1. / (a + b * log_res + c * log_res**3)) - 273.15
+    return deg_c
 
 
 
@@ -107,8 +107,8 @@ def opt_external_temp(traw):
     c = -3.87065673e-03
     d = 95.8241397
 
-    degC = a * np.power(traw.astype('O'), 3) + b * np.power(traw.astype('O'), 2) + c * traw + d
-    return degC.astype(float)
+    deg_c = a * np.power(traw.astype('O'), 3) + b * np.power(traw.astype('O'), 2) + c * traw + d
+    return deg_c.astype(float)
 
 
 

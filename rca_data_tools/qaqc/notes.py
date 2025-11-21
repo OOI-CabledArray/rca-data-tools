@@ -66,8 +66,8 @@ def read_logs() -> pd.DataFrame:
 def generate_tables(df_HITL: pd.DataFrame) -> None:
     # Generate HITL status tables:
     # by Stage:
-    plotPages = {}
-    plotPages['Stage1'] = [
+    plot_pages = {}
+    plot_pages['Stage1'] = [
         'ADCP',
         'BOTPT',
         'CTD',
@@ -85,7 +85,7 @@ def generate_tables(df_HITL: pd.DataFrame) -> None:
         'VELPT',
     ]
 
-    plotPages['Stage2'] = [
+    plot_pages['Stage2'] = [
         'CAMHD',
         'OPTAA',
         'PREST',
@@ -95,7 +95,7 @@ def generate_tables(df_HITL: pd.DataFrame) -> None:
         'VEL3D',
         'ZPLSC',
     ]
-    plotPages['Stage3'] = [
+    plot_pages['Stage3'] = [
         'CAMDS',
         'HPIES',
         'HYDBB',
@@ -104,10 +104,10 @@ def generate_tables(df_HITL: pd.DataFrame) -> None:
         'OBSBB',
         'OBSSP',
     ]
-    plotPages['Stage4'] = ['FLOBNC', 'FLOBNM', 'OSMOIA', 'PPS', 'RAS', 'D1000']
+    plot_pages['Stage4'] = ['FLOBNC', 'FLOBNM', 'OSMOIA', 'PPS', 'RAS', 'D1000']
 
     # by Site:
-    plotPages['Sites'] = [
+    plot_pages['Sites'] = [
         'CEO2SHBP',
         'CE04OSBP',
         'CE04OSPD',
@@ -128,7 +128,7 @@ def generate_tables(df_HITL: pd.DataFrame) -> None:
     ]
 
     # by Platform
-    plotPages['Platforms'] = {
+    plot_pages['Platforms'] = {
         'BEP': ['BP'],
         'Deep-Profiler': ['DP0'],
         'Shallow-Profiler': ['SF0'],
@@ -145,32 +145,32 @@ def generate_tables(df_HITL: pd.DataFrame) -> None:
             'ASHS',
         ],
     }
-    for page in plotPages.keys():
-        for item in plotPages[page]:
+    for page in plot_pages.keys():
+        for item in plot_pages[page]:
             if any(ele in page for ele in ['Stage', 'Sites']):
                 df_logList = df_HITL[df_HITL.index.str.contains(item)]
             elif 'Platforms' in page:
                 df_logList = df_HITL[
-                    df_HITL.index.str.contains('|'.join(plotPages[page][item]))
+                    df_HITL.index.str.contains('|'.join(plot_pages[page][item]))
                 ]
             if not df_logList.empty:
                 # only keep the first column (most recent note)
                 df_logList = df_logList.iloc[:, 0]
-                csvTable = df_logList.to_csv(header=False)
+                csv_table = df_logList.to_csv(header=False)
                 with open(
                     HITL_NOTES_DIR.joinpath(f"HITL_{page}_{item}.csv"), "w"
                 ) as f:
-                    f.write(csvTable)
-    statusList = ['Watchlist', 'Failed', 'Harvest', 'Plotting', 'Pending']
-    for status in statusList:
+                    f.write(csv_table)
+    status_list = ['Watchlist', 'Failed', 'Harvest', 'Plotting', 'Pending']
+    for status in status_list:
         df_statusList = df_HITL[df_HITL[0].str.contains(status,case=False)]
         if not df_statusList.empty:
             df_statusList = df_statusList.iloc[:, 0]
-            csvTable = df_statusList.to_csv(header=False)
+            csv_table = df_statusList.to_csv(header=False)
             with open(
                 HITL_NOTES_DIR.joinpath(f"HITL_Status_{status}.csv"), "w"
             ) as f:
-                f.write(csvTable)
+                f.write(csv_table)
 
 
 @click.command()

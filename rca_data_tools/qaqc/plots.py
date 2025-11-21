@@ -26,29 +26,29 @@ from rca_data_tools.qaqc.constants import (
     SPAN_DICT,
     S3_BUCKET,
     variable_dict,
-    variable_paramDict,
-    multiParameter_dict,
-    localRange_dict,
-    deployedRange_dict,
+    variable_param_dict,
+    multi_parameter_dict,
+    local_range_dict,
+    deployed_range_dict,
     calculate_dict,
-    calculateStrings_dict,
-    discreteSample_dict,
-    plotDir,
+    calculate_strings_dict,
+    discrete_sample_dict,
+    plot_dir,
     PLOT_DIR,
 )
 
 # load status dictionary
-statusDict = dashboard.loadStatus()
+status_dict = dashboard.loadStatus()
 
 
-def extractMulti(ds, inst, multi_dict, fileParams):
-    multiParam = multi_dict[inst]["parameter"]
-    subParams = multi_dict[inst]["subParameters"].strip('"').split(",")
-    for i in range(0, len(subParams)):
-        newParam = multiParam + "_" + subParams[i]
-        ds[newParam] = ds[multiParam][:, i]
-        fileParams.append(newParam)
-    return ds, fileParams
+def extractMulti(ds, inst, multi_dict, file_params):
+    multi_param = multi_dict[inst]["parameter"]
+    sub_params = multi_dict[inst]["subParameters"].strip('"').split(",")
+    for i in range(0, len(sub_params)):
+        new_param = multi_param + "_" + sub_params[i]
+        ds[new_param] = ds[multi_param][:, i]
+        file_params.append(new_param)
+    return ds, file_params
 
 
 def map_concurrency(func, iterator, func_args=(), func_kwargs={}, max_workers=10):
@@ -66,90 +66,90 @@ def map_concurrency(func, iterator, func_args=(), func_kwargs={}, max_workers=10
 
 def run_dashboard_creation(
     site,
-    paramList,
-    timeRef,
-    plotInstrument,
+    param_list,
+    time_ref,
+    plot_instrument,
     span,
-    decimationThreshold,
-    stageDict,
+    decimation_threshold,
+    stage_dict,
 ):
     logger = select_logger()
     plt.switch_backend("Agg")  # run locally without changing anything else?
 
-    if isinstance(timeRef, str):
-        timeRef = parser.parse(timeRef)
+    if isinstance(time_ref, str):
+        time_ref = parser.parse(time_ref)
 
     # Ensure that plot dir is created!
     PLOT_DIR.mkdir(exist_ok=True)
 
     now = datetime.utcnow()
-    plotList = []
+    plot_list = []
     logger.info(f"site: {site}")
     logger.info(f"span: {span}")
 
-    spanString = SPAN_DICT[span]
+    span_string = SPAN_DICT[span]
     # load data for site
-    siteData = dashboard.loadData(site, stageDict)
-    siteData = coerce_qartod_executed_to_int(siteData)
+    site_data = dashboard.loadData(site, stage_dict)
+    site_data = coerce_qartod_executed_to_int(site_data)
 
-    fileParams = stageDict[site]["dataParameters"].strip('"').split(",")
-    allVar = list(siteData.keys())
-    # add qartod and qc flags to fileParams list
-    qcStrings = ["_qartod_", "_qc_"]
-    qcParams = [
+    file_params = stage_dict[site]["dataParameters"].strip('"').split(",")
+    all_var = list(site_data.keys())
+    # add qartod and qc flags to file_params list
+    qc_strings = ["_qartod_", "_qc_"]
+    qc_params = [
         var
-        for var in allVar
-        if any(sub in var for sub in fileParams)
-        if any(qc in var for qc in qcStrings)
+        for var in all_var
+        if any(sub in var for sub in file_params)
+        if any(qc in var for qc in qc_strings)
     ]
-    fileParams = fileParams + qcParams
+    file_params = file_params + qc_params
     # drop un-used variables from dataset
-    dropList = [item for item in allVar if item not in fileParams]
-    siteData = siteData.drop(dropList)
+    drop_list = [item for item in all_var if item not in file_params]
+    site_data = site_data.drop(drop_list)
     # some instruments have inactive bins for current deployment - ie ADCPs
     if site in deployedRange_dict.keys():
-        sliceCoord = deployedRange_dict[site]["sliceCoord"]
-        siteData = siteData.sel(
+        slice_coord = deployedRange_dict[site]["slice_coord"]
+        site_data = site_data.sel(
             {
-                sliceCoord: slice(
+                slice_coord: slice(
                     deployedRange_dict[site]["lowerB"], deployedRange_dict[site]["upperB"]
                 )
             }
         )
         logger.warning(
-            f"Not all {sliceCoord} coords of {site} "
+            f"Not all {slice_coord} coords of {site} "
             "are active on current deployment. Dataset is being subset to active coords."
         )
 
-    logger.info(f"site date array: {siteData}")
+    logger.info(f"site date array: {site_data}")
     # extract parameters from multi-dimensional array
-    if plotInstrument in multiParameter_dict.keys():
-        siteData, fileParams = extractMulti(
-            siteData, plotInstrument, multiParameter_dict, fileParams
+    if plot_instrument in multiParameter_dict.keys():
+        site_data, file_params = extractMulti(
+            site_data, plot_instrument, multiParameter_dict, file_params
         )
 
     if (
-        stageDict[site]["decimationAlgo"] == "lttb"
+        stage_dict[site]["decimationAlgo"] == "lttb"
     ):  # lttb is prefered to preserve points of interest
         if int(span) == 365:
-            if len(siteData["time"]) > decimationThreshold:
+            if len(site_data["time"]) > decimation_threshold:
                 # decimate data
-                siteData_df = decimate.downsample(siteData, decimationThreshold, logger=logger)
+                siteData_df = decimate.downsample(site_data, decimation_threshold, logger=logger)
                 # turn dataframe into dataset
-                del siteData
+                del site_data
                 gc.collect()
-                siteData = xr.Dataset.from_dataframe(siteData_df, sparse=False)
-                siteData = siteData.swap_dims({"index": "time"})
-                siteData = siteData.reset_coords()
+                site_data = xr.Dataset.from_dataframe(siteData_df, sparse=False)
+                site_data = site_data.swap_dims({"index": "time"})
+                site_data = site_data.reset_coords()
 
-    elif stageDict[site]["decimationAlgo"] == "coarsen":  # use a cruder method for ADCP etc
+    elif stage_dict[site]["decimationAlgo"] == "coarsen":  # use a cruder method for ADCP etc
         if int(span) in [30, 365]:
-            if len(siteData["time"]) > decimationThreshold:
-                window = int(len(siteData["time"]) / decimationThreshold)
+            if len(site_data["time"]) > decimation_threshold:
+                window = int(len(site_data["time"]) / decimation_threshold)
                 logger.info(
                     f"{site} unable to be decimated using LTTB. Using xr.coarsen instead"
                 )
-                siteData = siteData.coarsen(time=window, boundary="trim").mean()
+                site_data = site_data.coarsen(time=window, boundary="trim").mean()
                 logger.info(f"Succesfully coarsened time with window of *{window}*.")
     # perform calculations for auxiliary parameters
     if site in calculate_dict:
@@ -157,57 +157,57 @@ def run_dashboard_creation(
             if calc in calculateStrings_dict:
                 # perform calculation by evaluating string
                 exec(calculateStrings_dict[calc]['string'])
-                # add new parameter to fileParams list
-                returnParams = calculateStrings_dict[calc]['returnParam'].strip('"').split(",")
-                for item in returnParams:
-                    fileParams.append(item)
+                # add new parameter to file_params list
+                return_params = calculateStrings_dict[calc]['returnParam'].strip('"').split(",")
+                for item in return_params:
+                    file_params.append(item)
             else:
                 logger.info(f"error calculating parameters: {calc}")
 
-    for param in paramList:
+    for param in param_list:
         logger.info(f"parameter: {param}")
-        variableParams = variable_dict[param].strip('"').split(",")
-        parameterList = [value for value in variableParams if value in fileParams]
-        if len(parameterList) == 0:
+        variable_params = variable_dict[param].strip('"').split(",")
+        parameter_list = [value for value in variable_params if value in file_params]
+        if len(parameter_list) == 0:
             logger.warning(f"Error retriving parameter: {param} from the xarray...")
         else:
-            for Yparam in parameterList:  # the parameters actually in xarray (in most cases 1)
-                # Yparam = parameterList[0]
+            for Yparam in parameter_list:  # the parameters actually in xarray (in most cases 1)
+                # Yparam = parameter_list[0]
                 # set up plotting parameters
-                if len(parameterList) > 1:
+                if len(parameter_list) > 1:
                     imageName_base = plotDir + site + "_" + Yparam
-                    plotTitle = site + " " + Yparam
+                    plot_title = site + " " + Yparam
                 else:
                     imageName_base = plotDir + site + "_" + param
-                    plotTitle = site + " " + param
+                    plot_title = site + " " + param
                 logger.info(imageName_base)
-                paramMin = float(variable_paramDict[param]["min"])
-                paramMax = float(variable_paramDict[param]["max"])
+                param_min = float(variable_paramDict[param]["min"])
+                param_max = float(variable_paramDict[param]["max"])
                 profile_paramMin = float(variable_paramDict[param]["profileMin"])
                 profile_paramMax = float(variable_paramDict[param]["profileMax"])
                 # default local range to standard range if not defined
-                paramMin_local = paramMin
-                paramMax_local = paramMax
+                paramMin_local = param_min
+                paramMax_local = param_max
                 profile_paramMin_local = profile_paramMin
                 profile_paramMax_local = profile_paramMax
-                localRanges = str(localRange_dict[site][param])
-                if not "nan" in localRanges:
-                    localRange = literal_eval(localRanges)
-                    if "local" in localRange:
-                        paramMin_local = localRange["local"][0]
-                        paramMax_local = localRange["local"][1]
-                    if "local_profile" in localRange:
-                        profile_paramMin_local = localRange["local_profile"][0]
-                        profile_paramMax_local = localRange["local_profile"][1]
+                local_ranges = str(localRange_dict[site][param])
+                if not "nan" in local_ranges:
+                    local_range = literal_eval(local_ranges)
+                    if "local" in local_range:
+                        paramMin_local = local_range["local"][0]
+                        paramMax_local = local_range["local"][1]
+                    if "local_profile" in local_range:
+                        profile_paramMin_local = local_range["local_profile"][0]
+                        profile_paramMax_local = local_range["local_profile"][1]
 
-                yLabel = variable_paramDict[param]["label"]
+                y_label = variable_paramDict[param]["label"]
 
                 # Load overlayData
                 overlayData_clim = {}
                 overlayData_grossRange = {}
-                sensorType = site.split("-")[3][0:5].lower()
+                sensor_type = site.split("-")[3][0:5].lower()
                 (overlayData_grossRange, overlayData_clim) = dashboard.loadQARTOD(
-                    site, Yparam, sensorType, logger=logger
+                    site, Yparam, sensor_type, logger=logger
                 )
                 overlayData_near = {}
                 # overlayData_near = loadNear(site)
@@ -217,64 +217,64 @@ def run_dashboard_creation(
 
                 overlayData_disc = pd.DataFrame() #TODO clean up after we descide of final discrete data solution
                 # if int(span) == 0:
-                #     overlayData_disc = discrete.extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
+                #     overlayData_disc = discrete.extractDiscreteOverlay(site,time_ref.year,discreteSample_dict,param)
 
-                if "PROFILER" in plotInstrument:
-                    profileList = dashboard.loadProfiles(site)
-                    pressureParams = variable_dict["pressure"].strip('"').split(",")
-                    pressureParamList = [
-                        value for value in pressureParams if value in fileParams
+                if "PROFILER" in plot_instrument:
+                    profile_list = dashboard.loadProfiles(site)
+                    pressure_params = variable_dict["pressure"].strip('"').split(",")
+                    pressure_param_list = [
+                        value for value in pressure_params if value in file_params
                     ]
-                    if len(pressureParamList) != 1:
+                    if len(pressure_param_list) != 1:
                         logger.info("Error retriving pressure parameter!")
                     else:
-                        pressParam = pressureParamList[0]
-                        paramData = siteData[[Yparam, pressParam]].chunk("auto")
-                        flagParams = [item for item in qcParams if Yparam in item]
-                        flagParams.extend((Yparam, pressParam))
-                        overlayData_flag = siteData[flagParams].chunk("auto")
-                        colorMap = "cmo." + variable_paramDict[param]["colorMap"]
-                        depthMinMax = stageDict[site]["depthMinMax"].strip('"').split(",")
-                        if "None" not in depthMinMax:
-                            yMin = int(depthMinMax[0])
-                            yMax = int(depthMinMax[1])
+                        press_param = pressure_param_list[0]
+                        param_data = site_data[[Yparam, press_param]].chunk("auto")
+                        flag_params = [item for item in qc_params if Yparam in item]
+                        flag_params.extend((Yparam, press_param))
+                        overlayData_flag = site_data[flag_params].chunk("auto")
+                        color_map = "cmo." + variable_paramDict[param]["color_map"]
+                        depth_min_max = stage_dict[site]["depth_min_max"].strip('"').split(",")
+                        if "None" not in depth_min_max:
+                            y_min = int(depth_min_max[0])
+                            y_max = int(depth_min_max[1])
                         plots = dashboard.plotProfilesGrid(
                             Yparam,
-                            pressParam,
+                            press_param,
                             param,  # short parameter name - see variableMap.csv
-                            paramData,
-                            plotTitle,
-                            yLabel,
-                            timeRef,
-                            yMin,
-                            yMax,
+                            param_data,
+                            plot_title,
+                            y_label,
+                            time_ref,
+                            y_min,
+                            y_max,
                             profile_paramMin,
                             profile_paramMax,
                             profile_paramMin_local,
                             profile_paramMax_local,
-                            colorMap,
+                            color_map,
                             imageName_base,
                             overlayData_anno,
                             overlayData_clim,
                             overlayData_near,
                             span,
-                            spanString,
-                            profileList,
-                            statusDict,
+                            span_string,
+                            profile_list,
+                            status_dict,
                             site,
-                            plotInstrument,
+                            plot_instrument,
                         )
-                        plotList.append(plots)
-                        if "ADCP" not in plotInstrument:
+                        plot_list.append(plots)
+                        if "ADCP" not in plot_instrument:
                             plots = dashboard.plotProfilesScatter(
                                 Yparam,
                                 param,
-                                pressParam,
-                                paramData,
-                                plotTitle,
-                                timeRef,
-                                yMin,
-                                yMax,
+                                press_param,
+                                param_data,
+                                plot_title,
+                                time_ref,
+                                y_min,
+                                y_max,
                                 profile_paramMin,
                                 profile_paramMax,
                                 profile_paramMin_local,
@@ -286,35 +286,35 @@ def run_dashboard_creation(
                                 overlayData_flag,
                                 overlayData_near,
                                 span,
-                                spanString,
-                                profileList,
-                                statusDict,
+                                span_string,
+                                profile_list,
+                                status_dict,
                                 site,
                             )
-                            plotList.append(plots)
-                            depths = stageDict[site]["depths"].strip('"').split(",")
+                            plot_list.append(plots)
+                            depths = stage_dict[site]["depths"].strip('"').split(",")
                             if "Single" not in depths:
-                                for profileDepth in depths:
-                                    paramData_depth = paramData[Yparam].where(
-                                        (int(profileDepth) < paramData[pressParam])
-                                        & (paramData[pressParam] < (int(profileDepth) + 0.5))
+                                for profile_depth in depths:
+                                    paramData_depth = param_data[Yparam].where(
+                                        (int(profile_depth) < param_data[press_param])
+                                        & (param_data[press_param] < (int(profile_depth) + 0.5))
                                     )
                                     overlayData_flag_extract = overlayData_flag.where(
-                                        (int(profileDepth) < overlayData_flag[pressParam])
+                                        (int(profile_depth) < overlayData_flag[press_param])
                                         & (
-                                            overlayData_flag[pressParam]
-                                            < (int(profileDepth) + 0.5)
+                                            overlayData_flag[press_param]
+                                            < (int(profile_depth) + 0.5)
                                         )
                                     )
                                     plotTitle_depth = (
-                                        plotTitle + ": " + profileDepth + " meters"
+                                        plot_title + ": " + profile_depth + " meters"
                                     )
                                     imageName_base_depth = (
-                                        imageName_base + "_" + profileDepth + "meters"
+                                        imageName_base + "_" + profile_depth + "meters"
                                     )
                                     if overlayData_clim:
                                         overlayData_clim_extract = dashboard.extractClim(
-                                            timeRef, profileDepth, overlayData_clim
+                                            time_ref, profile_depth, overlayData_clim
                                         )
                                     else:
                                         overlayData_clim_extract = pd.DataFrame()
@@ -323,8 +323,8 @@ def run_dashboard_creation(
                                         param,
                                         paramData_depth,
                                         plotTitle_depth,
-                                        yLabel,
-                                        timeRef,
+                                        y_label,
+                                        time_ref,
                                         profile_paramMin,
                                         profile_paramMax,
                                         profile_paramMin_local,
@@ -337,20 +337,20 @@ def run_dashboard_creation(
                                         overlayData_near,
                                         "medium",
                                         span,
-                                        spanString,
-                                        statusDict,
+                                        span_string,
+                                        status_dict,
                                         site,
                                     )
-                                    plotList.append(plots)
+                                    plot_list.append(plots)
                 else:
-                    paramData = siteData[Yparam]
-                    flagParams = [item for item in qcParams if Yparam in item]
-                    flagParams.append(Yparam)
-                    overlayData_flag = siteData[flagParams].chunk("auto")
+                    param_data = site_data[Yparam]
+                    flag_params = [item for item in qc_params if Yparam in item]
+                    flag_params.append(Yparam)
+                    overlayData_flag = site_data[flag_params].chunk("auto")
 
                     if overlayData_clim:
                         overlayData_clim_extract = dashboard.extractClim(
-                            timeRef, "0", overlayData_clim
+                            time_ref, "0", overlayData_clim
                         )
                     else:
                         overlayData_clim_extract = pd.DataFrame()
@@ -358,12 +358,12 @@ def run_dashboard_creation(
                     plots = dashboard.plotScatter(
                         Yparam,
                         param,
-                        paramData,
-                        plotTitle,
-                        yLabel,
-                        timeRef,
-                        paramMin,
-                        paramMax,
+                        param_data,
+                        plot_title,
+                        y_label,
+                        time_ref,
+                        param_min,
+                        param_max,
                         paramMin_local,
                         paramMax_local,
                         imageName_base,
@@ -374,20 +374,20 @@ def run_dashboard_creation(
                         overlayData_near,
                         "small",
                         span,
-                        spanString,
-                        statusDict,
+                        span_string,
+                        status_dict,
                         site,
                     )
-                    plotList.append(plots)
+                    plot_list.append(plots)
 
-                del paramData
+                del param_data
                 gc.collect()
-    del siteData
+    del site_data
     gc.collect()
     end = datetime.utcnow()
     elapsed = end - now
     logger.info(f"{site} finished plotting: Time elapsed ({elapsed})")
-    return plotList
+    return plot_list
 
 
 def organize_images(sync_to_s3=False, bucket_name=S3_BUCKET, fs_kwargs={}):

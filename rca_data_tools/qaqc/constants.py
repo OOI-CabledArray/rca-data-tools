@@ -211,7 +211,7 @@ THROTTLE_SPANS = {
     '7': 'week',
 }
 
-statusColors = {
+status_colors = {
     'OPERATIONAL': 'green',
     'FAILED': 'red',
     'TROUBLESHOOTING': 'red',
@@ -255,28 +255,28 @@ instrument_dict = (
 )
 
 # create dictionary of variable parameters for plotting
-variable_paramDict = (
+variable_param_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('variableParameters.csv'))
     .set_index('variable')
     .T.to_dict('series')
 )
 
 # create dictionary of multi-parameter instrumet variables
-multiParameter_dict = (
+multi_parameter_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('multiParameters.csv'))
     .set_index('instrument')
     .T.to_dict('series')
 )
 
 # create dictionary of local parameter ranges for each site
-localRange_dict = (
+local_range_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('localRanges.csv'))
     .set_index('refDes')
     .T.to_dict('series')
 )
 
 # create a dictonary of sites with partially active coordinates for current deployment
-deployedRange_dict = (
+deployed_range_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('deployedRanges.csv'))
     .set_index('refDes')
     .T.to_dict('series')
@@ -290,17 +290,17 @@ calculate_dict = (
 ) 
 
 # create a dictonary of calculations and inputs as executable strings
-calculateStrings_dict = (
+calculate_strings_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('calculateStrings.csv'))
     .set_index('calculation')
     .T.to_dict()
 )
 
 # create a dictonary of relevant discrete sample types for each variable
-discreteSample_dict = (
+discrete_sample_dict = (
     pd.read_csv(PARAMS_DIR.joinpath('discreteMap.csv'))
     .set_index('variable')
     .T.to_dict()
 )
 
-plotDir = str(PLOT_DIR) + '/'
+plot_dir = str(PLOT_DIR) + '/'

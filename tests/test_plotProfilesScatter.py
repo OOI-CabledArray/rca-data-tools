@@ -9,12 +9,12 @@ from rca_data_tools.qaqc.dashboard import plotProfilesScatter, loadProfiles
 site = 'RS01SBPS-SF01A-4F-PCO2WA101'
 Xparam = 'pco2_seawater'
 param = 'pco2'
-pressParam = 'int_ctd_pressure'
-paramData = xr.open_dataset('./tests/toy_data/PCO2WA101_paramData.nc')
-plotTitle = 'RS01SBPS-SF01A-4F-PCO2WA101 pco2'
-timeRef = datetime(2025, 7, 30, 0, 0)
-yMin = 0 
-yMax = 200
+press_param = 'int_ctd_pressure'
+param_data = xr.open_dataset('./tests/toy_data/PCO2WA101_paramData.nc')
+plot_title = 'RS01SBPS-SF01A-4F-PCO2WA101 pco2'
+time_ref = datetime(2025, 7, 30, 0, 0)
+y_min = 0 
+y_max = 200
 profile_paramMin = 200.0
 profile_paramMax = 1200.0
 profile_paramMin_local = 30
@@ -26,10 +26,10 @@ overlayData_disc = pd.DataFrame()
 overlayData_flag = xr.open_dataset('./tests/toy_data/PCO2WA101_overlayData_flag.nc')
 overlayData_near = {}
 span = '1'
-spanString = 'day'
-#profileList = pd.read_csv('./tests/toy_data/profileList.csv') # this may need to be static
-profileList = loadProfiles(site) # this is dynamic and could cause problems with the test, may be at root of index error
-statusDict = {'RS01SBPS-SF01A-4F-PCO2WA101': 'OPERATIONAL'}
+span_string = 'day'
+#profile_list = pd.read_csv('./tests/toy_data/profile_list.csv') # this may need to be static
+profile_list = loadProfiles(site) # this is dynamic and could cause problems with the test, may be at root of index error
+status_dict = {'RS01SBPS-SF01A-4F-PCO2WA101': 'OPERATIONAL'}
 site = 'RS01SBPS-SF01A-4F-PCO2WA101'
 
 expected_fileNameList = ['QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_none_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_anno_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_clim_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_flag_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_none_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_anno_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_clim_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_flag_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_none_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_anno_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_clim_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_flag_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_none_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_anno_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_clim_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_flag_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_none_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_anno_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_clim_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_flag_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_none_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_anno_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_clim_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_flag_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_none_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_anno_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_clim_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_flag_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_none_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_anno_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_clim_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_flag_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_none_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_anno_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_clim_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_flag_local.png']
@@ -42,15 +42,15 @@ expected_fileNameList = ['QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile
     ]
 )
 def test_plotProfilesScatter(test_timeRef):
-    fileNameList = plotProfilesScatter(
+    file_name_list = plotProfilesScatter(
         Xparam=Xparam,
         param=param,
-        pressParam=pressParam,
-        paramData=paramData,
-        plotTitle=plotTitle,
-        timeRef=test_timeRef,
-        yMin=yMin,
-        yMax=yMax,
+        press_param=press_param,
+        param_data=param_data,
+        plot_title=plot_title,
+        time_ref=test_timeRef,
+        y_min=y_min,
+        y_max=y_max,
         profile_paramMin=profile_paramMin,
         profile_paramMax=profile_paramMax,
         profile_paramMin_local=profile_paramMin_local,
@@ -62,10 +62,10 @@ def test_plotProfilesScatter(test_timeRef):
         overlayData_flag=overlayData_flag,
         overlayData_near=overlayData_near,
         span=span,
-        spanString=spanString,
-        profileList=profileList,
-        statusDict=statusDict,
+        span_string=span_string,
+        profile_list=profile_list,
+        status_dict=status_dict,
         site=site
     )
 
-    assert fileNameList == expected_fileNameList
+    assert file_name_list == expected_fileNameList
