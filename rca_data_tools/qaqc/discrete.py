@@ -37,9 +37,9 @@ def validateDiscrete(df,template):
     validate = 1
     
     ### Check for empty cells
-    emptyCells = np.where(pd.isnull(df))
-    if emptyCells[0].size > 0:
-        for cell in emptyCells:
+    empty_cells = np.where(pd.isnull(df))
+    if empty_cells[0].size > 0:
+        for cell in empty_cells:
             print('empty cell at ' + str(cell[0]) + ', ' + str(cell[1]))
             validate = 0
             
@@ -106,11 +106,11 @@ def loadDiscreteData():
     for result in results:
         if ('.csv' in result.name) and ('Cabled-' in result.name):
             data = repo.getObject(result)
-            dataString = data.getContentStream()
+            data_string = data.getContentStream()
             path = data.getPaths()[0]
             if all(keyword in path for keyword in pathKeys_ALL) and (any(keyword in path for keyword in pathKeys_ANY)):
                 print(result.name)
-                df = pd.read_csv(dataString,na_values=['-9999999']) 
+                df = pd.read_csv(data_string,na_values=['-9999999']) 
                 for header in df.keys():
                     if 'Cruise' in header:
                         print('fix this file header eventually...', header)
@@ -120,9 +120,9 @@ def loadDiscreteData():
     df_discrete = pd.concat(df_data, ignore_index=True)
 
     startTime_year = []
-    for timeEntry in df_discrete['Start Time [UTC]']:
-        startTime = np.datetime64(dt.datetime.strptime(timeEntry,'%Y-%m-%dT%H:%M:%S.%fZ'))
-        startTime_year.append(startTime.astype(object).year)
+    for time_entry in df_discrete['Start Time [UTC]']:
+        start_time = np.datetime64(dt.datetime.strptime(time_entry,'%Y-%m-%dT%H:%M:%S.%fZ'))
+        startTime_year.append(start_time.astype(object).year)
 
     df_discrete['sampleYear'] = startTime_year
 
@@ -143,12 +143,12 @@ def loadDiscreteData_github():
     pathKeys_ANY=['Ship Data','Ship_Data','Shipboard Data']
 
     page = requests.get(github_url).text
-    fileNames = list(set(re.findall('Cabled-[^"]*_Discrete_Summary\.csv',page)))
-    print(fileNames)
+    file_names = list(set(re.findall('Cabled-[^"]*_Discrete_Summary\.csv',page)))
+    print(file_names)
 
     df_data = []
-    if fileNames:
-        for file in fileNames:
+    if file_names:
+        for file in file_names:
             discrete_URL = gh_baseURL + file
             download = requests.get(discrete_URL)
             if download.status_code == 200:
@@ -162,9 +162,9 @@ def loadDiscreteData_github():
     df_discrete = pd.concat(df_data, ignore_index=True)
 
     startTime_year = []
-    for timeEntry in df_discrete['Start Time [UTC]']:
-        startTime = np.datetime64(dt.datetime.strptime(timeEntry,'%Y-%m-%dT%H:%M:%S.%fZ'))
-        startTime_year.append(startTime.astype(object).year)
+    for time_entry in df_discrete['Start Time [UTC]']:
+        start_time = np.datetime64(dt.datetime.strptime(time_entry,'%Y-%m-%dT%H:%M:%S.%fZ'))
+        startTime_year.append(start_time.astype(object).year)
     
     df_discrete['sampleYear'] = startTime_year
         
@@ -174,11 +174,11 @@ def loadDiscreteData_github():
 
 
 def extractDiscreteOverlay(site,year,discreteSample_dict,variable):
-    allDiscrete = loadDiscreteData_github()
-    baseSite = site.split('-')[0]
+    all_discrete = loadDiscreteData_github()
+    base_site = site.split('-')[0]
     if pd.isnull(discreteSample_dict[variable]['discreteColumn']):
         overlayData_disc = {}
     else:
-        overlayData_disc = allDiscrete[(allDiscrete['sampleYear'] == year) & (allDiscrete['Target Asset'].str.contains(baseSite,case=False))]
+        overlayData_disc = all_discrete[(all_discrete['sampleYear'] == year) & (all_discrete['Target Asset'].str.contains(base_site,case=False))]
     
     return overlayData_disc
