@@ -1088,6 +1088,7 @@ def plotProfilesScatter(
     profileList,
     statusDict,
     site,
+    homebrew_qartod
     ):
     """Scatter plots for the dashboard's profiler views"""
     plt.ioff()
@@ -1215,9 +1216,9 @@ def plotProfilesScatter(
                     'qc':{'symbol':'s','param':'_qc_summary_flag'},
                 }
             
-            # TODO if homebrew_qartod: block goes here, overwriting qcDS with homebrew qartod array
-            # if True: 
-            #     qartodRunner = QartodRunner(site, param, paramData, qcDS, flags)
+            if homebrew_qartod:
+                qartodRunner = QartodRunner(site, Xparam, baseDS, qcDS, flags)
+                qcDS = qartodRunner.qartod() # overwrite CI based qcDS with homebrew qartod results
 
             for flagType in flags.keys():
                 flagString = Xparam + flags[flagType]['param']
@@ -1692,6 +1693,7 @@ def plotScatter(
     spanString,
     statusDict,
     site,
+    homebrew_qartod,
 ):
     """Scatter plots for the dashboard's fixed depth and colormap (default) view"""
     fileNameList = []
@@ -2099,7 +2101,10 @@ def plotScatter(
             if not emptySlice:
                 fig, ax = setPlot()
                 plt.xlim(xMin, xMax)
-                legendString = 'all data'
+                if homebrew_qartod:
+                    legendString = 'all data (homebrew QARTOD)'
+                else:
+                    legendString = 'all data'
                 if 'large' in plotMarkerSize:
                     flagMarker = 3
                     plt.plot(
@@ -2135,9 +2140,10 @@ def plotScatter(
                     'qc':{'symbol':'s','param':'_qc_summary_flag'},
                 }
 
-                # TODO if homebrew_qartod: block goes here, overwriting qcDS with homebrew qartod array
-                if True: 
-                    qartodRunner = QartodRunner(site, Yparam, paramData, qcDS, flags)
+                # if homebrew_qartod, overwrite qcDS with homebrew qartod array
+                if homebrew_qartod: 
+                    qartodRunner = QartodRunner(site, Yparam, baseDS, qcDS, flags)
+                    qcDS = qartodRunner.qartod() # overwrite CI qcDS with homebrew qartod results
 
                 for flagType in flags.keys():
                     flagString = Yparam + flags[flagType]['param']
