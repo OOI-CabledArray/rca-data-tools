@@ -4,7 +4,6 @@ This module contains code for plot creations from various instruments.
 
 """
 from ast import literal_eval
-import concurrent.futures
 from datetime import datetime
 from dateutil import parser
 import gc
@@ -49,19 +48,6 @@ def extractMulti(ds, inst, multi_dict, fileParams):
         ds[newParam] = ds[multiParam][:, i]
         fileParams.append(newParam)
     return ds, fileParams
-
-
-def map_concurrency(func, iterator, func_args=(), func_kwargs={}, max_workers=10):
-    results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Start the load operations and mark each future with its URL
-        future_to_url = {
-            executor.submit(func, i, *func_args, **func_kwargs): i for i in iterator
-        }
-        for future in concurrent.futures.as_completed(future_to_url):
-            data = future.result()
-            results.append(data)
-    return results
 
 
 def run_dashboard_creation(
