@@ -58,6 +58,7 @@ def run_dashboard_creation(
     span,
     decimationThreshold,
     stageDict,
+    homebrew_qartod,
 ):
     logger = select_logger()
     plt.switch_backend("Agg")  # run locally without changing anything else?
@@ -276,6 +277,7 @@ def run_dashboard_creation(
                                 profileList,
                                 statusDict,
                                 site,
+                                homebrew_qartod,
                             )
                             plotList.append(plots)
                             depths = stageDict[site]["depths"].strip('"').split(",")
@@ -326,6 +328,7 @@ def run_dashboard_creation(
                                         spanString,
                                         statusDict,
                                         site,
+                                        homebrew_qartod,
                                     )
                                     plotList.append(plots)
                 else:
@@ -363,6 +366,7 @@ def run_dashboard_creation(
                         spanString,
                         statusDict,
                         site,
+                        homebrew_qartod,
                     )
                     plotList.append(plots)
 
