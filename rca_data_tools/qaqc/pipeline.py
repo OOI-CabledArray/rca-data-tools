@@ -39,6 +39,7 @@ class QAQCPipeline:
         time=now.strftime("%Y-%m-%d"),
         span='1',
         threshold=5_000_000,
+        homebrew_qartod=False,
         cloud_run=True,
         s3_bucket=S3_BUCKET,
         s3_sync=True,
@@ -49,6 +50,7 @@ class QAQCPipeline:
         self.span = span
         self.threshold = threshold
         self.stage = self._lookup_stage()
+        self.homebrew_qartod = homebrew_qartod
         self._cloud_run = cloud_run
         self.s3_bucket = s3_bucket
         self.s3_sync = s3_sync
@@ -124,6 +126,7 @@ class QAQCPipeline:
             'span': self.span,
             'threshold': self.threshold,
             'stage': self.stage,
+            'homebrew_qartod': self.homebrew_qartod,
             'fs_kwargs': self.s3fs_kwargs,
             'sync_to_s3': self.s3_sync,
             's3_bucket': self.s3_bucket,
@@ -177,6 +180,7 @@ def run_stage(stage_dict, args):
             cloud_run=args.cloud,
             s3_bucket=args.s3_bucket,
             s3_sync=args.s3_sync,
+            homebrew_qartod=args.homebrew_qartod,
         )
         if args.run is True:
             pipeline.run()
@@ -208,6 +212,7 @@ def parse_args():
         help=f"Choices {str(list(SPAN_DICT.keys()))}",
     )
     arg_parser.add_argument('--threshold', type=int, default=5000000)
+    arg_parser.add_argument('--homebrew-qartod', action='store_true', help="Use homebrew QARTOD tests for QAQC plots"  )
 
     return arg_parser.parse_args()
 
@@ -237,6 +242,7 @@ def main():
             cloud_run=args.cloud,
             s3_bucket=args.s3_bucket,
             s3_sync=args.s3_sync,
+            homebrew_qartod=args.homebrew_qartod,
         )
 
         if args.run is True:

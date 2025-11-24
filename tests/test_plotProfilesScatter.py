@@ -31,6 +31,7 @@ spanString = 'day'
 profileList = loadProfiles(site) # this is dynamic and could cause problems with the test, may be at root of index error
 statusDict = {'RS01SBPS-SF01A-4F-PCO2WA101': 'OPERATIONAL'}
 site = 'RS01SBPS-SF01A-4F-PCO2WA101'
+homebrew_qartod = False
 
 expected_fileNameList = ['QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_none_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_anno_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_clim_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_flag_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_none_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_anno_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_clim_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_flag_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_none_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_anno_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_clim_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_000profile_day_flag_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_none_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_anno_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_clim_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_flag_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_none_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_anno_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_clim_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_flag_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_none_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_anno_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_clim_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_001profile_day_flag_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_none_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_anno_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_clim_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_flag_full.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_none_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_anno_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_clim_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_flag_standard.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_none_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_anno_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_clim_local.png', 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2_002profile_day_flag_local.png']
 
@@ -65,7 +66,8 @@ def test_plotProfilesScatter(test_timeRef):
         spanString=spanString,
         profileList=profileList,
         statusDict=statusDict,
-        site=site
+        site=site,
+        homebrew_qartod=homebrew_qartod
     )
 
     assert fileNameList == expected_fileNameList

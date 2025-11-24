@@ -4,7 +4,6 @@ This module contains code for plot creations from various instruments.
 
 """
 from ast import literal_eval
-import concurrent.futures
 from datetime import datetime
 from dateutil import parser
 import gc
@@ -19,7 +18,7 @@ import matplotlib.pyplot as plt
 from rca_data_tools.qaqc import dashboard
 from rca_data_tools.qaqc import decimate
 from rca_data_tools.qaqc import discrete
-from rca_data_tools.qaqc import calculate
+from rca_data_tools.qaqc.qartod import loadQARTOD
 from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
 
 from rca_data_tools.qaqc.constants import (
@@ -51,19 +50,6 @@ def extractMulti(ds, inst, multi_dict, fileParams):
     return ds, fileParams
 
 
-def map_concurrency(func, iterator, func_args=(), func_kwargs={}, max_workers=10):
-    results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Start the load operations and mark each future with its URL
-        future_to_url = {
-            executor.submit(func, i, *func_args, **func_kwargs): i for i in iterator
-        }
-        for future in concurrent.futures.as_completed(future_to_url):
-            data = future.result()
-            results.append(data)
-    return results
-
-
 def run_dashboard_creation(
     site,
     paramList,
@@ -72,6 +58,7 @@ def run_dashboard_creation(
     span,
     decimationThreshold,
     stageDict,
+    homebrew_qartod,
 ):
     logger = select_logger()
     plt.switch_backend("Agg")  # run locally without changing anything else?
@@ -206,7 +193,7 @@ def run_dashboard_creation(
                 overlayData_clim = {}
                 overlayData_grossRange = {}
                 sensorType = site.split("-")[3][0:5].lower()
-                (overlayData_grossRange, overlayData_clim) = dashboard.loadQARTOD(
+                (overlayData_grossRange, overlayData_clim) = loadQARTOD(
                     site, Yparam, sensorType, logger=logger
                 )
                 overlayData_near = {}
@@ -290,6 +277,7 @@ def run_dashboard_creation(
                                 profileList,
                                 statusDict,
                                 site,
+                                homebrew_qartod,
                             )
                             plotList.append(plots)
                             depths = stageDict[site]["depths"].strip('"').split(",")
@@ -340,6 +328,7 @@ def run_dashboard_creation(
                                         spanString,
                                         statusDict,
                                         site,
+                                        homebrew_qartod,
                                     )
                                     plotList.append(plots)
                 else:
@@ -377,6 +366,7 @@ def run_dashboard_creation(
                         spanString,
                         statusDict,
                         site,
+                        homebrew_qartod,
                     )
                     plotList.append(plots)
 
