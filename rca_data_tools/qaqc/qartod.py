@@ -108,6 +108,14 @@ def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
 
 
 def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
+    """
+    Similar to loadQARTOD, but loads from RCA staging repo and acounts for slight differences
+    in table formatting. 
+    Parameters:
+    refDes: str
+    param: str
+    table_type: tuple (climatology, gross range) (fixed, fixed) or (binned, int) for profiler
+    """
 
     renameMap = {
                  'sea_water_temperature':'seawater_temperature',
@@ -124,7 +132,6 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
     sensor = sensor1 + '-' + sensor2
 
     githubBaseURL = 'https://raw.githubusercontent.com/wruef/qartod_staging/refs/heads/main/'
-
     #ie CE04OSPS-PC01B-4B-PHSENA106-ph_seawater.climatology.csv.fixed
 
     clim_URL = (
@@ -133,7 +140,7 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
         + '-'
         + param
         + '.climatology.csv.'
-        + table_type
+        + table_type[0] # clim table type
     )
     grossRange_URL = (
         githubBaseURL
@@ -141,7 +148,7 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
         + '-'
         + param
         + '.gross_range.csv.'
-        + table_type
+        + table_type[1] # gross range table type
     )
     # get clim table
     download = requests.get(clim_URL)
