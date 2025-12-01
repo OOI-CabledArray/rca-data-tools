@@ -300,9 +300,9 @@ class QartodRunner:
         self.qc_summary_da = qartod_ds[f"{param}{qc_flags['qc']['param']}"]
 
         if "FIXED" in all_configs_dict[refdes]['instrument']:
-            self.table_type = "fixed"
+            self.table_type = ("fixed", "fixed") # climatology and gross range both fixed for fixed instruments
         elif "PROFILER" in all_configs_dict[refdes]['instrument']:
-            self.table_type = "binned"
+            self.table_type = ("binned", "int") # gross range is integrated for profilers
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
 
@@ -312,7 +312,7 @@ class QartodRunner:
         param = self.param 
         qc_flags = self.qc_flags
 
-        if self.table_type == "fixed":
+        if self.table_type[0] == "fixed":
             fail_low = self.gross_dict['qartod']['gross_range_test']['fail_span'][0]
             fail_high = self.gross_dict['qartod']['gross_range_test']['fail_span'][1]
             sus_low = self.gross_dict['qartod']['gross_range_test']['suspect_span'][0]
@@ -338,7 +338,7 @@ class QartodRunner:
         clim_da = xr.full_like(da, 1)
         clim_da.name = f"{param}{qc_flags['qartod_climatology']['param']}"
 
-        if self.table_type == "fixed":
+        if self.table_type[1] == "fixed":
             for month_str in self.clim_dict.keys():
                 month_int = ast.literal_eval(month_str)
                 month_mask = self.da.time.dt.month == month_int
@@ -355,7 +355,7 @@ class QartodRunner:
         
     def qartod(self):
 
-        if self.table_type == "binned":
+        if self.table_type[0] == "binned":
             logger.warning("Binned climatologies not yet implimented")
             return None
 
