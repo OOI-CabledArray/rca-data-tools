@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rca_data_tools"
-version = "1.8.1"
+version = "1.9.0"
 description = "Utilities for working with Regional Cabled Array Data."
 authors = [
   { name = "RCA Data Team", email = "jduprey@uw.edu" },
@@ -28,16 +28,16 @@ dependencies = [
     "matplotlib",
     "netcdf4",
     "numba",
-    "numpy",
+    "numpy>2",
     "pandas>2",
     "pathlib",
     "prefect>3.0.3",
     "prefect-aws",
     "requests",
-    "s3fs",
+    "s3fs>=2024",
     "scipy",
     "xarray>=2024.1.1",
-    "zarr",
+    "zarr<3.0.0",
 ]
 
 [project.scripts]
