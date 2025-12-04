@@ -32,6 +32,7 @@ def dashboard_creation_task(
     span, 
     threshold,
     stage,
+    homebrew_qartod,
     ):
     """
     Prefect task for running dashboard creation
@@ -55,6 +56,7 @@ def dashboard_creation_task(
         span,
         threshold,
         stage_dict,
+        homebrew_qartod,
     )
     return plotList
         
@@ -117,6 +119,7 @@ def qaqc_pipeline_flow(
     span: str='1',
     threshold: int=5000000,
     stage: int=None,
+    homebrew_qartod: bool=False,
     # cloud args
     fs_kwargs: dict={},
     sync_to_s3: bool=True,
@@ -146,6 +149,7 @@ def qaqc_pipeline_flow(
             span=span,
             threshold=threshold,
             stage=stage,
+            homebrew_qartod=homebrew_qartod,
         )
         
     fs_kwargs = get_s3_kwargs()
