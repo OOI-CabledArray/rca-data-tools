@@ -15,9 +15,7 @@ from typing import List
 import xarray as xr
 import matplotlib.pyplot as plt
 
-from rca_data_tools.qaqc import dashboard
-from rca_data_tools.qaqc import decimate
-from rca_data_tools.qaqc import discrete
+from rca_data_tools.qaqc import dashboard, decimate, calculate, discrete
 from rca_data_tools.qaqc.qartod import loadQARTOD
 from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
 
