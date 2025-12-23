@@ -172,6 +172,8 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
 
         df_clim.rename(columns=climRename, inplace=True)
         clim_dict = df_clim.set_index('depth').to_dict()
+    else: 
+        raise FileNotFoundError(f"Climatology table not found at {clim_URL}")
 
     download = requests.get(grossRange_URL)
     if download.status_code == 200:
@@ -185,5 +187,8 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
         if len(qcConfig) > 0:
             qcConfig_json = qcConfig.values[0].replace("'", "\"")
         gross_dict = json.loads(qcConfig_json)
+    
+    else: 
+        raise FileNotFoundError(f"Gross range table not found at {grossRange_URL}")
 
     return clim_dict, gross_dict
