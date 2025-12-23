@@ -2102,7 +2102,7 @@ def plotScatter(
                 fig, ax = setPlot()
                 plt.xlim(xMin, xMax)
                 if homebrew_qartod:
-                    legendString = 'all data (homebrew QARTOD)'
+                    legendString = 'all data <STAGED QARTOD>'
                 else:
                     legendString = 'all data'
                 if 'large' in plotMarkerSize:
