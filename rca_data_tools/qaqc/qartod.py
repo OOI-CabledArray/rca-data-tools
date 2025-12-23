@@ -139,7 +139,7 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
         + refDes
         + '-'
         + param
-        + '.climatology.csv.'
+        + '.climatology_table.csv.'
         + table_type[0] # clim table type
     )
     grossRange_URL = (
@@ -147,8 +147,8 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
         + refDes
         + '-'
         + param
-        + '.gross_range.csv.'
-        + table_type[1] # gross range table type
+        + '-gross_range_test_values.csv'
+        #+ table_type[1] # gross range table type #NOTE wendi dropped this tag in staging
     )
     # get clim table
     download = requests.get(clim_URL)
