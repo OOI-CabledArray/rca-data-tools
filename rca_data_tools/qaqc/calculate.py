@@ -10,7 +10,7 @@ import xarray as xr
 import numpy as np
 from typing import Dict
 from rca_data_tools.qaqc.qartod import loadStagedQARTOD
-from rca_data_tools.qaqc.constants import all_configs_dict
+from rca_data_tools.qaqc.constants import all_configs_dict, variable_dict
 from rca_data_tools.qaqc.utils import select_logger
 
 logger = select_logger()
@@ -290,19 +290,20 @@ class QartodRunner:
         NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range 
         fixed instruments have fixed climatology and fixed gross range tables. 
         """
-        #TODO impliment binned climatology and integrated gross range within the loadStagedQARTOD function
-        
+        #TODO in the plot profile scatter loop this class is invoked in a loop which might cause github to api limit us
+        # might need to seperate fetching tables so its run once at the beginning of a dashboard workflow
         self.refdes = refdes
         self.param = param
         self.da = da
+        self.pressure_param = self.get_pressure_param()
         self.qartod_ds = qartod_ds
         self.qc_flags = qc_flags
         self.qc_summary_da = qartod_ds[f"{param}{qc_flags['qc']['param']}"]
 
         if "FIXED" in all_configs_dict[refdes]['instrument']:
-            self.table_type = ("fixed", "fixed") # climatology and gross range both fixed for fixed instruments
+            self.table_type = ("fixed", "fixed") # (clim, gross) both fixed for fixed instruments
         elif "PROFILER" in all_configs_dict[refdes]['instrument']:
-            self.table_type = ("binned", "int") # gross range is integrated for profilers
+            self.table_type = ("binned", "int") # (clim, gross) gross range is integrated for profilers
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
 
@@ -312,17 +313,22 @@ class QartodRunner:
         param = self.param 
         qc_flags = self.qc_flags
 
-        if self.table_type[0] == "fixed":
+        if isinstance(da, xr.Dataset):
+            gross_da = xr.full_like(da[param], 1) # create qartod da from just param of interest
+        elif isinstance(da, xr.DataArray):
+            gross_da = xr.full_like(da, 1)
+
+        gross_da.name = f"{param}{qc_flags['qartod_grossRange']['param']}"
+
+        if self.table_type[1] in ["fixed", "int"]: # gross range table is same format for fixed and integrated 
             fail_low = self.gross_dict['qartod']['gross_range_test']['fail_span'][0]
             fail_high = self.gross_dict['qartod']['gross_range_test']['fail_span'][1]
             sus_low = self.gross_dict['qartod']['gross_range_test']['suspect_span'][0]
             sus_high = self.gross_dict['qartod']['gross_range_test']['suspect_span'][1]
 
-            fail_mask = (da <= fail_low) | (da >= fail_high)
-            suspect_mask = ((da <= sus_low) | (da >= sus_high)) & ~fail_mask
+            fail_mask = (gross_da <= fail_low) | (gross_da >= fail_high)
+            suspect_mask = ((gross_da <= sus_low) | (gross_da >= sus_high)) & ~fail_mask
 
-            gross_da = xr.full_like(da, 1)
-            gross_da.name = f"{param}{qc_flags['qartod_grossRange']['param']}"
             gross_da = gross_da.where(~fail_mask, 4)
             gross_da = gross_da.where(~suspect_mask, 3)
             
@@ -333,12 +339,17 @@ class QartodRunner:
     def run_climatology(self):
         da = self.da
         param = self.param 
+        pressure_param = self.pressure_param
         qc_flags = self.qc_flags
 
-        clim_da = xr.full_like(da, 1)
+        if isinstance(da, xr.Dataset):
+            clim_da = xr.full_like(da[param], 1) # create qartod da from just param of interest
+        elif isinstance(da, xr.DataArray):
+            clim_da = xr.full_like(da, 1)
+
         clim_da.name = f"{param}{qc_flags['qartod_climatology']['param']}"
 
-        if self.table_type[1] == "fixed":
+        if self.table_type[0] == "fixed":
             for month_str in self.clim_dict.keys():
                 month_int = ast.literal_eval(month_str)
                 month_mask = self.da.time.dt.month == month_int
@@ -346,25 +357,56 @@ class QartodRunner:
                 sus_low = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[0]
                 sus_high = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[1]
 
-                suspect_mask = ( (self.da <= sus_low) | (self.da >= sus_high) ) & month_mask
+                suspect_mask = ( (clim_da <= sus_low) | (clim_da >= sus_high) ) & month_mask
                 #clim_da.attrs = self.qartod_ds[clim_da.name].attrs
                 clim_da = clim_da.where(~suspect_mask, 3)
+        
+        elif self.table_type[0] == "binned":
+            # TODO double check this logic # TODO how do we get pressure for profilers fixed depth
+            for month_str in self.clim_dict.keys():
+                month_int = ast.literal_eval(month_str)
+                month_mask = self.da.time.dt.month == month_int
+
+                for depth_range_str in self.clim_dict[month_str].keys():
+                    depth_range = ast.literal_eval(depth_range_str)
+                    depth_mask = (self.da[pressure_param] >= depth_range[0]) & (self.da[pressure_param] < depth_range[1])
+
+                    sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[0]
+                    sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
+
+                    suspect_mask = ( (clim_da <= sus_low) | (clim_da >= sus_high) ) & month_mask & depth_mask
+                    clim_da = clim_da.where(~suspect_mask, 3)
         
         return clim_da
 
         
     def qartod(self):
 
-        if self.table_type[0] == "binned":
-            logger.warning("Binned climatologies not yet implimented")
-            return None
-
         gross_da = self.run_gross_range()
         climatology_da = self.run_climatology()
 
-        homebrew_qartod_ds = xr.merge([self.da, self.qc_summary_da, gross_da, climatology_da])
-
+        if self.pressure_param: # we want to return pressure param if it was passed orginally
+            homebrew_qartod_ds = xr.merge([self.da[self.param], self.da[self.pressure_param], self.qc_summary_da, gross_da, climatology_da])
+        else:
+            homebrew_qartod_ds = xr.merge([self.da[self.param], self.qc_summary_da, gross_da, climatology_da])
+        
         return homebrew_qartod_ds
-                       
+    
+
+    def get_pressure_param(self):
+
+        pressure_vars = variable_dict['pressure'].strip('"').split(',')
+        if isinstance(self.da, xr.Dataset):
+            matching_vars = [var for var in pressure_vars if var in self.da.data_vars]
+            if matching_vars:
+                pressure_param = matching_vars[0]
+                return pressure_param
+            else:
+                # if no pressure var in dataset
+                return None
+        
+        else: 
+            # if single data array
+            return None
 
  

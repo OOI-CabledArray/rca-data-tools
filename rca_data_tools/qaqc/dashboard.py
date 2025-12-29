@@ -35,7 +35,7 @@ import textwrap as tw
 import xml.etree.ElementTree as et
 
 from rca_data_tools.qaqc.utils import select_logger, save_fig, get_s3_kwargs
-from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict
+from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict, all_configs_dict
 from rca_data_tools.qaqc.calculate import QartodRunner
 INPUT_BUCKET = "ooi-data/"
 
@@ -1092,7 +1092,7 @@ def plotProfilesScatter(
     ):
     """Scatter plots for the dashboard's profiler views"""
     plt.ioff()
-    dpi=200
+    dpi=300
     fileNameList = []
     logger=select_logger()
     # Plot Overlays
@@ -2141,7 +2141,9 @@ def plotScatter(
                 }
 
                 # if homebrew_qartod, overwrite qcDS with homebrew qartod array
-                if homebrew_qartod: 
+                # TODO remove fixed if we want to see staged qartod on fixed depth plots, 
+                # TODO but this will require making Qartod Runner aware of what fixed depth plot routine we are in...
+                if homebrew_qartod and "FIXED" in all_configs_dict[site]['instrument']: 
                     qartodRunner = QartodRunner(site, Yparam, baseDS, qcDS, flags)
                     qcDS = qartodRunner.qartod() # overwrite CI qcDS with homebrew qartod results
 
