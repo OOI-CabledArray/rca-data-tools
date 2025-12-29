@@ -1558,15 +1558,15 @@ def plotProfilesScatter(
                                 save_fig(fig, fileNameList, fileName, dpi, ['_local'])
                                 overlayFileName = fileName + '_local'
                                 for overlay in overlays:
-                                    plotOverlays(overlay,fig,ax,overlayFileName,timeSpan)
+                                    plotOverlays(overlay, fig, ax, overlayFileName, timeSpan)
                                 profileIterator += 1
                     elif 'week' in spanString:
                         profileIterator += 1 
-                        iterList = [[k.year,k.month,k.day] for k in dataDict.keys()]
+                        iterList = [[k.year, k.month, k.day] for k in dataDict.keys()]
                         iterList_sorted = sorted({tuple(i) for i in iterList}, key=lambda element: (element[0], element[1], element[2]))
                         for spanIter in iterList_sorted:
-                            logger.info(f"Concatenating for {spanIter}")
-                            logger.info(f"dataDict {dataDict}")
+                            logger.debug(f"Concatenating for {spanIter}")
+                            logger.debug(f"dataDict {dataDict}")
                             fig, ax = setPlot()
                             scatterX_sub = np.concatenate( [ dataDict[i]['scatterX'] for i in dataDict.keys() if ( (i.day == spanIter[2]) and (i.year == spanIter[0]) and (i.month == spanIter[1]) ) ] )
                             scatterY_sub = np.concatenate( [ dataDict[i]['scatterY'] for i in dataDict.keys() if ( (i.day == spanIter[2]) and (i.year == spanIter[0]) and (i.month == spanIter[1]) ) ] )

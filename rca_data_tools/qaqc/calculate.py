@@ -356,6 +356,7 @@ class QartodRunner:
 
                 sus_low = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[0]
                 sus_high = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[1]
+                logger.info(f"Month: {month_int}, Suspect Low: {sus_low}, Suspect High: {sus_high}")
 
                 suspect_mask = ( (clim_da <= sus_low) | (clim_da >= sus_high) ) & month_mask
                 #clim_da.attrs = self.qartod_ds[clim_da.name].attrs
@@ -373,6 +374,7 @@ class QartodRunner:
 
                     sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[0]
                     sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
+                    logger.info(f"Month: {month_int}, Depth Range: {depth_range}, Suspect Low: {sus_low}, Suspect High: {sus_high}")
 
                     suspect_mask = ( (clim_da <= sus_low) | (clim_da >= sus_high) ) & month_mask & depth_mask
                     clim_da = clim_da.where(~suspect_mask, 3)
