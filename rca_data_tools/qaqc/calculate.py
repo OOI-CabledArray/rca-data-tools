@@ -307,17 +307,17 @@ class QartodRunner:
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
 
-
     def run_gross_range(self):
         da = self.da
         param = self.param 
         qc_flags = self.qc_flags
 
         if isinstance(da, xr.Dataset):
-            gross_da = xr.full_like(da[param], 1) # create qartod da from just param of interest
+            param_da = da[param]
         elif isinstance(da, xr.DataArray):
-            gross_da = xr.full_like(da, 1)
+            param_da = da
 
+        gross_da = xr.full_like(param_da, 1) # qartod array which mirrors input array
         gross_da.name = f"{param}{qc_flags['qartod_grossRange']['param']}"
 
         if self.table_type[1] in ["fixed", "int"]: # gross range table is same format for fixed and integrated 
@@ -326,8 +326,8 @@ class QartodRunner:
             sus_low = self.gross_dict['qartod']['gross_range_test']['suspect_span'][0]
             sus_high = self.gross_dict['qartod']['gross_range_test']['suspect_span'][1]
 
-            fail_mask = (gross_da <= fail_low) | (gross_da >= fail_high)
-            suspect_mask = ((gross_da <= sus_low) | (gross_da >= sus_high)) & ~fail_mask
+            fail_mask = (param_da <= fail_low) | (param_da >= fail_high)
+            suspect_mask = ((param_da <= sus_low) | (param_da >= sus_high)) & ~fail_mask
 
             gross_da = gross_da.where(~fail_mask, 4)
             gross_da = gross_da.where(~suspect_mask, 3)
@@ -343,10 +343,11 @@ class QartodRunner:
         qc_flags = self.qc_flags
 
         if isinstance(da, xr.Dataset):
-            clim_da = xr.full_like(da[param], 1) # create qartod da from just param of interest
+            param_da = da[param]
         elif isinstance(da, xr.DataArray):
-            clim_da = xr.full_like(da, 1)
+            param_da = da
 
+        clim_da = xr.full_like(param_da, 1) # qartod array which mirrors input array
         clim_da.name = f"{param}{qc_flags['qartod_climatology']['param']}"
 
         if self.table_type[0] == "fixed":
@@ -358,7 +359,7 @@ class QartodRunner:
                 sus_high = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[1]
                 logger.info(f"Month: {month_int}, Suspect Low: {sus_low}, Suspect High: {sus_high}")
 
-                suspect_mask = ( (clim_da <= sus_low) | (clim_da >= sus_high) ) & month_mask
+                suspect_mask = ( (param_da <= sus_low) | (param_da >= sus_high) ) & month_mask
                 #clim_da.attrs = self.qartod_ds[clim_da.name].attrs
                 clim_da = clim_da.where(~suspect_mask, 3)
         
@@ -376,7 +377,7 @@ class QartodRunner:
                     sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
                     logger.info(f"Month: {month_int}, Depth Range: {depth_range}, Suspect Low: {sus_low}, Suspect High: {sus_high}")
 
-                    suspect_mask = ( (clim_da <= sus_low) | (clim_da >= sus_high) ) & month_mask & depth_mask
+                    suspect_mask = ( (param_da <= sus_low) | (param_da >= sus_high) ) & month_mask & depth_mask
                     clim_da = clim_da.where(~suspect_mask, 3)
         
         return clim_da
