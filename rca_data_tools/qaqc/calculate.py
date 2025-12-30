@@ -295,6 +295,7 @@ class QartodRunner:
         self.refdes = refdes
         self.param = param
         self.da = da
+        self.param_da = self.clean_param_data_array()
         self.pressure_param = self.get_pressure_param()
         self.qartod_ds = qartod_ds
         self.qc_flags = qc_flags
@@ -308,14 +309,9 @@ class QartodRunner:
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
 
     def run_gross_range(self):
-        da = self.da
-        param = self.param 
+        param = self.param
+        param_da = self.param_da
         qc_flags = self.qc_flags
-
-        if isinstance(da, xr.Dataset):
-            param_da = da[param]
-        elif isinstance(da, xr.DataArray):
-            param_da = da
 
         gross_da = xr.full_like(param_da, 1) # qartod array which mirrors input array
         gross_da.name = f"{param}{qc_flags['qartod_grossRange']['param']}"
@@ -338,14 +334,10 @@ class QartodRunner:
     
     def run_climatology(self):
         da = self.da
-        param = self.param 
+        param = self.param
+        param_da = self.param_da
         pressure_param = self.pressure_param
         qc_flags = self.qc_flags
-
-        if isinstance(da, xr.Dataset):
-            param_da = da[param]
-        elif isinstance(da, xr.DataArray):
-            param_da = da
 
         clim_da = xr.full_like(param_da, 1) # qartod array which mirrors input array
         clim_da.name = f"{param}{qc_flags['qartod_climatology']['param']}"
@@ -353,7 +345,7 @@ class QartodRunner:
         if self.table_type[0] == "fixed":
             for month_str in self.clim_dict.keys():
                 month_int = ast.literal_eval(month_str)
-                month_mask = self.da.time.dt.month == month_int
+                month_mask = da.time.dt.month == month_int
 
                 sus_low = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[0]
                 sus_high = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[1]
@@ -367,11 +359,11 @@ class QartodRunner:
             # TODO double check this logic # TODO how do we get pressure for profilers fixed depth
             for month_str in self.clim_dict.keys():
                 month_int = ast.literal_eval(month_str)
-                month_mask = self.da.time.dt.month == month_int
+                month_mask = da.time.dt.month == month_int
 
                 for depth_range_str in self.clim_dict[month_str].keys():
                     depth_range = ast.literal_eval(depth_range_str)
-                    depth_mask = (self.da[pressure_param] >= depth_range[0]) & (self.da[pressure_param] < depth_range[1])
+                    depth_mask = (da[pressure_param] >= depth_range[0]) & (da[pressure_param] < depth_range[1])
 
                     sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[0]
                     sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
@@ -412,4 +404,14 @@ class QartodRunner:
             # if single data array
             return None
 
+    def clean_param_data_array(self):
+        da = self.da
+        param = self.param 
+
+        if isinstance(da, xr.Dataset):
+            param_da = da[param]
+        elif isinstance(da, xr.DataArray):
+            param_da = da
+
+        return param_da
  
