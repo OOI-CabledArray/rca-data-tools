@@ -381,9 +381,9 @@ class QartodRunner:
         climatology_da = self.run_climatology()
 
         if self.pressure_param: # we want to return pressure param if it was passed orginally
-            homebrew_qartod_ds = xr.merge([self.da[self.param], self.da[self.pressure_param], self.qc_summary_da, gross_da, climatology_da])
+            homebrew_qartod_ds = xr.merge([self.param_da, self.da[self.pressure_param], self.qc_summary_da, gross_da, climatology_da])
         else:
-            homebrew_qartod_ds = xr.merge([self.da[self.param], self.qc_summary_da, gross_da, climatology_da])
+            homebrew_qartod_ds = xr.merge([self.param_da, self.qc_summary_da, gross_da, climatology_da])
         
         return homebrew_qartod_ds
     
