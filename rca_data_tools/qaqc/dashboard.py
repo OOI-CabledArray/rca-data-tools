@@ -2142,7 +2142,7 @@ def plotScatter(
 
                 # if homebrew_qartod, overwrite qcDS with homebrew qartod array
                 # TODO remove fixed if we want to see staged qartod on fixed depth plots, 
-                # TODO but this will require making Qartod Runner aware of what fixed depth plot routine we are in...
+                # TODO but this would require passing pressure param into this function when called on fixed depths
                 if homebrew_qartod and "FIXED" in all_configs_dict[site]['instrument']: 
                     qartodRunner = QartodRunner(site, Yparam, baseDS, qcDS, flags)
                     qcDS = qartodRunner.qartod() # overwrite CI qcDS with homebrew qartod results

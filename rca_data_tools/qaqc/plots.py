@@ -106,7 +106,7 @@ def run_dashboard_creation(
             "are active on current deployment. Dataset is being subset to active coords."
         )
 
-    logger.info(f"site date array: {siteData}")
+    logger.debug(f"site array: {siteData}")
     # extract parameters from multi-dimensional array
     if plotInstrument in multiParameter_dict.keys():
         siteData, fileParams = extractMulti(
