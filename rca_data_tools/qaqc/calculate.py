@@ -1,10 +1,11 @@
 """calculate.py
 
-This module contains code for creating data products 
+This module contains code for creating data products
 useful to the QA/QC process that are not served
 through OOI/M2M.
 
 """
+
 import ast
 import xarray as xr
 import numpy as np
@@ -16,12 +17,13 @@ from rca_data_tools.qaqc.utils import select_logger
 logger = select_logger()
 ### OPTAA functions
 
+
 def opt_internal_temp(traw):
     """
     Description:
 
         Calculates the internal instrument temperature. Used in subsequent
-        OPTAA calculations.  Copied from original code in 
+        OPTAA calculations.  Copied from original code in
         https://bitbucket.org/ooicgsn/pyseas/get/develop.zip
 
     Implemented by:
@@ -53,10 +55,10 @@ def opt_internal_temp(traw):
             1341-00700_Data_Product_SPEC_OPTABSN_OOI.pdf)
     """
     # convert counts to volts
-    volts = 5. * traw / 65535.
+    volts = 5.0 * traw / 65535.0
 
     # calculate the resistance of the thermistor
-    res = 10000. * volts / (4.516 - volts)
+    res = 10000.0 * volts / (4.516 - volts)
 
     # convert resistance to temperature
     a = 0.00093135
@@ -64,10 +66,8 @@ def opt_internal_temp(traw):
     c = 0.000000125741
 
     log_res = np.log(res)
-    degC = (1. / (a + b * log_res + c * log_res**3)) - 273.15
+    degC = (1.0 / (a + b * log_res + c * log_res**3)) - 273.15
     return degC
-
-
 
 
 def opt_external_temp(traw):
@@ -113,10 +113,8 @@ def opt_external_temp(traw):
     c = -3.87065673e-03
     d = 95.8241397
 
-    degC = a * np.power(traw.astype('O'), 3) + b * np.power(traw.astype('O'), 2) + c * traw + d
+    degC = a * np.power(traw.astype("O"), 3) + b * np.power(traw.astype("O"), 2) + c * traw + d
     return degC.astype(float)
-
-
 
 
 def opt_pressure(praw, offset, sfactor):
@@ -160,8 +158,6 @@ def opt_pressure(praw, offset, sfactor):
     return depth
 
 
-
-
 def opt_calculate_ratios(optaa):
     """
     Pigment ratios can be calculated to assess the impacts of bio-fouling,
@@ -196,20 +192,19 @@ def opt_calculate_ratios(optaa):
     :param optaa: xarray dataset with the scatter corrected absorbance data.
     :return optaa: xarray dataset with the estimates for pigment ratios added.
     """
-    apg = optaa['optical_absorption']
-    m412 = np.nanargmin(np.abs(optaa['wavelength_a'].values[:] - 412.0))
-    m440 = np.nanargmin(np.abs(optaa['wavelength_a'].values[:] - 440.0))
-    m490 = np.nanargmin(np.abs(optaa['wavelength_a'].values[:] - 490.0))
-    m530 = np.nanargmin(np.abs(optaa['wavelength_a'].values[:] - 530.0))
-    m676 = np.nanargmin(np.abs(optaa['wavelength_a'].values[:] - 676.0))
+    apg = optaa["optical_absorption"]
+    m412 = np.nanargmin(np.abs(optaa["wavelength_a"].values[:] - 412.0))
+    m440 = np.nanargmin(np.abs(optaa["wavelength_a"].values[:] - 440.0))
+    m490 = np.nanargmin(np.abs(optaa["wavelength_a"].values[:] - 490.0))
+    m530 = np.nanargmin(np.abs(optaa["wavelength_a"].values[:] - 530.0))
+    m676 = np.nanargmin(np.abs(optaa["wavelength_a"].values[:] - 676.0))
 
-    optaa['ratio_cdom'] = apg[:, m412] / apg[:, m440]
-    optaa['ratio_carotenoids'] = apg[:, m490] / apg[:, m440]
-    optaa['ratio_phycobilins'] = apg[:, m530] / apg[:, m440]
-    optaa['ratio_qband'] = apg[:, m676] / apg[:, m440]
+    optaa["ratio_cdom"] = apg[:, m412] / apg[:, m440]
+    optaa["ratio_carotenoids"] = apg[:, m490] / apg[:, m440]
+    optaa["ratio_phycobilins"] = apg[:, m530] / apg[:, m440]
+    optaa["ratio_qband"] = apg[:, m676] / apg[:, m440]
 
     return optaa
-
 
 
 def opt_estimate_chl_poc(optaa, coeffs, chl_line_height=0.020):
@@ -230,20 +225,33 @@ def opt_estimate_chl_poc(optaa, coeffs, chl_line_height=0.020):
     """
     # use the standard chlorophyll line height estimation with an extinction coefficient of 0.020,
     # from Roesler and Barnard, 2013 (doi:10.4319/lom.2013.11.483)
-    m650 = np.argmin(np.abs(coeffs['a_wavelengths'] - 650.0))  # find the closest wavelength to 650 nm
-    m676 = np.argmin(np.abs(coeffs['a_wavelengths'] - 676.0))  # find the closest wavelength to 676 nm
-    m715 = np.argmin(np.abs(coeffs['a_wavelengths'] - 715.0))  # find the closest wavelength to 715 nm
-    apg = optaa['apg_ts_s']
-    abl = ((apg[:, m715-1:m715+2].median(axis=1) - apg[:, m650-1:m650+2].median(axis=1)) /
-           (715 - 650)) * (676 - 650) + apg[:, m650-1:m650+2].median(axis=1)  # interpolate to 676 nm
-    aphi = apg[:, m676-1:m676+2].median(axis=1) - abl
-    optaa['estimated_chlorophyll'] = aphi / chl_line_height
+    m650 = np.argmin(
+        np.abs(coeffs["a_wavelengths"] - 650.0)
+    )  # find the closest wavelength to 650 nm
+    m676 = np.argmin(
+        np.abs(coeffs["a_wavelengths"] - 676.0)
+    )  # find the closest wavelength to 676 nm
+    m715 = np.argmin(
+        np.abs(coeffs["a_wavelengths"] - 715.0)
+    )  # find the closest wavelength to 715 nm
+    apg = optaa["apg_ts_s"]
+    abl = (
+        (
+            apg[:, m715 - 1 : m715 + 2].median(axis=1)
+            - apg[:, m650 - 1 : m650 + 2].median(axis=1)
+        )
+        / (715 - 650)
+    ) * (676 - 650) + apg[:, m650 - 1 : m650 + 2].median(axis=1)  # interpolate to 676 nm
+    aphi = apg[:, m676 - 1 : m676 + 2].median(axis=1) - abl
+    optaa["estimated_chlorophyll"] = aphi / chl_line_height
 
     # estimate the POC concentration from the attenuation at 660 nm, from Cetinic et al., 2012 and references therein
     # (doi:10.4319/lom.2012.10.415)
-    m660 = np.argmin(np.abs(coeffs['c_wavelengths'] - 660.0))  # find the closest wavelength to 660 nm
-    cpg = optaa['cpg_ts']
-    optaa['estimated_poc'] = cpg[:, m660-1:m660+2].median(axis=1) * 381
+    m660 = np.argmin(
+        np.abs(coeffs["c_wavelengths"] - 660.0)
+    )  # find the closest wavelength to 660 nm
+    cpg = optaa["cpg_ts"]
+    optaa["estimated_poc"] = cpg[:, m660 - 1 : m660 + 2].median(axis=1) * 381
 
     return optaa
 
@@ -252,11 +260,10 @@ class QartodRunner:
     def __init__(
         self,
         refdes: str,
-        param : str,
+        param: str,
         da: xr.DataArray,
         qartod_ds: xr.Dataset,
         qc_flags: Dict,
-
     ):
         """
         parameters:
@@ -264,7 +271,7 @@ class QartodRunner:
         param: str, name of data param of interest ie: 'ph_seawater' subset to time of interest
         da: xarray DataArray, actual data array of param of interest used to run qartod tests against tables
         qartod_ds: xarray Dataset, dataset of qartod test arrays and param of interest, may be helpful for persisting attrs
-        qc_flags: dict of qartod flag mappings useful for generating array names ie: 
+        qc_flags: dict of qartod flag mappings useful for generating array names ie:
             {
                 'qartod_grossRange': {
                     'symbol': '+',
@@ -280,17 +287,17 @@ class QartodRunner:
                 }
             }
         self.qartod(): method that runs homebrew qartod tests and returns a dataset that can overwrite
-        the qcDS generated by CI for when the data team wants to review new or preliminary qartod 
-        tables. This method will be triggered with '--homebrew-qartod' flag. And the resulting 
+        the qcDS generated by CI for when the data team wants to review new or preliminary qartod
+        tables. This method will be triggered with '--homebrew-qartod' flag. And the resulting
         pngs will probably be stored in an alternate s3 bucket to be viewed with the staging frontend.
 
-        loadStagedQARTOD(): function that loads qartod tables from RCA qartod staging repo and formats 
-        the tables so we can run homebrew tests in this plotting routine. 
+        loadStagedQARTOD(): function that loads qartod tables from RCA qartod staging repo and formats
+        the tables so we can run homebrew tests in this plotting routine.
 
-        NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range 
-        fixed instruments have fixed climatology and fixed gross range tables. 
+        NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range
+        fixed instruments have fixed climatology and fixed gross range tables.
         """
-        #TODO in the plot profile scatter loop this class is invoked in a loop which might cause github to api limit us
+        # TODO in the plot profile scatter loop this class is invoked in a loop which might cause github to api limit us
         # might need to seperate fetching tables so its run once at the beginning of a dashboard workflow
         self.refdes = refdes
         self.param = param
@@ -301,10 +308,16 @@ class QartodRunner:
         self.qc_flags = qc_flags
         self.qc_summary_da = qartod_ds[f"{param}{qc_flags['qc']['param']}"]
 
-        if "FIXED" in all_configs_dict[refdes]['instrument']:
-            self.table_type = ("fixed", "fixed") # (clim, gross) both fixed for fixed instruments
-        elif "PROFILER" in all_configs_dict[refdes]['instrument']:
-            self.table_type = ("binned", "int") # (clim, gross) gross range is integrated for profilers
+        if "FIXED" in all_configs_dict[refdes]["instrument"]:
+            self.table_type = (
+                "fixed",
+                "fixed",
+            )  # (clim, gross) both fixed for fixed instruments
+        elif "PROFILER" in all_configs_dict[refdes]["instrument"]:
+            self.table_type = (
+                "binned",
+                "int",
+            )  # (clim, gross) gross range is integrated for profilers
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
 
@@ -313,25 +326,27 @@ class QartodRunner:
         param_da = self.param_da
         qc_flags = self.qc_flags
 
-        gross_da = xr.full_like(param_da, 1) # qartod array which mirrors input array
+        gross_da = xr.full_like(param_da, 1)  # qartod array which mirrors input array
         gross_da.name = f"{param}{qc_flags['qartod_grossRange']['param']}"
 
-        if self.table_type[1] in ["fixed", "int"]: # gross range table is same format for fixed and integrated 
-            fail_low = self.gross_dict['qartod']['gross_range_test']['fail_span'][0]
-            fail_high = self.gross_dict['qartod']['gross_range_test']['fail_span'][1]
-            sus_low = self.gross_dict['qartod']['gross_range_test']['suspect_span'][0]
-            sus_high = self.gross_dict['qartod']['gross_range_test']['suspect_span'][1]
+        if self.table_type[1] in [
+            "fixed",
+            "int",
+        ]:  # gross range table is same format for fixed and integrated
+            fail_low = self.gross_dict["qartod"]["gross_range_test"]["fail_span"][0]
+            fail_high = self.gross_dict["qartod"]["gross_range_test"]["fail_span"][1]
+            sus_low = self.gross_dict["qartod"]["gross_range_test"]["suspect_span"][0]
+            sus_high = self.gross_dict["qartod"]["gross_range_test"]["suspect_span"][1]
 
             fail_mask = (param_da <= fail_low) | (param_da >= fail_high)
             suspect_mask = ((param_da <= sus_low) | (param_da >= sus_high)) & ~fail_mask
 
             gross_da = gross_da.where(~fail_mask, 4)
             gross_da = gross_da.where(~suspect_mask, 3)
-            
-            #gross_da.attrs = self.qartod_ds[gross_da.name].attrs
+
+            # gross_da.attrs = self.qartod_ds[gross_da.name].attrs
             return gross_da
-        
-    
+
     def run_climatology(self):
         da = self.da
         param = self.param
@@ -339,7 +354,7 @@ class QartodRunner:
         pressure_param = self.pressure_param
         qc_flags = self.qc_flags
 
-        clim_da = xr.full_like(param_da, 1) # qartod array which mirrors input array
+        clim_da = xr.full_like(param_da, 1)  # qartod array which mirrors input array
         clim_da.name = f"{param}{qc_flags['qartod_climatology']['param']}"
 
         if self.table_type[0] == "fixed":
@@ -347,14 +362,16 @@ class QartodRunner:
                 month_int = ast.literal_eval(month_str)
                 month_mask = da.time.dt.month == month_int
 
-                sus_low = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[0]
-                sus_high = ast.literal_eval(self.clim_dict[month_str]['[0, 0]'])[1]
-                logger.info(f"Month: {month_int}, Suspect Low: {sus_low}, Suspect High: {sus_high}")
+                sus_low = ast.literal_eval(self.clim_dict[month_str]["[0, 0]"])[0]
+                sus_high = ast.literal_eval(self.clim_dict[month_str]["[0, 0]"])[1]
+                logger.info(
+                    f"Month: {month_int}, Suspect Low: {sus_low}, Suspect High: {sus_high}"
+                )
 
-                suspect_mask = ( (param_da <= sus_low) | (param_da >= sus_high) ) & month_mask
-                #clim_da.attrs = self.qartod_ds[clim_da.name].attrs
+                suspect_mask = ((param_da <= sus_low) | (param_da >= sus_high)) & month_mask
+                # clim_da.attrs = self.qartod_ds[clim_da.name].attrs
                 clim_da = clim_da.where(~suspect_mask, 3)
-        
+
         elif self.table_type[0] == "binned":
             # TODO double check this logic # TODO how do we get pressure for profilers fixed depth
             for month_str in self.clim_dict.keys():
@@ -363,34 +380,48 @@ class QartodRunner:
 
                 for depth_range_str in self.clim_dict[month_str].keys():
                     depth_range = ast.literal_eval(depth_range_str)
-                    depth_mask = (da[pressure_param] >= depth_range[0]) & (da[pressure_param] < depth_range[1])
+                    depth_mask = (da[pressure_param] >= depth_range[0]) & (
+                        da[pressure_param] < depth_range[1]
+                    )
 
                     sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[0]
                     sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
-                    logger.info(f"Month: {month_int}, Depth Range: {depth_range}, Suspect Low: {sus_low}, Suspect High: {sus_high}")
+                    logger.info(
+                        f"Month: {month_int}, Depth Range: {depth_range}, Suspect Low: {sus_low}, Suspect High: {sus_high}"
+                    )
 
-                    suspect_mask = ( (param_da <= sus_low) | (param_da >= sus_high) ) & month_mask & depth_mask
+                    suspect_mask = (
+                        ((param_da <= sus_low) | (param_da >= sus_high))
+                        & month_mask
+                        & depth_mask
+                    )
                     clim_da = clim_da.where(~suspect_mask, 3)
-        
+
         return clim_da
 
-        
     def qartod(self):
-
         gross_da = self.run_gross_range()
         climatology_da = self.run_climatology()
 
-        if self.pressure_param: # we want to return pressure param if it was passed orginally
-            homebrew_qartod_ds = xr.merge([self.param_da, self.da[self.pressure_param], self.qc_summary_da, gross_da, climatology_da])
+        if self.pressure_param:  # we want to return pressure param if it was passed orginally
+            homebrew_qartod_ds = xr.merge(
+                [
+                    self.param_da,
+                    self.da[self.pressure_param],
+                    self.qc_summary_da,
+                    gross_da,
+                    climatology_da,
+                ]
+            )
         else:
-            homebrew_qartod_ds = xr.merge([self.param_da, self.qc_summary_da, gross_da, climatology_da])
-        
+            homebrew_qartod_ds = xr.merge(
+                [self.param_da, self.qc_summary_da, gross_da, climatology_da]
+            )
+
         return homebrew_qartod_ds
-    
 
     def get_pressure_param(self):
-
-        pressure_vars = variable_dict['pressure'].strip('"').split(',')
+        pressure_vars = variable_dict["pressure"].strip('"').split(",")
         if isinstance(self.da, xr.Dataset):
             matching_vars = [var for var in pressure_vars if var in self.da.data_vars]
             if matching_vars:
@@ -399,14 +430,14 @@ class QartodRunner:
             else:
                 # if no pressure var in dataset
                 return None
-        
-        else: 
+
+        else:
             # if single data array
             return None
 
     def clean_param_data_array(self):
         da = self.da
-        param = self.param 
+        param = self.param
 
         if isinstance(da, xr.Dataset):
             param_da = da[param]
@@ -414,4 +445,3 @@ class QartodRunner:
             param_da = da
 
         return param_da
- 
