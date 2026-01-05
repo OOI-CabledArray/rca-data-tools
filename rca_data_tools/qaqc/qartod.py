@@ -103,17 +103,17 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
     table_type: tuple (climatology, gross range) (fixed, fixed) or (binned, int) for profiler
     """
     # FIXME this rename map is not helping us avoid 404 errors when looking for tables
-    # might need a special staging rename map?
-    renameMap = {
-        "sea_water_temperature": "seawater_temperature",
-        "sea_water_practical_salinity": "practical_salinity",
-        "sea_water_pressure": "seawater_pressure",
-        "sea_water_density": "density",
-        #'ph_seawater':'seawater_ph',
-    }
+    # FIXME might need a special staging rename map? actualy might not need this for staged qartod
+    # renameMap = {
+    #     "sea_water_temperature": "seawater_temperature",
+    #     "sea_water_practical_salinity": "practical_salinity",
+    #     "sea_water_pressure": "seawater_pressure",
+    #     "sea_water_density": "density",
+    #     #'ph_seawater':'seawater_ph',
+    # }
 
-    if param in renameMap:
-        param = renameMap[param]
+    # if param in renameMap:
+    #     param = renameMap[param]
 
     (site, node, sensor1, sensor2) = refDes.split("-")
     sensor = sensor1 + "-" + sensor2
