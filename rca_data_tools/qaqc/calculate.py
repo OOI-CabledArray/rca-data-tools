@@ -306,7 +306,7 @@ class QartodRunner:
         self.pressure_param = self.get_pressure_param()
         self.qartod_ds = qartod_ds
         self.qc_flags = qc_flags
-        self.qc_summary_da = qartod_ds[f"{param}{qc_flags['qc']['param']}"]
+        self.qc_summary_da = self.get_qc_summary_da()
 
         if "FIXED" in all_configs_dict[refdes]["instrument"]:
             self.table_type = (
@@ -403,21 +403,21 @@ class QartodRunner:
         gross_da = self.run_gross_range()
         climatology_da = self.run_climatology()
 
-        if self.pressure_param:  # we want to return pressure param if it was passed orginally
-            homebrew_qartod_ds = xr.merge(
-                [
-                    self.param_da,
-                    self.da[self.pressure_param],
-                    self.qc_summary_da,
-                    gross_da,
-                    climatology_da,
-                ]
-            )
-        else:
-            homebrew_qartod_ds = xr.merge(
-                [self.param_da, self.qc_summary_da, gross_da, climatology_da]
-            )
+        merge_vars = [
+            self.param_da, # parameter we ran the test on 
+            gross_da, # gross range qartod test results
+            climatology_da, # climatology qartod test results
+        ]
 
+        # merge pressure param if applicable
+        if self.pressure_param:
+            merge_vars.append(self.da[self.pressure_param])
+
+        # merge qc summary if applicable
+        if self.qc_summary_da is not None:
+            merge_vars.append(self.qc_summary_da)
+
+        homebrew_qartod_ds = xr.merge(merge_vars)
         return homebrew_qartod_ds
 
     def get_pressure_param(self):
@@ -445,3 +445,11 @@ class QartodRunner:
             param_da = da
 
         return param_da
+
+    def get_qc_summary_da(self):
+        try: 
+            qc_summary_da = self.qartod_ds[f"{self.param}{self.qc_flags['qc']['param']}"]
+        except KeyError:
+            logger.warning(f"QC summary data array not found for {self.refdes} {self.param}")
+            qc_summary_da = None
+        return qc_summary_da
