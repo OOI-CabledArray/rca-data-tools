@@ -2151,7 +2151,7 @@ def plotScatter(
                     flagString = Yparam + flags[flagType]['param']
                     print(flagString)
                     if flagString in qcDS:
-                        print(f'paramters found for {flagString}')
+                        print(f'parameters found for {flagString}')
                         flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'y'}}
                         for level in flagStatus.keys():
                             flaggedDS = qcDS.where((qcDS[flagString] == flagStatus[level]['value']).compute(), drop=True) # find where the flags DS matches a certain flag status
@@ -2172,7 +2172,7 @@ def plotScatter(
                                 legendString = f'{flagType} {level}: no points flagged'
                                 plt.plot([0],[0],color='w',markersize=0,label='%s' % legendString,)
                     else:
-                        print('no paramters found for ',flagString)
+                        print('no parameters found for ',flagString)
                         legendString = f'no {flagType} flags found'
                         plt.plot(scatterX,scatterY,alpha=0,markersize=0,label='%s' % legendString,)
 
