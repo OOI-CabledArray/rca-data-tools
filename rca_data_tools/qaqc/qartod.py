@@ -120,58 +120,63 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
 
     githubBaseURL = "https://raw.githubusercontent.com/wruef/qartod_staging/refs/heads/main/"
     # ie CE04OSPS-PC01B-4B-PHSENA106-ph_seawater.climatology.csv.fixed
-
-    clim_URL = (
-        githubBaseURL
-        + refDes
-        + "-"
-        + param
-        + ".climatology_table.csv."
-        + table_type[0]  # clim table type
-    )
-    grossRange_URL = (
-        githubBaseURL + refDes + "-" + param + "-gross_range_test_values.csv"
-        # + table_type[1] # gross range table type #NOTE wendi dropped this tag in staging
-    )
-    # get clim table
-    download = requests.get(clim_URL)
-    if download.status_code == 200:
-        df_clim = pd.read_csv(io.StringIO(download.content.decode("utf-8")))
-        climRename = {
-            "Unnamed: 0": "depth",
-            "[1, 1]": "1",
-            "[2, 2]": "2",
-            "[3, 3]": "3",
-            "[4, 4]": "4",
-            "[5, 5]": "5",
-            "[6, 6]": "6",
-            "[7, 7]": "7",
-            "[8, 8]": "8",
-            "[9, 9]": "9",
-            "[10, 10]": "10",
-            "[11, 11]": "11",
-            "[12, 12]": "12",
-        }
-
-        df_clim.rename(columns=climRename, inplace=True)
-        clim_dict = df_clim.set_index("depth").to_dict()
+    if table_type[0] is None:
+        clim_dict = None
     else:
-        raise FileNotFoundError(f"Climatology table not found at {clim_URL}")
+        clim_URL = (
+            githubBaseURL
+            + refDes
+            + "-"
+            + param
+            + ".climatology_table.csv."
+            + table_type[0]  # clim table type
+        )
+        # get clim table
+        download = requests.get(clim_URL)
+        if download.status_code == 200:
+            df_clim = pd.read_csv(io.StringIO(download.content.decode("utf-8")))
+            climRename = {
+                "Unnamed: 0": "depth",
+                "[1, 1]": "1",
+                "[2, 2]": "2",
+                "[3, 3]": "3",
+                "[4, 4]": "4",
+                "[5, 5]": "5",
+                "[6, 6]": "6",
+                "[7, 7]": "7",
+                "[8, 8]": "8",
+                "[9, 9]": "9",
+                "[10, 10]": "10",
+                "[11, 11]": "11",
+                "[12, 12]": "12",
+            }
 
-    download = requests.get(grossRange_URL)
-    if download.status_code == 200:
-        df_grossRange = pd.read_csv(io.StringIO(download.content.decode("utf-8")))
-        qcConfig = df_grossRange.qcConfig[
-            (df_grossRange.subsite == site)
-            & (df_grossRange.node == node)
-            & (df_grossRange.sensor == sensor)
-            & (df_grossRange.parameters.str.contains(param))
-        ]
-        if len(qcConfig) > 0:
-            qcConfig_json = qcConfig.values[0].replace("'", '"')
-        gross_dict = json.loads(qcConfig_json)
+            df_clim.rename(columns=climRename, inplace=True)
+            clim_dict = df_clim.set_index("depth").to_dict()
+        else:
+            raise FileNotFoundError(f"Climatology table not found at {clim_URL}")
 
+    if table_type[1] is None:
+        gross_dict = None
     else:
-        raise FileNotFoundError(f"Gross range table not found at {grossRange_URL}")
+        grossRange_URL = (
+            githubBaseURL + refDes + "-" + param + "-gross_range_test_values.csv"
+            # + table_type[1] # gross range table type #NOTE wendi dropped this tag in staging
+        )
+        download = requests.get(grossRange_URL)
+        if download.status_code == 200:
+            df_grossRange = pd.read_csv(io.StringIO(download.content.decode("utf-8")))
+            qcConfig = df_grossRange.qcConfig[
+                (df_grossRange.subsite == site)
+                & (df_grossRange.node == node)
+                & (df_grossRange.sensor == sensor)
+                & (df_grossRange.parameters.str.contains(param))
+            ]
+            if len(qcConfig) > 0:
+                qcConfig_json = qcConfig.values[0].replace("'", '"')
+            gross_dict = json.loads(qcConfig_json)
+
+        else:
+            raise FileNotFoundError(f"Gross range table not found at {grossRange_URL}")
 
     return clim_dict, gross_dict

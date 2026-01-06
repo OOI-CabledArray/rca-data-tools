@@ -5,6 +5,7 @@ workpool.)
 
 """
 import pandas as pd
+import yaml
 from pathlib import Path
 
 COMPUTE_EXCEPTIONS = {
@@ -304,3 +305,5 @@ discreteSample_dict = (
 )
 
 plotDir = str(PLOT_DIR) + '/'
+
+qartod_skip_dict = yaml.safe_load(open("./rca_data_tools/qaqc/params/qartod_skip.yaml")) 

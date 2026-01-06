@@ -2149,7 +2149,6 @@ def plotScatter(
 
                 for flagType in flags.keys():
                     flagString = Yparam + flags[flagType]['param']
-                    print(flagString)
                     if flagString in qcDS:
                         print(f'parameters found for {flagString}')
                         flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'y'}}

@@ -11,7 +11,7 @@ import xarray as xr
 import numpy as np
 from typing import Dict
 from rca_data_tools.qaqc.qartod import loadStagedQARTOD
-from rca_data_tools.qaqc.constants import all_configs_dict, variable_dict
+from rca_data_tools.qaqc.constants import all_configs_dict, variable_dict, qartod_skip_dict
 from rca_data_tools.qaqc.utils import select_logger
 
 logger = select_logger()
@@ -307,17 +307,7 @@ class QartodRunner:
         self.qartod_ds = qartod_ds
         self.qc_flags = qc_flags
         self.qc_summary_da = self.get_qc_summary_da()
-
-        if "FIXED" in all_configs_dict[refdes]["instrument"]:
-            self.table_type = (
-                "fixed",
-                "fixed",
-            )  # (clim, gross) both fixed for fixed instruments
-        elif "PROFILER" in all_configs_dict[refdes]["instrument"]:
-            self.table_type = (
-                "binned",
-                "int",
-            )  # (clim, gross) gross range is integrated for profilers
+        self.table_type = self.determine_qartod_table_types()
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
 
@@ -325,6 +315,9 @@ class QartodRunner:
         param = self.param
         param_da = self.param_da
         qc_flags = self.qc_flags
+
+        if self.table_type[1] is None:
+            return None
 
         gross_da = xr.full_like(param_da, 1)  # qartod array which mirrors input array
         gross_da.name = f"{param}{qc_flags['qartod_grossRange']['param']}"
@@ -353,6 +346,9 @@ class QartodRunner:
         param_da = self.param_da
         pressure_param = self.pressure_param
         qc_flags = self.qc_flags
+
+        if self.table_type[0] is None:
+            return None
 
         clim_da = xr.full_like(param_da, 1)  # qartod array which mirrors input array
         clim_da.name = f"{param}{qc_flags['qartod_climatology']['param']}"
@@ -403,21 +399,23 @@ class QartodRunner:
         gross_da = self.run_gross_range()
         climatology_da = self.run_climatology()
 
-        merge_vars = [
-            self.param_da, # parameter we ran the test on 
-            gross_da, # gross range qartod test results
-            climatology_da, # climatology qartod test results
-        ]
+        merge_vars = [self.param_da] # parameter we ran the qartod test on
+
+        # if tests were skipped we won't return those arrays
+        if gross_da is not None:
+            merge_vars.append(gross_da)
+        if climatology_da is not None:
+            merge_vars.append(climatology_da)
 
         # merge pressure param if applicable
         if self.pressure_param:
             merge_vars.append(self.da[self.pressure_param])
 
-        # merge qc summary if applicable
         if self.qc_summary_da is not None:
             merge_vars.append(self.qc_summary_da)
 
         homebrew_qartod_ds = xr.merge(merge_vars)
+
         return homebrew_qartod_ds
 
     def get_pressure_param(self):
@@ -450,6 +448,33 @@ class QartodRunner:
         try: 
             qc_summary_da = self.qartod_ds[f"{self.param}{self.qc_flags['qc']['param']}"]
         except KeyError:
-            logger.warning(f"QC summary data array not found for {self.refdes} {self.param}")
+            logger.info(f"QC summary data array not found for {self.refdes} {self.param}")
             qc_summary_da = None
         return qc_summary_da
+    
+    
+    def determine_qartod_table_types(self):
+        refdes = self.refdes
+
+        if "FIXED" in all_configs_dict[refdes]["instrument"]:
+            table_type = [
+                "fixed",
+                "fixed",
+              ]  # (clim, gross) both fixed for fixed instruments
+        elif "PROFILER" in all_configs_dict[refdes]["instrument"]:
+            table_type = [
+                "binned",
+                "int",
+              ]  # (clim, gross) gross range is integrated for profilers
+
+        if self.param in qartod_skip_dict.keys():
+            skip_tests = qartod_skip_dict[self.param]
+            if "climatology" in skip_tests:
+                table_type[0] = None # skip climatology test
+            if "gross_range" in skip_tests:
+                table_type[1] = None # skip gross range test
+
+        return table_type
+
+        
+

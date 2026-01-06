@@ -1,0 +1,5 @@
+# stream param name: qartod test type to skip
+dpc_ctd_seawater_conductivity: climatology
+sea_water_electrical_conductivity: climatology
+sea_water_pressure: climatology
+sea_water_density: [climatology, gross_range]
