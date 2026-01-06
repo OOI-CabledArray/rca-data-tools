@@ -3,9 +3,12 @@ dpc_ctd_seawater_conductivity: climatology
 sea_water_electrical_conductivity: climatology
 sea_water_pressure: climatology
 sea_water_density: [climatology, gross_range]
+seafloor_pressure: climatology
 temperature1: climatology
 temperature2: climatology
 temperature3: climatology
+vent_fluid_temperature: climatology
+vent_fluid_chloride_conc: climatology
 resistivity_5: [climatology, gross_range]
 resistivity_x1: [climatology, gross_range]
 resistivity_x5: [climatology, gross_range]
