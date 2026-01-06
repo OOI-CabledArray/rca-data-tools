@@ -399,7 +399,7 @@ class QartodRunner:
         gross_da = self.run_gross_range()
         climatology_da = self.run_climatology()
 
-        merge_vars = [self.param_da] # parameter we ran the qartod test on
+        merge_vars = [self.param_da]  # parameter we ran the qartod test on
 
         # if tests were skipped we won't return those arrays
         if gross_da is not None:
@@ -445,14 +445,13 @@ class QartodRunner:
         return param_da
 
     def get_qc_summary_da(self):
-        try: 
+        try:
             qc_summary_da = self.qartod_ds[f"{self.param}{self.qc_flags['qc']['param']}"]
         except KeyError:
             logger.info(f"QC summary data array not found for {self.refdes} {self.param}")
             qc_summary_da = None
         return qc_summary_da
-    
-    
+
     def determine_qartod_table_types(self):
         refdes = self.refdes
 
@@ -460,21 +459,18 @@ class QartodRunner:
             table_type = [
                 "fixed",
                 "fixed",
-              ]  # (clim, gross) both fixed for fixed instruments
+            ]  # (clim, gross) both fixed for fixed instruments
         elif "PROFILER" in all_configs_dict[refdes]["instrument"]:
             table_type = [
                 "binned",
                 "int",
-              ]  # (clim, gross) gross range is integrated for profilers
+            ]  # (clim, gross) gross range is integrated for profilers
 
         if self.param in qartod_skip_dict.keys():
             skip_tests = qartod_skip_dict[self.param]
             if "climatology" in skip_tests:
-                table_type[0] = None # skip climatology test
+                table_type[0] = None  # skip climatology test
             if "gross_range" in skip_tests:
-                table_type[1] = None # skip gross range test
+                table_type[1] = None  # skip gross range test
 
         return table_type
-
-        
-
