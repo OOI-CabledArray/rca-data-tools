@@ -6,3 +6,30 @@ sea_water_density: [climatology, gross_range]
 temperature1: climatology
 temperature2: climatology
 temperature3: climatology
+resistivity_5: [climatology, gross_range]
+resistivity_x1: [climatology, gross_range]
+resistivity_x5: [climatology, gross_range]
+temperature01: climatology
+temperature02: climatology
+temperature03: climatology
+temperature04: climatology
+temperature05: climatology
+temperature06: climatology
+temperature07: climatology
+temperature08: climatology
+temperature09: climatology
+temperature10: climatology
+temperature11: climatology
+temperature12: climatology
+temperature13: climatology
+temperature14: climatology
+temperature15: climatology
+temperature16: climatology
+temperature17: climatology
+temperature18: climatology
+temperature19: climatology
+temperature20: climatology
+temperature21: climatology
+temperature22: climatology
+temperature23: climatology
+temperature24: climatology
