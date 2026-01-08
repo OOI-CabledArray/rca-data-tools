@@ -12,6 +12,10 @@ vent_fluid_chloride_conc: climatology
 resistivity_5: [climatology, gross_range]
 resistivity_x1: [climatology, gross_range]
 resistivity_x5: [climatology, gross_range]
+velpt_d_eastward_velocity: climatology
+velpt_d_northward_velocity: climatology
+velpt_d_upward_velocity: climatology
+pressure_temp: [climatology, gross_range] 
 temperature01: climatology
 temperature02: climatology
 temperature03: climatology
