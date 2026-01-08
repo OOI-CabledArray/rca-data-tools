@@ -15,6 +15,9 @@ resistivity_x5: [climatology, gross_range]
 velpt_d_eastward_velocity: climatology
 velpt_d_northward_velocity: climatology
 velpt_d_upward_velocity: climatology
+eastward_turbulent_velocity: climatology
+northward_turbulent_velocity: climatology
+upward_turbulent_velocity: climatology
 pressure_temp: [climatology, gross_range] 
 temperature01: climatology
 temperature02: climatology
