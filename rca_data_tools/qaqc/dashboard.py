@@ -2154,7 +2154,7 @@ def plotScatter(
                     if flagString in qcDS:
                         print(f'parameters found for {flagString}')
                         if 'gross' in flagString:
-                            flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'o'}}
+                            flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'orange'}}
                         elif 'climatology' in flagString:
                             flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'y'}}
                         else:
