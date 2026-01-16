@@ -1227,6 +1227,8 @@ def plotProfilesScatter(
                         flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'o'}}
                     elif 'climatology' in flagString:
                         flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'y'}}
+                    else:
+                        flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'c'}}
                     for level in flagStatus.keys():
                         flaggedDS = qcDS.where((qcDS[flagString] == flagStatus[level]['value']).compute(), drop=True)
                         flag_X = flaggedDS[Xparam].values
@@ -2158,6 +2160,8 @@ def plotScatter(
                             flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'o'}}
                         elif 'climatology' in flagString:
                             flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'y'}}
+                        else:
+                            flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'c'}}
                         for level in flagStatus.keys():
                             flaggedDS = qcDS.where((qcDS[flagString] == flagStatus[level]['value']).compute(), drop=True) # find where the flags DS matches a certain flag status
                             flag_X = flaggedDS.time.values # flagged times
