@@ -1101,10 +1101,7 @@ def plotProfilesScatter(
     ranges = ['full', 'standard', 'local']
     # Descent Sensors (only on descent)
     descentSamples = ['pco2_seawater','ph_seawater']
-    # Drop nans
     logger.info(paramData)
-    #paramData = paramData.where(paramData[Xparam].notnull().compute(),drop=True) #TODO 
-    # this was commented out for mem bug ask Wendi about bringing in back + consequences?
 
     yLabel = 'pressure, m'
     
