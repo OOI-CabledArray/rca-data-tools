@@ -1216,6 +1216,7 @@ def plotProfilesScatter(
             if homebrew_qartod:
                 qartodRunner = QartodRunner(site, Xparam, baseDS, qcDS, flags)
                 qcDS = qartodRunner.qartod() # overwrite CI based qcDS with homebrew qartod results
+                qcDS = qcDS.sel(time=slice(timeSpan[0], timeSpan[1]))
 
             for flagType in flags.keys():
                 flagString = Xparam + flags[flagType]['param']
@@ -2143,8 +2144,6 @@ def plotScatter(
                 }
 
                 # if homebrew_qartod, overwrite qcDS with homebrew qartod array
-                # TODO remove fixed if we want to see staged qartod on fixed depth plots, 
-                # TODO but this would require passing pressure param into this function when called on fixed depths
                 if homebrew_qartod and "FIXED" in all_configs_dict[site]['instrument']: 
                     qartodRunner = QartodRunner(site, Yparam, baseDS, qcDS, flags)
                     qcDS = qartodRunner.qartod() # overwrite CI qcDS with homebrew qartod results
