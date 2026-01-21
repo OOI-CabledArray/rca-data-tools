@@ -1210,7 +1210,7 @@ def plotProfilesScatter(
                     'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
                     'qartod_climatology':{'symbol':'x','param':'_qartod_executed_climatology_test'},
                     #'qartod_summary':{'symbol':'1','param':'_qartod_results'},
-                    'qc':{'symbol':'s','param':'_qc_summary_flag'},
+                    #'qc':{'symbol':'s','param':'_qc_summary_flag'}, # TODO add back after qartod done
                 }
             
             if homebrew_qartod:
