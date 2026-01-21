@@ -1600,7 +1600,6 @@ def plotProfilesScatter(
                         iterList_sorted = sorted({tuple(i) for i in iterList}, key=lambda element: (element[0], element[1]))
                         for spanIter in iterList_sorted:
                             logger.info(f"Concatenating for {spanIter}")
-                            logger.info(f"dataDict {dataDict}")
                             fig, ax = setPlot()
                             scatterX_sub = np.concatenate( [ dataDict[i]['scatterX'] for i in dataDict.keys() if ( (i.week == spanIter[1]) and (i.year == spanIter[0]) ) ] )
                             scatterY_sub = np.concatenate( [ dataDict[i]['scatterY'] for i in dataDict.keys() if ( (i.week == spanIter[1]) and (i.year == spanIter[0]) ) ] )
@@ -1633,7 +1632,6 @@ def plotProfilesScatter(
                         iterList_sorted = sorted({tuple(i) for i in iterList}, key=lambda element: (element[0], element[1]))
                         for spanIter in iterList_sorted:
                             logger.info(f"Concatenating for {spanIter}")
-                            logger.info(f"dataDict {dataDict}")
                             fig, ax = setPlot()
                             scatterX_sub = np.concatenate( [ dataDict[i]['scatterX'] for i in dataDict.keys() if ( (i.month == spanIter[1]) and (i.year == spanIter[0]) ) ] )
                             scatterY_sub = np.concatenate( [ dataDict[i]['scatterY'] for i in dataDict.keys() if ( (i.month == spanIter[1]) and (i.year == spanIter[0]) ) ] )
