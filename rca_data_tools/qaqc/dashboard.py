@@ -2174,11 +2174,11 @@ def plotScatter(
                             	    )
                             else:
                                 legendString = f'{flagType} {level}: no points flagged'
-                                plt.plot([0],[0],color='w',markersize=0,label='%s' % legendString,)
+                                plt.plot([0], [0], color='w', markersize=0, label='%s' % legendString)
                     else:
                         print('no parameters found for ',flagString)
                         legendString = f'no {flagType} flags found'
-                        plt.plot(scatterX,scatterY,alpha=0,markersize=0,label='%s' % legendString,)
+                        plt.plot(scatterX, scatterY, alpha=0, markersize=0, label='%s' % legendString)
 
                 # generating custom legend 
                 handles, labels = ax.get_legend_handles_labels()
