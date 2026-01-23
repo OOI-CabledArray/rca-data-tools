@@ -1,4 +1,5 @@
 # stream param name: qartod test type to skip
+# or if single instrument - refdes: test type to skip
 dpc_ctd_seawater_conductivity: climatology
 sea_water_electrical_conductivity: climatology
 sea_water_pressure: climatology
@@ -43,3 +44,4 @@ temperature21: climatology
 temperature22: climatology
 temperature23: climatology
 temperature24: climatology
+RS03INT2-MJ03D-11-CTDPFB307: climatology

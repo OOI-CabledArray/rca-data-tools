@@ -466,8 +466,12 @@ class QartodRunner:
                 "int",
             ]  # (clim, gross) gross range is integrated for profilers
 
-        if self.param in qartod_skip_dict.keys():
-            skip_tests = qartod_skip_dict[self.param]
+        if self.param in qartod_skip_dict.keys() or self.refdes in qartod_skip_dict.keys():
+            try:
+                skip_tests = qartod_skip_dict[self.param]
+            except KeyError:
+                skip_tests = qartod_skip_dict[self.refdes]
+
             if "climatology" in skip_tests:
                 table_type[0] = None  # skip climatology test
             if "gross_range" in skip_tests:

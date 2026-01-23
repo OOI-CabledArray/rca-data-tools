@@ -135,6 +135,6 @@ discreteSample_dict = (
 
 plotDir = str(PLOT_DIR) + '/'
 
-qartod_skip_dict = yaml.safe_load(open(PARAMS_DIR.joinpath("qartod_skip.yaml"))) 
+qartod_skip_dict = yaml.safe_load(open(PARAMS_DIR.joinpath(""))) 
 
 COMPUTE_EXCEPTIONS = yaml.safe_load(open(PARAMS_DIR.joinpath("compute_exceptions.yaml")))
