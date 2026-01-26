@@ -297,7 +297,7 @@ class QartodRunner:
         NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range
         fixed instruments have fixed climatology and fixed gross range tables.
         """
-        # TODO in the plot profile scatter loop this class is invoked in a loop which might cause github to api limit us
+        # in plot_profile_scatter this class is invoked in a loop which might cause github to api limit us
         # might need to seperate fetching tables so its run once at the beginning of a dashboard workflow
         self.refdes = refdes
         self.param = param
@@ -369,7 +369,6 @@ class QartodRunner:
                 clim_da = clim_da.where(~suspect_mask, 3)
 
         elif self.table_type[0] == "binned":
-            # TODO double check this logic # TODO how do we get pressure for profilers fixed depth
             for month_str in self.clim_dict.keys():
                 month_int = ast.literal_eval(month_str)
                 month_mask = da.time.dt.month == month_int

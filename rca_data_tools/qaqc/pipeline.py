@@ -62,7 +62,7 @@ class QAQCPipeline:
         self.__setup()
 
     def __setup(self):
-        # TODO data filtering/verification should occur in this class
+        # TODO Don S: data filtering/verification should occur in this class
         self.created_dt = datetime.datetime.utcnow()
         if self.site not in all_configs_dict:
             raise ValueError(
