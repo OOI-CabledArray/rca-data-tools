@@ -112,7 +112,7 @@ def organize_images_task(
         return Cancelled(message="No plots found to be organized.")
     
 
-@flow(timeout_seconds=86400) # time out after 24 hours #TODO back to 8 after qartod staging done
+@flow(timeout_seconds=28800)
 def qaqc_pipeline_flow(
     site: str,
     timeString: str,

@@ -200,7 +200,7 @@ def run_dashboard_creation(
                 overlayData_anno = {}
                 overlayData_anno = dashboard.loadAnnotations(site)
 
-                overlayData_disc = pd.DataFrame() #TODO clean up after we descide of final discrete data solution
+                overlayData_disc = pd.DataFrame() #TODO clean up after we decide of final discrete data solution
                 # if int(span) == 0:
                 #     overlayData_disc = discrete.extractDiscreteOverlay(site,timeRef.year,discreteSample_dict,param)
 
