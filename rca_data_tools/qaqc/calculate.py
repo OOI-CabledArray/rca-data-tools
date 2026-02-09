@@ -392,10 +392,16 @@ class QartodRunner:
                         f"Month: {month_int}, Depth Range: {depth_range}, Suspect Low: {sus_low}, Suspect High: {sus_high}"
                     )
 
+                    time_depth_mask = month_mask & depth_mask
+                    # NOTE note evaluated logic is only implimented for binned climatologies
+                    if np.isnan(sus_low) or np.isnan(sus_high): 
+                        logger.warning(f"Month: {month_int}, Depth Range: {depth_range} has invalid climatology thresholds. Setting all values for this bin to `9`.")
+                        clim_da = clim_da.where(~time_depth_mask, 9) # Set value to 9 where (month & depth) is true
+                        continue
+
                     suspect_mask = (
                         ((param_da <= sus_low) | (param_da >= sus_high))
-                        & month_mask
-                        & depth_mask
+                        & time_depth_mask
                     )
                     clim_da = clim_da.where(~suspect_mask, 3)
 
