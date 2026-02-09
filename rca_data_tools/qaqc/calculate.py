@@ -385,7 +385,8 @@ class QartodRunner:
                     except ValueError:
                         logger.warning(f"literal eval failed for {month_str} {depth_range_str} - likely due to `nan` value"
                                        " setting suspect thresholds to `nan`.")
-                        continue
+                        sus_low = np.nan
+                        sus_high = np.nan
 
                     logger.info(
                         f"Month: {month_int}, Depth Range: {depth_range}, Suspect Low: {sus_low}, Suspect High: {sus_high}"
