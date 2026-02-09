@@ -102,17 +102,6 @@ def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):
     param: str
     table_type: tuple (climatology, gross range) (fixed, fixed) or (binned, int) for profiler
     """
-    # NOTE rename map might need to be adjust or uncommented for staged tables
-    # renameMap = {
-    #     "sea_water_temperature": "seawater_temperature",
-    #     "sea_water_practical_salinity": "practical_salinity",
-    #     "sea_water_pressure": "seawater_pressure",
-    #     "sea_water_density": "density",
-    #     #'ph_seawater':'seawater_ph',
-    # }
-
-    # if param in renameMap:
-    #     param = renameMap[param]
 
     (site, node, sensor1, sensor2) = refDes.split("-")
     sensor = sensor1 + "-" + sensor2

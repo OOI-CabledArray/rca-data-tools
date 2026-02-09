@@ -379,8 +379,14 @@ class QartodRunner:
                         da[pressure_param] < depth_range[1]
                     )
 
-                    sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[0]
-                    sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
+                    try:
+                        sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[0]
+                        sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
+                    except ValueError:
+                        logger.warning(f"literal eval failed for {month_str} {depth_range_str} - likely due to `nan` value"
+                                       " setting suspect thresholds to `nan`.")
+                        continue
+
                     logger.info(
                         f"Month: {month_int}, Depth Range: {depth_range}, Suspect Low: {sus_low}, Suspect High: {sus_high}"
                     )
