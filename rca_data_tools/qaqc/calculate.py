@@ -297,8 +297,7 @@ class QartodRunner:
         NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range
         fixed instruments have fixed climatology and fixed gross range tables.
         """
- 
- 
+
         self.refdes = refdes
         self.param = param
         self.da = da
@@ -310,7 +309,6 @@ class QartodRunner:
         self.table_type = self.determine_qartod_table_types()
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
-
 
     def run_gross_range(self):
         param = self.param
@@ -340,7 +338,6 @@ class QartodRunner:
 
             # gross_da.attrs = self.qartod_ds[gross_da.name].attrs
             return gross_da
-
 
     def run_climatology(self):
         da = self.da
@@ -382,11 +379,17 @@ class QartodRunner:
                     )
 
                     try:
-                        sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[0]
-                        sus_high = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[1]
+                        sus_low = ast.literal_eval(self.clim_dict[month_str][depth_range_str])[
+                            0
+                        ]
+                        sus_high = ast.literal_eval(
+                            self.clim_dict[month_str][depth_range_str]
+                        )[1]
                     except ValueError:
-                        logger.warning(f"literal eval failed for {month_str} {depth_range_str} - likely due to `nan` value"
-                                       " setting suspect thresholds to `nan`.")
+                        logger.warning(
+                            f"literal eval failed for {month_str} {depth_range_str} - likely due to `nan` value"
+                            " setting suspect thresholds to `nan`."
+                        )
                         sus_low = np.nan
                         sus_high = np.nan
 
@@ -396,19 +399,21 @@ class QartodRunner:
 
                     time_depth_mask = month_mask & depth_mask
                     # NOTE note evaluated logic is only implimented for binned climatologies
-                    if np.isnan(sus_low) or np.isnan(sus_high): 
-                        logger.warning(f"Month: {month_int}, Depth Range: {depth_range} has invalid climatology thresholds. Setting all values for this bin to `9`.")
-                        clim_da = clim_da.where(~time_depth_mask, 9) # Set value to 9 where (month & depth) is true
+                    if np.isnan(sus_low) or np.isnan(sus_high):
+                        logger.warning(
+                            f"Month: {month_int}, Depth Range: {depth_range} has invalid climatology thresholds. Setting all values for this bin to `9`."
+                        )
+                        clim_da = clim_da.where(
+                            ~time_depth_mask, 9
+                        )  # Set value to 9 where (month & depth) is true
                         continue
 
                     suspect_mask = (
-                        ((param_da <= sus_low) | (param_da >= sus_high))
-                        & time_depth_mask
-                    )
+                        (param_da <= sus_low) | (param_da >= sus_high)
+                    ) & time_depth_mask
                     clim_da = clim_da.where(~suspect_mask, 3)
 
         return clim_da
-
 
     def qartod(self):
         gross_da = self.run_gross_range()
@@ -433,7 +438,6 @@ class QartodRunner:
 
         return homebrew_qartod_ds
 
-
     def get_pressure_param(self):
         pressure_vars = variable_dict["pressure"].strip('"').split(",")
         if isinstance(self.da, xr.Dataset):
@@ -449,7 +453,6 @@ class QartodRunner:
             # if single data array
             return None
 
-
     def clean_param_data_array(self):
         da = self.da
         param = self.param
@@ -461,7 +464,6 @@ class QartodRunner:
 
         return param_da
 
-
     def get_qc_summary_da(self):
         try:
             qc_summary_da = self.qartod_ds[f"{self.param}{self.qc_flags['qc']['param']}"]
@@ -469,7 +471,6 @@ class QartodRunner:
             logger.info(f"QC summary data array not found for {self.refdes} {self.param}")
             qc_summary_da = None
         return qc_summary_da
-
 
     def determine_qartod_table_types(self):
         refdes = self.refdes
