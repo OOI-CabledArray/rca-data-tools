@@ -9,7 +9,7 @@ through OOI/M2M.
 import ast
 import xarray as xr
 import numpy as np
-from typing import Dict
+from typing import Dict, Optional
 from rca_data_tools.qaqc.qartod import loadStagedQARTOD
 from rca_data_tools.qaqc.constants import all_configs_dict, variable_dict, qartod_skip_dict
 from rca_data_tools.qaqc.utils import select_logger
@@ -262,16 +262,16 @@ class QartodRunner:
         refdes: str,
         param: str,
         da: xr.DataArray,
-        qartod_ds: xr.Dataset,
-        qc_flags: Dict,
+        qartod_ds: Optional[xr.Dataset],
+        qc_flags: Optional[Dict],
     ):
         """
         parameters:
         refdes: str, reference designator of instrument
         param: str, name of data param of interest ie: 'ph_seawater' subset to time of interest
         da: xarray DataArray, actual data array of param of interest used to run qartod tests against tables
-        qartod_ds: xarray Dataset, dataset of qartod test arrays and param of interest, may be helpful for persisting attrs
-        qc_flags: dict of qartod flag mappings useful for generating array names ie:
+        qartod_ds: Optional[xarray.Dataset], dataset of qartod test arrays and param of interest, may be helpful for persisting attrs
+        qc_flags: Optional[Dict], dict of qartod flag mappings useful for generating array names ie:
             {
                 'qartod_grossRange': {
                     'symbol': '+',
@@ -297,7 +297,8 @@ class QartodRunner:
         NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range
         fixed instruments have fixed climatology and fixed gross range tables.
         """
-
+        # TODO only run bare necesities on init so the class is more flexible for Wendi's future
+        # tests
         self.refdes = refdes
         self.param = param
         self.da = da
