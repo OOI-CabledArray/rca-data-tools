@@ -297,8 +297,8 @@ class QartodRunner:
         NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range
         fixed instruments have fixed climatology and fixed gross range tables.
         """
-        # in plot_profile_scatter this class is invoked in a loop which might cause github to api limit us
-        # might need to seperate fetching tables so its run once at the beginning of a dashboard workflow
+ 
+ 
         self.refdes = refdes
         self.param = param
         self.da = da
@@ -310,6 +310,7 @@ class QartodRunner:
         self.table_type = self.determine_qartod_table_types()
 
         self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
+
 
     def run_gross_range(self):
         param = self.param
@@ -339,6 +340,7 @@ class QartodRunner:
 
             # gross_da.attrs = self.qartod_ds[gross_da.name].attrs
             return gross_da
+
 
     def run_climatology(self):
         da = self.da
@@ -407,6 +409,7 @@ class QartodRunner:
 
         return clim_da
 
+
     def qartod(self):
         gross_da = self.run_gross_range()
         climatology_da = self.run_climatology()
@@ -430,6 +433,7 @@ class QartodRunner:
 
         return homebrew_qartod_ds
 
+
     def get_pressure_param(self):
         pressure_vars = variable_dict["pressure"].strip('"').split(",")
         if isinstance(self.da, xr.Dataset):
@@ -445,6 +449,7 @@ class QartodRunner:
             # if single data array
             return None
 
+
     def clean_param_data_array(self):
         da = self.da
         param = self.param
@@ -456,6 +461,7 @@ class QartodRunner:
 
         return param_da
 
+
     def get_qc_summary_da(self):
         try:
             qc_summary_da = self.qartod_ds[f"{self.param}{self.qc_flags['qc']['param']}"]
@@ -463,6 +469,7 @@ class QartodRunner:
             logger.info(f"QC summary data array not found for {self.refdes} {self.param}")
             qc_summary_da = None
         return qc_summary_da
+
 
     def determine_qartod_table_types(self):
         refdes = self.refdes
