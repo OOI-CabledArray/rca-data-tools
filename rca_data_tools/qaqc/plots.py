@@ -403,9 +403,9 @@ def organize_images(sync_to_s3=False, bucket_name=S3_BUCKET, fs_kwargs={}):
                         S3FS.rm(fs_path)
                     S3FS.put(str(destination.absolute()), fs_path)
             else:
-                print(f"{i} is not a `png` or `svg` file ... skipping ...")
+                print(f"{i} is not a `png` or `svg` file ... will not sort ...")
         else:
-            print(f"{i} is not a file ... skipping ...")
+            print(f"{i} is not a file ... will not sort ...")
 
 
 def delete_outdated_images(
