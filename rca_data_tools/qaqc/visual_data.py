@@ -119,7 +119,7 @@ def make_wide_summary_df(timerange_df, img_size_cutoff):
 
         wide_df = summary_df.pivot(
             index="date_taken", columns="image_status", values="count"
-        ).reset_index()
+        ) .fillna(0).reset_index()
 
         if "not_blank" not in wide_df.columns:
             logger.warning(
