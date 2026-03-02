@@ -256,7 +256,7 @@ def opt_estimate_chl_poc(optaa, coeffs, chl_line_height=0.020):
     return optaa
 
 
-class QartodRunner:
+class QartodVizRunner:
     def __init__(
         self,
         refdes: str,
