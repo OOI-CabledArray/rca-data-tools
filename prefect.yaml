@@ -32,6 +32,11 @@ deployments:
     job_variables:
       cpu: 2048
       memory: 16384
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: 4vcpu_30gb
@@ -43,7 +48,12 @@ deployments:
   work_pool:
     name: scope-push-pool
     work_queue_name:
-    job_variables: {}
+    job_variables:
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: 8vcpu_60gb
@@ -58,6 +68,11 @@ deployments:
     job_variables:
       cpu: 8192
       memory: 61440
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: 16vcpu_80gb
@@ -72,6 +87,11 @@ deployments:
     job_variables:
       cpu: 16384
       memory: 81920
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: 16vcpu_88gb
@@ -86,6 +106,11 @@ deployments:
     job_variables:
       cpu: 16384
       memory: 90112
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: 16vcpu_96gb
@@ -100,6 +125,11 @@ deployments:
     job_variables:
       cpu: 16384
       memory: 98304
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: 16vcpu_104gb
@@ -114,5 +144,10 @@ deployments:
     job_variables:
       cpu: 16384
       memory: 106496
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
