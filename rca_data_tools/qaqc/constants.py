@@ -1,6 +1,9 @@
 import pandas as pd
 import yaml
 from pathlib import Path
+import csv
+
+from rca_data_tools.qaqc.utils import build_function_registry, load_calc_metadata, load_site_calculations
 
 # visual data constants
 CAM_URL_DICT = {
@@ -113,18 +116,13 @@ deployedRange_dict = (
 )
 
 # create a dictonary of auxilliary parameters to be calculated
-calculate_dict = (
-    pd.read_csv(PARAMS_DIR.joinpath('calculateParameters.csv'))
-    .set_index('refDes')
-    .T.to_dict('series')
-) 
+calculate_dict = ( load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv') ) )
 
 # create a dictonary of calculations and inputs as executable strings
-calculateStrings_dict = (
-    pd.read_csv(PARAMS_DIR.joinpath('calculateStrings.csv'))
-    .set_index('calculation')
-    .T.to_dict()
-)
+calculateCalls_dict = ( load_calc_metadata(PARAMS_DIR.joinpath('calculateCalls.csv')) )
+
+# function registry of calculation commands
+function_registry = build_function_registry(calculateCalls_dict, module_name="rca_data_tools.qaqc.advanced_qaqc.calculateFunctions")
 
 # create a dictonary of relevant discrete sample types for each variable
 discreteSample_dict = (

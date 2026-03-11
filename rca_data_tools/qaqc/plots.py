@@ -4,6 +4,7 @@ This module contains code for plot creations from various instruments.
 
 """
 from ast import literal_eval
+from asyncio.log import logger
 from datetime import datetime
 from dateutil import parser
 import gc
@@ -14,6 +15,7 @@ import pandas as pd
 from typing import List
 import xarray as xr
 import matplotlib.pyplot as plt
+import importlib
 
 from rca_data_tools.qaqc import dashboard, decimate, calculate, discrete
 from rca_data_tools.qaqc.qartod import loadQARTOD
@@ -28,7 +30,8 @@ from rca_data_tools.qaqc.constants import (
     localRange_dict,
     deployedRange_dict,
     calculate_dict,
-    calculateStrings_dict,
+    calculateCalls_dict,
+    function_registry,
     discreteSample_dict,
     plotDir,
     PLOT_DIR,
@@ -36,7 +39,6 @@ from rca_data_tools.qaqc.constants import (
 
 # load status dictionary
 statusDict = dashboard.loadStatus()
-
 
 def extractMulti(ds, inst, multi_dict, fileParams):
     multiParam = multi_dict[inst]["parameter"]
@@ -46,6 +48,55 @@ def extractMulti(ds, inst, multi_dict, fileParams):
         ds[newParam] = ds[multiParam][:, i]
         fileParams.append(newParam)
     return ds, fileParams
+
+def run_calculations_for_site(site, siteData):
+    """
+    Run all configured calculations for a site and append outputs to siteData.
+    Requires globals:
+        calculate_dict,
+        calculateCalls_dict,
+        function_registry
+    """
+
+    fileParams = []
+
+    if site not in calculate_dict:
+        return siteData, fileParams
+
+    for calc_name in calculate_dict[site]:
+        meta = calculateCalls_dict[calc_name]
+        func = function_registry[meta["function_key"]]
+
+        # --- gather inputs ---
+        args = []
+        for name in meta["inputs"]:
+            if name == "DATASET":
+                args.append(siteData)
+            elif name == "site":
+                args.append(site)
+            else:
+                args.append(siteData[name])
+
+        kwargs = meta.get("kwargs", {})
+
+        # --- run calculation ---
+        result = func(*args, **kwargs)
+
+        # --- handle outputs ---
+        outputs = meta["outputs"]
+        results = (result,) if len(outputs) == 1 else result
+
+        for out_name, value in zip(outputs, results):
+            if not isinstance(value, xr.DataArray):
+                value = xr.DataArray(
+                    value,
+                    dims=siteData["time"].dims,
+                    coords=siteData["time"].coords
+                )
+            siteData[out_name] = value
+            fileParams.append(out_name)
+
+    return siteData, fileParams
 
 
 def run_dashboard_creation(
@@ -136,23 +187,23 @@ def run_dashboard_creation(
                 )
                 siteData = siteData.coarsen(time=window, boundary="trim").mean()
                 logger.info(f"Succesfully coarsened time with window of *{window}*.")
-    # perform calculations for auxiliary parameters
+                
     if site in calculate_dict:
-        for calc in calculate_dict[site]['calculations'].strip('"').split(","):
-            if calc in calculateStrings_dict:
-                # perform calculation by evaluating string
-                exec(calculateStrings_dict[calc]['string'])
-                # add new parameter to fileParams list
-                returnParams = calculateStrings_dict[calc]['returnParam'].strip('"').split(",")
-                for item in returnParams:
-                    fileParams.append(item)
-            else:
-                logger.info(f"error calculating parameters: {calc}")
+        logger.info(f"calculating parameters for {site}...")
+        
+        siteData, calc_fileParams = run_calculations_for_site(site, siteData)
+        fileParams.extend(calc_fileParams)
+                
+        logger.info(f"parameters in list: {fileParams}")
+        logger.info(list(siteData.data_vars))            
 
     for param in paramList:
         logger.info(f"parameter: {param}")
         variableParams = variable_dict[param].strip('"').split(",")
+        logger.info(f"variableParams: {variableParams}")
+        logger.info(f"fileParams: {fileParams}")
         parameterList = [value for value in variableParams if value in fileParams]
+        logger.info(f"parameterList: {parameterList}")
         if len(parameterList) == 0:
             logger.warning(f"Error retriving parameter: {param} from the xarray...")
         else:
