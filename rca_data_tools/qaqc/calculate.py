@@ -10,6 +10,7 @@ import ast
 import xarray as xr
 import numpy as np
 from typing import Dict, Optional
+
 from rca_data_tools.qaqc.qartod import loadStagedQARTOD, loadQARTOD
 from rca_data_tools.qaqc.constants import all_configs_dict, variable_dict, qartod_skip_dict
 from rca_data_tools.qaqc.utils import select_logger
@@ -139,7 +140,7 @@ class QartodRunner:
                 )
 
                 suspect_mask = ((param_da <= sus_low) | (param_da >= sus_high)) & month_mask
-                
+
                 clim_da = clim_da.where(~suspect_mask, 3)
 
         elif self.table_type[0] == "binned":
@@ -191,6 +192,7 @@ class QartodRunner:
                     clim_da = clim_da.where(~suspect_mask, 3)
 
         return clim_da
+    
 
     def create_qartod_viz_ds(self):
         gross_da = self.run_gross_range()

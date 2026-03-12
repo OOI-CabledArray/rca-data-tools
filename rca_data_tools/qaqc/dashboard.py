@@ -35,7 +35,7 @@ import textwrap as tw
 import xml.etree.ElementTree as et
 
 from rca_data_tools.qaqc.utils import select_logger, save_fig, get_s3_kwargs
-from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict, all_configs_dict
+from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict, all_configs_dict, qc_flags
 from rca_data_tools.qaqc.calculate import QartodRunner
 INPUT_BUCKET = "ooi-data/"
 
@@ -1206,21 +1206,15 @@ def plotProfilesScatter(
         elif 'flag' in overlay:
             qcDS = overlayData_flag.sel(time=slice(timeSpan[0], timeSpan[1]))
             qcDS = retrieve_qc(qcDS)
-            flags = {
-                    'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
-                    'qartod_climatology':{'symbol':'x','param':'_qartod_executed_climatology_test'},
-                    #'qartod_summary':{'symbol':'1','param':'_qartod_results'},
-                    #'qc':{'symbol':'s','param':'_qc_summary_flag'}, # TODO add back after qartod done
-                }
             
             if homebrew_qartod:
                 # here QartodRunner is invoked in a loop which might cause github to api limit us
-                qartodRunner = QartodRunner(site, Xparam, baseDS, False, flags, qcDS)
+                qartodRunner = QartodRunner(site, Xparam, baseDS, False, qc_flags, qcDS)
                 qcDS = qartodRunner.create_qartod_viz_ds() # overwrite CI based qcDS with homebrew qartod results
                 qcDS = qcDS.sel(time=slice(timeSpan[0], timeSpan[1]))
 
-            for flagType in flags.keys():
-                flagString = Xparam + flags[flagType]['param']
+            for flagType in qc_flags.keys():
+                flagString = Xparam + qc_flags[flagType]['param']
                 if flagString in qcDS:
                     if 'gross' in flagString:
                         flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'orange'}}
@@ -1235,7 +1229,7 @@ def plotProfilesScatter(
                             n = len(flag_X)
                             legendString = f'{flagType} {level}: {n} points'
                             flag_Y = flaggedDS[pressParam].values
-                            flagLine = plt.plot(flag_X,-flag_Y,flags[flagType]['symbol'],color=flagStatus[level]['color'],
+                            flagLine = plt.plot(flag_X,-flag_Y,qc_flags[flagType]['symbol'],color=flagStatus[level]['color'],
                             	    markersize=1,label='%s' % legendString,
                             	    )
                         else:
@@ -2134,20 +2128,13 @@ def plotScatter(
                 print(qcDS)
                 # retrieve flags
                 qcDS = retrieve_qc(qcDS)
-                flags = {
-                    'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
-                    'qartod_climatology':{'symbol':'x','param':'_qartod_executed_climatology_test'},
-                    #'qartod_summary':{'symbol':'1','param':'_qartod_results'},
-                    #'qc':{'symbol':'s','param':'_qc_summary_flag'}, # TODO return this after qartod staging?
-                }
-
                 # if homebrew_qartod, overwrite qcDS with homebrew qartod array
                 if homebrew_qartod and "FIXED" in all_configs_dict[site]['instrument']: 
-                    qartodRunner = QartodRunner(site, Yparam, baseDS, False, flags, qcDS)
+                    qartodRunner = QartodRunner(site, Yparam, baseDS, False, qc_flags, qcDS)
                     qcDS = qartodRunner.create_qartod_viz_ds() # overwrite CI qcDS with homebrew qartod results
 
-                for flagType in flags.keys():
-                    flagString = Yparam + flags[flagType]['param']
+                for flagType in qc_flags.keys():
+                    flagString = Yparam + qc_flags[flagType]['param']
                     if flagString in qcDS:
                         print(f'parameters found for {flagString}')
                         if 'gross' in flagString:
@@ -2166,7 +2153,7 @@ def plotScatter(
                                 plt.plot(
                                     flag_X, # flagged times 
                                     flag_Y, # flagged parameter values
-                            	    flags[flagType]['symbol'],
+                            	    qc_flags[flagType]['symbol'],
                             	    color=flagStatus[level]['color'],
                             	    markersize=flagMarker,
                             	    label='%s' % legendString,   
