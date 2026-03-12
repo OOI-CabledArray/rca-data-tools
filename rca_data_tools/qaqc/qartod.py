@@ -90,7 +90,7 @@ def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
         logger.warning(f"error retrieving climatology data for {refDes} {param} {sensorType}")
         clim_dict = {}
 
-    return (grossRange_dict, clim_dict)
+    return (clim_dict, grossRange_dict)
 
 
 def loadStagedQARTOD(refDes, param, table_type, logger=select_logger()):

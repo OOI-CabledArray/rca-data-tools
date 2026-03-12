@@ -243,7 +243,7 @@ def run_dashboard_creation(
                 overlayData_clim = {}
                 overlayData_grossRange = {}
                 sensorType = site.split("-")[3][0:5].lower()
-                (overlayData_grossRange, overlayData_clim) = loadQARTOD(
+                (overlayData_clim, overlayData_grossRange) = loadQARTOD(
                     site, Yparam, sensorType, logger=logger
                 )
                 overlayData_near = {}
