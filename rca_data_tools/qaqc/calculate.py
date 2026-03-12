@@ -23,8 +23,8 @@ class QartodRunner:
         param: str,
         da: xr.DataArray,
         use_production_tables: bool,
-        qartod_ds: Optional[xr.Dataset],
-        qc_flags: Optional[Dict],
+        qc_flags: Dict,
+        qartod_ds: Optional[xr.Dataset]=None,
     ):
         """
         parameters:
@@ -64,12 +64,12 @@ class QartodRunner:
         self.use_production_tables = use_production_tables
         self.param_da = self.clean_param_data_array()
         self.pressure_param = self.get_pressure_param()
-        self.qartod_ds = qartod_ds
         self.qc_flags = qc_flags
+        self.qartod_ds = qartod_ds
         self.qc_summary_da = self.get_qc_summary_da()
         self.table_type = self.determine_qartod_table_types()
         self.sensor_type = self.refdes.split("-")[3][0:5].lower()
-        
+
 
     def run_gross_range(self):
         if self.use_production_tables:
@@ -217,6 +217,7 @@ class QartodRunner:
             matching_vars = [var for var in pressure_vars if var in self.da.data_vars]
             if matching_vars:
                 pressure_param = matching_vars[0]
+                logger.info(f"Found pressure parameter: {pressure_param}.")
                 return pressure_param
             else:
                 # if no pressure var in dataset
@@ -240,7 +241,7 @@ class QartodRunner:
     def get_qc_summary_da(self):
         try:
             qc_summary_da = self.qartod_ds[f"{self.param}{self.qc_flags['qc']['param']}"]
-        except KeyError:
+        except (KeyError, TypeError):
             logger.info(f"QC summary data array not found for {self.refdes} {self.param}")
             qc_summary_da = None
         return qc_summary_da
