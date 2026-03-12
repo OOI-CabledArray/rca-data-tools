@@ -10,18 +10,19 @@ import ast
 import xarray as xr
 import numpy as np
 from typing import Dict, Optional
-from rca_data_tools.qaqc.qartod import loadStagedQARTOD
+from rca_data_tools.qaqc.qartod import loadStagedQARTOD, loadQARTOD
 from rca_data_tools.qaqc.constants import all_configs_dict, variable_dict, qartod_skip_dict
-from rca_data_tools.qaqc.utils import select_logger, get_calibration_dataset, broadcast_calibrations
+from rca_data_tools.qaqc.utils import select_logger
 
 logger = select_logger()
 
-class QartodVizRunner:
+class QartodRunner:
     def __init__(
         self,
         refdes: str,
         param: str,
         da: xr.DataArray,
+        use_production_tables: bool,
         qartod_ds: Optional[xr.Dataset],
         qc_flags: Optional[Dict],
     ):
@@ -57,21 +58,25 @@ class QartodVizRunner:
         NOTE as of 2025 profiling instruments have binned climatology tables and integrated gross range
         fixed instruments have fixed climatology and fixed gross range tables.
         """
-        # TODO only run bare necesities on init so the class is more flexible for Wendi's future
-        # tests
         self.refdes = refdes
         self.param = param
         self.da = da
+        self.use_production_tables = use_production_tables
         self.param_da = self.clean_param_data_array()
         self.pressure_param = self.get_pressure_param()
         self.qartod_ds = qartod_ds
         self.qc_flags = qc_flags
         self.qc_summary_da = self.get_qc_summary_da()
         self.table_type = self.determine_qartod_table_types()
-
-        self.clim_dict, self.gross_dict = loadStagedQARTOD(refdes, param, self.table_type)
+        self.sensor_type = self.refdes.split("-")[3][0:5].lower()
+        
 
     def run_gross_range(self):
+        if self.use_production_tables:
+            self.clim_dict, self.gross_dict = loadQARTOD(self.refdes, self.param, self.sensor_type)
+        else:
+            self.clim_dict, self.gross_dict = loadStagedQARTOD(self.refdes, self.param, self.table_type)
+
         param = self.param
         param_da = self.param_da
         qc_flags = self.qc_flags
@@ -101,6 +106,11 @@ class QartodVizRunner:
             return gross_da
 
     def run_climatology(self):
+        if self.use_production_tables:
+            self.clim_dict, self.gross_dict = loadQARTOD(self.refdes, self.param, self.sensor_type)
+        else:
+            self.clim_dict, self.gross_dict = loadStagedQARTOD(self.refdes, self.param, self.table_type)
+        
         da = self.da
         param = self.param
         param_da = self.param_da

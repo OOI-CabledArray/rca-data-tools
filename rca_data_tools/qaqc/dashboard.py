@@ -36,7 +36,7 @@ import xml.etree.ElementTree as et
 
 from rca_data_tools.qaqc.utils import select_logger, save_fig, get_s3_kwargs
 from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict, all_configs_dict
-from rca_data_tools.qaqc.calculate import QartodVizRunner
+from rca_data_tools.qaqc.calculate import QartodRunner
 INPUT_BUCKET = "ooi-data/"
 
 
@@ -1214,8 +1214,8 @@ def plotProfilesScatter(
                 }
             
             if homebrew_qartod:
-                # here QartodVizRunner is invoked in a loop which might cause github to api limit us
-                qartodRunner = QartodVizRunner(site, Xparam, baseDS, qcDS, flags)
+                # here QartodRunner is invoked in a loop which might cause github to api limit us
+                qartodRunner = QartodRunner(site, Xparam, baseDS, False, qcDS, flags)
                 qcDS = qartodRunner.qartod() # overwrite CI based qcDS with homebrew qartod results
                 qcDS = qcDS.sel(time=slice(timeSpan[0], timeSpan[1]))
 
@@ -2143,7 +2143,7 @@ def plotScatter(
 
                 # if homebrew_qartod, overwrite qcDS with homebrew qartod array
                 if homebrew_qartod and "FIXED" in all_configs_dict[site]['instrument']: 
-                    qartodRunner = QartodVizRunner(site, Yparam, baseDS, qcDS, flags)
+                    qartodRunner = QartodRunner(site, Yparam, baseDS, False, qcDS, flags)
                     qcDS = qartodRunner.qartod() # overwrite CI qcDS with homebrew qartod results
 
                 for flagType in flags.keys():
