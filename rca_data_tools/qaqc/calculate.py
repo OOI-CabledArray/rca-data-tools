@@ -107,7 +107,6 @@ class QartodRunner:
             gross_da = gross_da.where(~fail_mask, 4)
             gross_da = gross_da.where(~suspect_mask, 3)
 
-            # gross_da.attrs = self.qartod_ds[gross_da.name].attrs
             return gross_da
 
     def run_climatology(self):
@@ -140,7 +139,7 @@ class QartodRunner:
                 )
 
                 suspect_mask = ((param_da <= sus_low) | (param_da >= sus_high)) & month_mask
-                # clim_da.attrs = self.qartod_ds[clim_da.name].attrs
+                
                 clim_da = clim_da.where(~suspect_mask, 3)
 
         elif self.table_type[0] == "binned":
