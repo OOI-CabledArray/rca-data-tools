@@ -1,0 +1,19 @@
+CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample:
+  salinity_corrected_nitrate:
+    downstream_from:
+      - sea_water_temperature
+      - sea_water_practical_salinity
+      - int_ctd_pressure
+RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample:
+  salinity_corrected_nitrate:
+    downstream_from:
+      - sea_water_temperature
+      - sea_water_practical_salinity
+      - int_ctd_pressure
+RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_sample:
+  salinity_corrected_nitrate:
+    downstream_from:
+      - sea_water_temperature
+      - sea_water_practical_salinity
+      - int_ctd_pressure
+  
