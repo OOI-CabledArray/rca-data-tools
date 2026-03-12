@@ -75,14 +75,14 @@ class QartodRunner:
         self.qc_summary_da = self.get_qc_summary_da()
         self.table_type = self.determine_qartod_table_types()
         self.sensor_type = self.refdes.split("-")[3][0:5].lower()
-
-
-    def run_gross_range(self):
+        
         if self.use_production_tables:
             self.clim_dict, self.gross_dict = loadQARTOD(self.refdes, self.param, self.sensor_type)
         else:
             self.clim_dict, self.gross_dict = loadStagedQARTOD(self.refdes, self.param, self.table_type)
 
+
+    def run_gross_range(self):
         param = self.param
         param_da = self.param_da
         qc_flags = self.qc_flags
@@ -111,11 +111,6 @@ class QartodRunner:
             return gross_da
 
     def run_climatology(self):
-        if self.use_production_tables:
-            self.clim_dict, self.gross_dict = loadQARTOD(self.refdes, self.param, self.sensor_type)
-        else:
-            self.clim_dict, self.gross_dict = loadStagedQARTOD(self.refdes, self.param, self.table_type)
-        
         da = self.da
         param = self.param
         param_da = self.param_da
