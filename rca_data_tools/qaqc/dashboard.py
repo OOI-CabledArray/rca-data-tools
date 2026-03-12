@@ -1215,7 +1215,7 @@ def plotProfilesScatter(
             
             if homebrew_qartod:
                 # here QartodRunner is invoked in a loop which might cause github to api limit us
-                qartodRunner = QartodRunner(site, Xparam, baseDS, False, qcDS, flags)
+                qartodRunner = QartodRunner(site, Xparam, baseDS, False, flags, qcDS)
                 qcDS = qartodRunner.create_qartod_viz_ds() # overwrite CI based qcDS with homebrew qartod results
                 qcDS = qcDS.sel(time=slice(timeSpan[0], timeSpan[1]))
 
@@ -2143,7 +2143,7 @@ def plotScatter(
 
                 # if homebrew_qartod, overwrite qcDS with homebrew qartod array
                 if homebrew_qartod and "FIXED" in all_configs_dict[site]['instrument']: 
-                    qartodRunner = QartodRunner(site, Yparam, baseDS, False, qcDS, flags)
+                    qartodRunner = QartodRunner(site, Yparam, baseDS, False, flags, qcDS)
                     qcDS = qartodRunner.create_qartod_viz_ds() # overwrite CI qcDS with homebrew qartod results
 
                 for flagType in flags.keys():
