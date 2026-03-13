@@ -39,7 +39,7 @@ deployments:
   work_pool:
     name: scope-push-pool
     work_queue_name:
-    job_variables:
+    job_variables: {}
   schedule:
   is_schedule_active: true
 - name: 8vcpu_60gb
