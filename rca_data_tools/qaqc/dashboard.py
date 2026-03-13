@@ -1088,9 +1088,13 @@ def plotProfilesScatter(
     profileList,
     statusDict,
     site,
-    homebrew_qartod
+    homebrew_qartod,
+    express
     ):
     """Scatter plots for the dashboard's profiler views"""
+    if express:
+        return [] # empty list instead of populated file name list 
+    
     plt.ioff()
     dpi=300
     fileNameList = []

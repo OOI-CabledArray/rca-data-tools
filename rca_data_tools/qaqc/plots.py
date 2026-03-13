@@ -100,14 +100,15 @@ def run_calculations_for_site(site, siteData):
 
 
 def run_dashboard_creation(
-    site,
-    paramList,
-    timeRef,
-    plotInstrument,
-    span,
-    decimationThreshold,
-    stageDict,
-    homebrew_qartod,
+    site: str,
+    paramList: List[str],
+    timeRef: str,
+    plotInstrument: str,
+    span: str,
+    decimationThreshold: int,
+    stageDict: dict,
+    homebrew_qartod: bool,
+    express: bool,
 ):
     logger = select_logger()
     plt.switch_backend("Agg")  # run locally without changing anything else?
@@ -328,6 +329,7 @@ def run_dashboard_creation(
                                 statusDict,
                                 site,
                                 homebrew_qartod,
+                                express,
                             )
                             plotList.append(plots)
                             depths = stageDict[site]["depths"].strip('"').split(",")
