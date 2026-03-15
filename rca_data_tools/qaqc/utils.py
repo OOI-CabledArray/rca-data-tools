@@ -287,54 +287,27 @@ def get_calibration_dataset(reference_designator):
 
 def broadcast_calibrations(cals, timestamps):
     """
-    Broadcast calibration coefficients to a large time series efficiently.
-
-    Parameters
-    ----------
-    cals : xr.Dataset
-        Calibration dataset from get_calibration_dataset()
-    timestamps : pd.DatetimeIndex or np.ndarray of datetime64
-        Measurement timestamps
-
-    Returns
-    -------
-    dict
-        Keys = coefficient names
-        Values = numpy arrays aligned to timestamps:
-        - scalar coefficients    → shape (n,)
-        - 1-D array coefficients → shape (n, array_length)
-        - 2-D array coefficients → shape (n, n_rows, n_cols)
+    Memory-safe calibration lookup (no full broadcast).
+    Returns calibration tables + index mapping.
     """
-    n = len(timestamps)
-    out = {}
-
     intervals = pd.IntervalIndex.from_arrays(
-        cals.valid_start.values, cals.valid_stop.values, closed="left"
+        cals.valid_start.values,
+        cals.valid_stop.values,
+        closed="left"
     )
-    indices = intervals.get_indexer(timestamps)
 
+    # For each timestamp → which calibration row applies
+    cal_index = intervals.get_indexer(timestamps).astype("int32")
+
+    # Store calibration tables WITHOUT expanding
+    tables = {}
     for var in cals.data_vars:
-        values = cals[var].values   # shape: (n_cal,), (n_cal, k), or (n_cal, r, c)
-        mask = indices >= 0
+        tables[var] = cals[var].values  # small
 
-        if values.ndim == 1:
-            arr = np.full(n, np.nan, dtype=float)
-            arr[mask] = values[indices[mask]]
-
-        elif values.ndim == 2:
-            arr = np.full((n, values.shape[1]), np.nan, dtype=float)
-            arr[mask, :] = values[indices[mask], :]
-
-        elif values.ndim == 3:
-            arr = np.full((n, values.shape[1], values.shape[2]), np.nan, dtype=float)
-            arr[mask, :, :] = values[indices[mask], :, :]
-
-        else:
-            raise ValueError(f"Unsupported ndim {values.ndim} for variable '{var}'")
-
-        out[var] = arr
-
-    return out
+    return {
+        "index": cal_index,   # shape (n_time,)
+        "tables": tables      # small calibration arrays
+    }
 
 # -------------------------------------------------------------------------------------
 # Loading helpers for calculation dictionaries from CSVs and creating FUNCTION_REGISTRY
