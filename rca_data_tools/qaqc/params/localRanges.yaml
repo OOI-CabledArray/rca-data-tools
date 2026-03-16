@@ -308,7 +308,7 @@ CE04OSPS-PC01B-4C-PHSENH109:
     local: [1025, 1028]
   oxygen:
     local: [0, 300]
-  pressure:
+  sea_water_pressure:
     local: [185, 250]
 
 CE02SHBP-LJ01D-10-PHSENH110:
@@ -324,7 +324,7 @@ CE02SHBP-LJ01D-10-PHSENH110:
     local: [1025, 1028]
   oxygen:
     local: [0, 20]
-  pressure:
+  sea_water_pressure:
     local: [70, 90]
 
 CE04OSBP-LJ01C-10-PHSEND107:
