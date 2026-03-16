@@ -166,8 +166,17 @@ def opt_pressure(praw, offset, sfactor):
     return depth
 
 
-def opt_calculate_ratios(optaa):
+def opt_calculate_all_optical_products(
+    optaa,
+    site,
+    chl_line_height=0.020,
+    time_chunk=1000000
+):
     """
+    Ultra memory-safe optical calculations.
+    Uses calibration index lookup (no broadcast).
+    Aggressively frees memory after each chunk.
+    
     Pigment ratios can be calculated to assess the impacts of bio-fouling,
     sensor calibration drift, potential changes in community composition,
     light history or bloom health and age. Calculated ratios are:
@@ -195,122 +204,10 @@ def opt_calculate_ratios(optaa):
         phytoplankton community structure. All phytoplankton contain
         chlorophyll 'a' as the primary light harvesting pigment, but green
         algae and dinoflagellates contain chlorophyll 'b' and 'c', respectively,
-        which are spectrally redshifted compared to chlorophyll 'a'.
+        which are spectrally redshifted compared to chlorophyll 'a'.      
+    * Derive estimates of Chlorophyll-a and particulate organic carbon (POC)
+        from scatter-corrected absorption and attenuation data.
 
-    :param optaa: xarray dataset with the scatter corrected absorbance data.
-    :return optaa: xarray dataset with the estimates for pigment ratios added.
-    """
-    apg = optaa["optical_absorption"]
-    wl = optaa["wavelength_a"]
-
-    # --- load small wavelength array once (safe) ---
-    wl_vals = wl.values  # wavelengths are tiny (~100), OK to load
-
-    def nearest_idx(vals, target):
-        return int(np.abs(vals - target).argmin())
-
-    m412 = nearest_idx(wl_vals, 412.0)
-    m440 = nearest_idx(wl_vals, 440.0)
-    m490 = nearest_idx(wl_vals, 490.0)
-    m530 = nearest_idx(wl_vals, 530.0)
-    m676 = nearest_idx(wl_vals, 676.0)
-
-    wl_dim = apg.dims[1]
-
-    a412 = apg.isel({wl_dim: m412})
-    a440 = apg.isel({wl_dim: m440})
-    a490 = apg.isel({wl_dim: m490})
-    a530 = apg.isel({wl_dim: m530})
-    a676 = apg.isel({wl_dim: m676})
-
-    # --- safe division (no warnings) ---
-    def safe_ratio(num, den):
-        return xr.where(den != 0, num / den, np.nan)
-
-    ratio_cdom = safe_ratio(a412, a440).rename("ratio_cdom")
-    ratio_carotenoids = safe_ratio(a490, a440).rename("ratio_carotenoids")
-    ratio_phycobilins = safe_ratio(a530, a440).rename("ratio_phycobilins")
-    ratio_qband = safe_ratio(a676, a440).rename("ratio_qband")
-
-    ###logger.info(f"CDOM Ratio: {ratio_cdom.values}")
-    ###logger.info(f"Carotenoid Ratio: {ratio_carotenoids.values}")
-    ###logger.info(f"Phycobilin Ratio: {ratio_phycobilins.values}")
-    ###logger.info(f"Q Band Ratio: {ratio_qband.values}")
-
-    return ratio_cdom, ratio_carotenoids, ratio_phycobilins, ratio_qband
-
-
-def opt_estimate_chl_poc(optaa, site, chl_line_height=0.020):
-    """
-    Derive estimates of Chlorophyll-a and particulate organic carbon (POC)
-    from scatter-corrected absorption and attenuation data.
-    NaN-safe + edge-safe + Dask-friendly.
-    """
-
-    # --- load calibration coefficients and broadcast ---
-    cals = get_calibration_dataset(site)
-    coeffs = broadcast_calibrations(cals, optaa.time)
-
-    # --- wavelength index helpers ---
-    def nearest_idx(arr, target):
-        return int(np.abs(arr - target).argmin())
-
-    def safe_slice(i, n):
-        return slice(max(i - 1, 0), min(i + 2, n))
-
-    # --- find wavelength indices ---
-    aw = coeffs["CC_awlngth"]
-    cw = coeffs["CC_cwlngth"]
-
-    m650 = nearest_idx(aw, 650.0)
-    m676 = nearest_idx(aw, 676.0)
-    m715 = nearest_idx(aw, 715.0)
-    m660 = nearest_idx(cw, 660.0)
-
-    # --- data arrays ---
-    apg = optaa["optical_absorption"]
-    cpg = optaa["beam_attenuation"]
-
-    n_wl_a = apg.sizes[apg.dims[1]]
-    n_wl_c = cpg.sizes[cpg.dims[1]]
-    wl_dim_a = apg.dims[1]
-    wl_dim_c = cpg.dims[1]
-
-    # --- NaN-safe median helper ---
-    def med3(da, idx, n, dim):
-        return da.isel({dim: safe_slice(idx, n)}).median(dim=dim, skipna=True)
-
-    # --- chlorophyll line height ---
-    a715 = med3(apg, m715, n_wl_a, wl_dim_a)
-    a650 = med3(apg, m650, n_wl_a, wl_dim_a)
-    a676 = med3(apg, m676, n_wl_a, wl_dim_a)
-
-    abl = ((a715 - a650) / (715 - 650)) * (676 - 650) + a650
-    aphi = a676 - abl
-    estimated_chlorophyll = aphi / chl_line_height
-    estimated_chlorophyll.name = "estimated_chlorophyll"
-
-    # --- POC from attenuation ---
-    c660 = med3(cpg, m660, n_wl_c, wl_dim_c)
-    estimated_poc = c660 * 381
-    estimated_poc.name = "estimated_poc"
-
-    ###logger.info(estimated_chlorophyll.values)
-    ###logger.info(estimated_poc.values)
-
-    return estimated_chlorophyll, estimated_poc
-
-
-def opt_calculate_all_optical_products(
-    optaa,
-    site,
-    chl_line_height=0.020,
-    time_chunk=1000000
-):
-    """
-    Ultra memory-safe optical calculations.
-    Uses calibration index lookup (no broadcast).
-    Aggressively frees memory after each chunk.
     """
     logger.info("Loading calibrations")
     cals = get_calibration_dataset(site)
@@ -379,7 +276,7 @@ def opt_calculate_all_optical_products(
         stop = min(start + time_chunk, n_time)
         sl = slice(start, stop)
 
-        logger.info(f"Chunk {start}:{stop}")
+        #logger.info(f"Chunk {start}:{stop}")
 
         # ---- load minimal data ----
         abs_chunk = (

@@ -193,18 +193,12 @@ def run_dashboard_creation(
         logger.info(f"calculating parameters for {site}...")
         
         siteData, calc_fileParams = run_calculations_for_site(site, siteData)
-        fileParams.extend(calc_fileParams)
-                
-        logger.info(f"parameters in list: {fileParams}")
-        logger.info(list(siteData.data_vars))            
+        fileParams.extend(calc_fileParams)    
 
     for param in paramList:
         logger.info(f"parameter: {param}")
         variableParams = variable_dict[param].strip('"').split(",")
-        logger.info(f"variableParams: {variableParams}")
-        logger.info(f"fileParams: {fileParams}")
         parameterList = [value for value in variableParams if value in fileParams]
-        logger.info(f"parameterList: {parameterList}")
         if len(parameterList) == 0:
             logger.warning(f"Error retriving parameter: {param} from the xarray...")
         else:
