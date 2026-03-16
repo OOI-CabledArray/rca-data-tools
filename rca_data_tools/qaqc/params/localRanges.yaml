@@ -298,10 +298,34 @@ RS03AXPS-SF03A-2D-PHSENA301:
 CE04OSPS-PC01B-4C-PHSENH109:
   ph:
     local: [7, 9]
+  temperature:
+    local: [5, 11]
+  salinity:
+    local: [33, 35]
+  conductivity:
+    local: [3, 4]
+  density:
+    local: [1025, 1028]
+  oxygen:
+    local: [0, 300]
+  pressure:
+    local: [185, 250]
 
 CE02SHBP-LJ01D-10-PHSENH110:
   ph:
     local: [7, 9]
+  temperature:
+    local: [5, 11]
+  salinity:
+    local: [33, 35]
+  conductivity:
+    local: [3, 4]
+  density:
+    local: [1025, 1028]
+  oxygen:
+    local: [0, 20]
+  pressure:
+    local: [70, 90]
 
 CE04OSBP-LJ01C-10-PHSEND107:
   ph:

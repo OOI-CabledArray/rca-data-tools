@@ -108,12 +108,6 @@ multiParameter_dict = (
     .T.to_dict('series')
 )
 
-# create dictionary of local parameter ranges for each site
-# localRange_dict = (
-#     pd.read_csv(PARAMS_DIR.joinpath('localRanges.csv'))
-#     .set_index('refDes')
-#     .T.to_dict('series')
-# )
 
 localRange_dict = yaml.safe_load(open(PARAMS_DIR.joinpath("localRanges.yaml"))) 
 
