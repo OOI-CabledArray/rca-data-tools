@@ -119,20 +119,13 @@ deployedRange_dict = (
 )
 
 # create a dictonary of auxilliary parameters to be calculated
-calculate_dict = ( load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv') ) )
+calculate_dict = (load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv')))
 
 # create a dictonary of calculations and inputs as executable strings
-calculateCalls_dict = ( load_calc_metadata(PARAMS_DIR.joinpath('calculateCalls.csv')) )
+calculateCalls_dict = (load_calc_metadata(PARAMS_DIR.joinpath('calculateCalls.csv')))
 
 # function registry of calculation commands
 function_registry = build_function_registry(calculateCalls_dict, module_name="rca_data_tools.qaqc.advanced_qaqc.calculateFunctions")
-
-# create a dictonary of relevant discrete sample types for each variable
-discreteSample_dict = (
-    pd.read_csv(PARAMS_DIR.joinpath('discreteMap.csv'))
-    .set_index('variable')
-    .T.to_dict()
-)
 
 plotDir = str(PLOT_DIR) + '/'
 

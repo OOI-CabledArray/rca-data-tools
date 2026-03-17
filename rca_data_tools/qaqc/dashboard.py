@@ -35,7 +35,7 @@ import textwrap as tw
 import xml.etree.ElementTree as et
 
 from rca_data_tools.qaqc.utils import select_logger, save_fig, get_s3_kwargs
-from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, discreteSample_dict, all_configs_dict, qc_flags
+from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, all_configs_dict, qc_flags
 from rca_data_tools.qaqc.calculate import QartodRunner
 INPUT_BUCKET = "ooi-data/"
 
@@ -1080,7 +1080,6 @@ def plotProfilesScatter(
     fileName_base,
     overlayData_anno,
     overlayData_clim,
-    overlayData_disc,
     overlayData_flag,
     overlayData_near,
     span,
@@ -1100,9 +1099,7 @@ def plotProfilesScatter(
     fileNameList = []
     logger=select_logger()
     # Plot Overlays
-    overlays = ['anno', 'clim', 'disc', 'flag', 'near', 'none']
-    # Data Ranges
-    ranges = ['full', 'standard', 'local']
+    overlays = ['anno', 'clim', 'flag', 'near', 'none']
     # Descent Sensors (only on descent)
     descentSamples = ['pco2_seawater','ph_seawater']
     logger.info(paramData)
@@ -1259,40 +1256,6 @@ def plotProfilesScatter(
             for child in axHandle.get_children():
                 if isinstance(child, matplotlib.lines.Line2D):
                     child.remove()
-         
-        elif 'disc' in overlay:
-            if 'deploy' in spanString:
-                if overlayData_disc.empty:
-                    print('empty data frame, no discrete samples to plot')
-                else:
-                    print('adding discrete sample data to plot')
-                    for cast in set(overlayData_disc['Cast']):
-                        castData = overlayData_disc[overlayData_disc['Cast'] == cast]
-                        castTime = castData['Start Time [UTC]'].iloc[0]
-                        for item in discreteSample_dict[param]['discreteColumn'].replace("'","").split(","):
-                            legendString = f'{cast}, {castTime}, {item}'
-                            if 'Discrete' in item:
-                                discLine = plt.plot(castData[item],-castData['CTD Pressure [db]'],color='k',markersize=2,linestyle='None', marker='o',label='%s' % legendString)
-                            elif 'CTD' in item:
-                                discLine = plt.plot(castData[item],-castData['CTD Pressure [db]'],color='g',markersize=2,linestyle='None', marker='o',label='%s' % legendString)    
-                                #discLine = plt.plot(castData[item],-castData['CTD Pressure [db]'],color='g',label='%s' % legendString)
-                        
-                        # generating custom legend
-                        handles, labels = ax.get_legend_handles_labels()
-                        patches = []
-                        for handle, label in zip(handles, labels):
-                            patches.append(
-                            mlines.Line2D([],[],color=handle.get_color(),marker=handle.get_marker(),
-                                markersize=1,linewidth=0,label=label)
-                            )
-                        legend = ax.legend(handles=patches, loc="upper right", fontsize=3)
-                        figureHandle.savefig(fileName + '.png', dpi=dpi)
-                        fileNameList.append(fileName + '.png')
-                        legend.remove()
-                        for child in axHandle.get_children():
-                            if isinstance(child, matplotlib.lines.Line2D):
-                                child.remove()                         
-    
                         
         return
 
@@ -1684,7 +1647,6 @@ def plotScatter(
     fileName_base,
     overlayData_anno,
     overlayData_clim,
-    overlayData_disc,
     overlayData_flag,
     overlayData_near,
     plotMarkerSize,
@@ -1698,7 +1660,7 @@ def plotScatter(
     fileNameList = []
     dpi = 300
     # Plot Overlays
-    overlays = ['anno','clim','disc', 'flag', 'near', 'time', 'none']
+    overlays = ['anno', 'clim', 'flag', 'near', 'time', 'none']
 
     # Data Ranges
     ranges = ['full', 'standard', 'local']
@@ -2050,49 +2012,6 @@ def plotScatter(
         if 'near' in overlay:
             # add nearest neighbor data traces
             print('adding nearest neighbor data to plot')
-
-        if 'disc' in overlay:
-            if 'deploy' in spanString:
-                if overlayData_disc.empty:
-                    print('empty data frame, no discrete samples to plot')
-                else:
-                    print('adding discrete sample data to plot')
-                    for cast in set(overlayData_disc['Cast']):
-                        castData = overlayData_disc[overlayData_disc['Cast'] == cast]
-                        castTime = castData['Start Time [UTC]'].iloc[0]
-                        for item in discreteSample_dict[param]['discreteColumn'].replace("'","").split(","):
-                            legendString = f'{cast}, {castTime}, {item}'
-                            if 'Discrete' in item:
-                                discLine = plt.plot(castData[item],-castData['CTD Pressure [db]'],color='k',markersize=2,linestyle='None', marker='o',label='%s' % legendString)
-                            elif 'CTD' in item:
-                                discLine = plt.plot(castData[item],-castData['CTD Pressure [db]'],color='g',markersize=2,linestyle='None', marker='o',label='%s' % legendString)
-                                #discLine = plt.plot(castData[item],-castData['CTD Pressure [db]'],color='g',label='%s' % legendString)
-            
-                        # generating custom legend
-                        handles, labels = ax.get_legend_handles_labels()
-                        patches = []
-                        for handle, label in zip(handles, labels):
-                            patches.append(
-                            mlines.Line2D([],[],color=handle.get_color(),marker=handle.get_marker(),
-                                markersize=1,linewidth=0,label=label)
-                            )
-                        legend = ax.legend(handles=patches, loc="upper right", fontsize=3)
-                        
-                        plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                        divider = make_axes_locatable(ax)
-                        cax = divider.append_axes("right", size="2%", pad=0.05)
-                        for axis in ['top','bottom','left','right']:
-                            cax.spines[axis].set_linewidth(0)
-                            cax.set_xticks([])
-                            cax.set_yticks([])
-                        fileName = fileName_base + '_' + spanString + '_' + 'disc' 
-                        save_fig(fig, fileNameList, fileName, dpi, ['_full'])
-                        ax.set_ylim(yMin, yMax)
-                        save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
-                        ax.set_ylim(yMin_local, yMax_local)
-                        save_fig(fig, fileNameList, fileName, dpi, ['_local'])
-                        
-
 
         if 'flag' in overlay:
             # highlight flagged data points
