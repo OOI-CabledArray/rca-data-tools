@@ -190,6 +190,8 @@ RS01SBPS-PC01A-4C-FLORDD103:
     local: [0, 300]
   cdom:
     local: [0, 3]
+  chlorophyll:
+    local: [0, 4]
 
 RS03AXPS-PC03A-4C-FLORDD303:
   nitrate:
@@ -198,6 +200,8 @@ RS03AXPS-PC03A-4C-FLORDD303:
     local: [0, 300]
   cdom:
     local: [0, 3]
+  chlorophyll:
+    local: [0, 1.2]
 
 CE04OSPS-SF01B-3A-FLORTD104:
   chlorophyll:
@@ -226,14 +230,20 @@ RS03AXPS-SF03A-3A-FLORTD301:
 CE04OSPS-SF01B-4A-NUTNRA102:
   sea_water_pressure:
     local_profile: [0, 36]
+  nitrate:
+    local_profile: [0, 35]
 
 RS01SBPS-SF01A-4A-NUTNRA101:
   sea_water_pressure:
     local_profile: [0, 40]
+  nitrate:
+    local_profile: [0, 39]
 
 RS03AXPS-SF03A-4A-NUTNRA301:
   sea_water_pressure:
     local_profile: [0, 34]
+  nitrate:
+    local_profile: [3, 32]
 
 CE04OSPS-SF01B-3C-PARADA102:
   par:
