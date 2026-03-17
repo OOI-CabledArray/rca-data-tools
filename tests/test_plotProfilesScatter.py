@@ -22,7 +22,6 @@ profile_paramMax_local = 1400
 fileName_base = 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2'
 overlayData_anno = pickle.load(open('./tests/toy_data/PCO2WA101_overlayData_anno.pickle', 'rb'))
 overlayData_clim = pickle.load(open('./tests/toy_data/PCO2WA101_overlayData_clim.pickle', 'rb'))
-overlayData_disc = pd.DataFrame()
 overlayData_flag = xr.open_dataset('./tests/toy_data/PCO2WA101_overlayData_flag.nc')
 overlayData_near = {}
 span = '1'
@@ -59,7 +58,6 @@ def test_plotProfilesScatter(test_timeRef):
         fileName_base=fileName_base,
         overlayData_anno=overlayData_anno,
         overlayData_clim=overlayData_clim,
-        overlayData_disc=overlayData_disc,
         overlayData_flag=overlayData_flag,
         overlayData_near=overlayData_near,
         span=span,
