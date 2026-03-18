@@ -341,6 +341,7 @@ def load_calc_metadata(calc_csv_path):
 # Load site_calculations.csv → SITE_CALCULATIONS
 def load_site_calculations(site_csv_path):
     df = pd.read_csv(site_csv_path)
+    df = df[df["runDuringHarvest"] == False]
     return {
         row["refDes"]: [c.strip() for c in row["calculations"].split("|")]
         for _, row in df.iterrows()
