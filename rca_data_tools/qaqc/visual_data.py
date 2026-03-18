@@ -17,8 +17,8 @@ from rca_data_tools.qaqc.constants import (
     CAM_URL_DICT,
     N_EXPECTED_IMGS,
     PLOT_DIR,
-    plotDir,
-    stage3_dict,
+    PLOT_DIR_STR,
+    STAGE3_DICT,
 )
 from rca_data_tools.qaqc.utils import select_logger
 
@@ -146,9 +146,9 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     overlay = "none"
     depth = "full"  # HACK but has been working forever
     span_str = SPAN_DICT[span]
-    file_name = f"{plotDir}{site}_{span_str}_{overlay}_{depth}.png"
+    file_name = f"{PLOT_DIR_STR}{site}_{span_str}_{overlay}_{depth}.png"
     logger.info(file_name)
-    img_size_cutoff = int(stage3_dict[site]["dataParameters"])  # HACK probably a cleaner way to config
+    img_size_cutoff = int(STAGE3_DICT[site]["dataParameters"])  # HACK probably a cleaner way to config
 
     # calculate time window
     end_date = parser.parse(time_string)

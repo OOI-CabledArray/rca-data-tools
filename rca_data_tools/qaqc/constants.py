@@ -44,7 +44,7 @@ THROTTLE_SPANS = {
     '7': 'week',
 }
 
-statusColors = {
+STATUS_COLORS = {
     'OPERATIONAL': 'green',
     'FAILED': 'red',
     'TROUBLESHOOTING': 'red',
@@ -56,7 +56,7 @@ statusColors = {
     'NOT_DEPLOYED': 'blue'
 }
 
-qc_flags = {
+QC_FLAGS = {
         'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
         'qartod_climatology':{'symbol':'x','param':'_qartod_executed_climatology_test'},
         #'qartod_summary':{'symbol':'1','param':'_qartod_results'},
@@ -64,71 +64,71 @@ qc_flags = {
     }
 
 # create dictionary of sites key for filePrefix, nearestNeighbors
-sites_dict = (
+SITES_DICT = (
     pd.read_csv(PARAMS_DIR.joinpath('sitesDictionary.csv'))
     .set_index('refDes')
     .T.to_dict('series')
 )
 
-stage2_dict = (
+STAGE2_DICT = (
     pd.read_csv(PARAMS_DIR.joinpath('stage2Dictionary.csv'))
     .set_index('refDes')
     .T.to_dict('series')
 )
 
-stage3_dict = (
+STAGE3_DICT = (
     pd.read_csv(PARAMS_DIR.joinpath('stage3Dictionary.csv'))
     .set_index('refDes')
     .T.to_dict('series')
 )
 
-all_configs_dict = {**sites_dict, **stage2_dict, **stage3_dict}
+ALL_CONFIGS_DICT = {**SITES_DICT, **STAGE2_DICT, **STAGE3_DICT}
 
 # create dictionary of parameter vs variable Name
-variable_dict = pd.read_csv(PARAMS_DIR.joinpath('variableMap.csv'), index_col=0).iloc[:, 0].to_dict()
+VARIABLE_DICT = pd.read_csv(PARAMS_DIR.joinpath('variableMap.csv'), index_col=0).iloc[:, 0].to_dict()
 
 # create dictionary of instrumet key for plot parameters
-instrument_dict = (
+INSTRUMENT_DICT = (
     pd.read_csv(PARAMS_DIR.joinpath('plotParameters.csv'))
     .set_index('instrument')
     .T.to_dict('series')
 )
 
 # create dictionary of variable parameters for plotting
-variable_paramDict = (
+VARIABLE_PARAM_DICT = (
     pd.read_csv(PARAMS_DIR.joinpath('variableParameters.csv'))
     .set_index('variable')
     .T.to_dict('series')
 )
 
 # create dictionary of multi-parameter instrumet variables
-multiParameter_dict = (
+MULTI_PARAMETER_DICT = (
     pd.read_csv(PARAMS_DIR.joinpath('multiParameters.csv'))
     .set_index('instrument')
     .T.to_dict('series')
 )
 
 
-localRange_dict = yaml.safe_load(open(PARAMS_DIR.joinpath("localRanges.yaml"))) 
+LOCAL_RANGE_DICT = yaml.safe_load(open(PARAMS_DIR.joinpath("localRanges.yaml")))
 
 # create a dictonary of sites with partially active coordinates for current deployment
-deployedRange_dict = (
+DEPLOYED_RANGE_DICT = (
     pd.read_csv(PARAMS_DIR.joinpath('deployedRanges.csv'))
     .set_index('refDes')
     .T.to_dict('series')
 )
 
+QARTOD_SKIP_DICT = yaml.safe_load(open(PARAMS_DIR.joinpath("qartod_skip.yaml"))) 
+
 # create a dictonary of auxilliary parameters to be calculated
-calculate_dict = (load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv')))
+CALCULATE_DICT = (load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv')))
 
 # create a dictonary of calculations and inputs as executable strings
-calculateCalls_dict = (load_calc_metadata(PARAMS_DIR.joinpath('calculateCalls.csv')))
+CALCULATE_CALLS_DICT = (load_calc_metadata(PARAMS_DIR.joinpath('calculateCalls.csv')))
 
 # function registry of calculation commands
-function_registry = build_function_registry(calculateCalls_dict, module_name="rca_data_tools.qaqc.advanced_qaqc.calculateFunctions")
+FUNCTION_REGISTRY = build_function_registry(CALCULATE_CALLS_DICT, module_name="rca_data_tools.qaqc.advanced_qaqc.calculateFunctions")
 
-plotDir = str(PLOT_DIR) + '/'
-
-qartod_skip_dict = yaml.safe_load(open(PARAMS_DIR.joinpath("qartod_skip.yaml"))) 
+PLOT_DIR_STR = str(PLOT_DIR) + '/'
 
 COMPUTE_EXCEPTIONS = yaml.safe_load(open(PARAMS_DIR.joinpath("compute_exceptions.yaml")))

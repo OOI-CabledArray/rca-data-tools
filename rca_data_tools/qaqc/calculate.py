@@ -12,7 +12,7 @@ import numpy as np
 from typing import Dict, Optional
 
 from rca_data_tools.qaqc.qartod import loadStagedQARTOD, loadQARTOD
-from rca_data_tools.qaqc.constants import all_configs_dict, variable_dict, qartod_skip_dict
+from rca_data_tools.qaqc.constants import ALL_CONFIGS_DICT, VARIABLE_DICT, QARTOD_SKIP_DICT
 from rca_data_tools.qaqc.utils import select_logger
 
 logger = select_logger()
@@ -216,7 +216,7 @@ class QartodRunner:
         return homebrew_qartod_ds
 
     def get_pressure_param(self):
-        pressure_vars = variable_dict["pressure"].strip('"').split(",")
+        pressure_vars = VARIABLE_DICT["pressure"].strip('"').split(",")
         if isinstance(self.da, xr.Dataset):
             matching_vars = [var for var in pressure_vars if var in self.da.data_vars]
             if matching_vars:
@@ -253,22 +253,22 @@ class QartodRunner:
     def determine_qartod_table_types(self):
         refdes = self.refdes
 
-        if "FIXED" in all_configs_dict[refdes]["instrument"]:
+        if "FIXED" in ALL_CONFIGS_DICT[refdes]["instrument"]:
             table_type = [
                 "fixed",
                 "fixed",
             ]  # (clim, gross) both fixed for fixed instruments
-        elif "PROFILER" in all_configs_dict[refdes]["instrument"]:
+        elif "PROFILER" in ALL_CONFIGS_DICT[refdes]["instrument"]:
             table_type = [
                 "binned",
                 "int",
             ]  # (clim, gross) gross range is integrated for profilers
 
-        if self.param in qartod_skip_dict.keys() or self.refdes in qartod_skip_dict.keys():
+        if self.param in QARTOD_SKIP_DICT.keys() or self.refdes in QARTOD_SKIP_DICT.keys():
             try:
-                skip_tests = qartod_skip_dict[self.param]
+                skip_tests = QARTOD_SKIP_DICT[self.param]
             except KeyError:
-                skip_tests = qartod_skip_dict[self.refdes]
+                skip_tests = QARTOD_SKIP_DICT[self.refdes]
 
             if "climatology" in skip_tests:
                 table_type[0] = None  # skip climatology test

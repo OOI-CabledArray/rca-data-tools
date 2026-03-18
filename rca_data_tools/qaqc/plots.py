@@ -24,15 +24,15 @@ from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_i
 from rca_data_tools.qaqc.constants import (
     SPAN_DICT,
     S3_BUCKET,
-    variable_dict,
-    variable_paramDict,
-    multiParameter_dict,
-    localRange_dict,
-    deployedRange_dict,
-    calculate_dict,
-    calculateCalls_dict,
-    function_registry,
-    plotDir,
+    VARIABLE_DICT,
+    VARIABLE_PARAM_DICT,
+    MULTI_PARAMETER_DICT,
+    LOCAL_RANGE_DICT,
+    DEPLOYED_RANGE_DICT,
+    CALCULATE_DICT,
+    CALCULATE_CALLS_DICT,
+    FUNCTION_REGISTRY,
+    PLOT_DIR_STR,
     PLOT_DIR,
 )
 
@@ -52,19 +52,19 @@ def run_calculations_for_site(site, siteData):
     """
     Run all configured calculations for a site and append outputs to siteData.
     Requires globals:
-        calculate_dict,
-        calculateCalls_dict,
-        function_registry
+        CALCULATE_DICT,
+        CALCULATE_CALLS_DICT,
+        FUNCTION_REGISTRY
     """
 
     fileParams = []
 
-    if site not in calculate_dict:
+    if site not in CALCULATE_DICT:
         return siteData, fileParams
 
-    for calc_name in calculate_dict[site]:
-        meta = calculateCalls_dict[calc_name]
-        func = function_registry[meta["function_key"]]
+    for calc_name in CALCULATE_DICT[site]:
+        meta = CALCULATE_CALLS_DICT[calc_name]
+        func = FUNCTION_REGISTRY[meta["function_key"]]
 
         # --- gather inputs ---
         args = []
@@ -143,12 +143,12 @@ def run_dashboard_creation(
     dropList = [item for item in allVar if item not in fileParams]
     siteData = siteData.drop(dropList)
     # some instruments have inactive bins for current deployment - ie ADCPs
-    if site in deployedRange_dict.keys():
-        sliceCoord = deployedRange_dict[site]["sliceCoord"]
+    if site in DEPLOYED_RANGE_DICT.keys():
+        sliceCoord = DEPLOYED_RANGE_DICT[site]["sliceCoord"]
         siteData = siteData.sel(
             {
                 sliceCoord: slice(
-                    deployedRange_dict[site]["lowerB"], deployedRange_dict[site]["upperB"]
+                    DEPLOYED_RANGE_DICT[site]["lowerB"], DEPLOYED_RANGE_DICT[site]["upperB"]
                 )
             }
         )
@@ -159,9 +159,9 @@ def run_dashboard_creation(
 
     logger.debug(f"site array: {siteData}")
     # extract parameters from multi-dimensional array
-    if plotInstrument in multiParameter_dict.keys():
+    if plotInstrument in MULTI_PARAMETER_DICT.keys():
         siteData, fileParams = extractMulti(
-            siteData, plotInstrument, multiParameter_dict, fileParams
+            siteData, plotInstrument, MULTI_PARAMETER_DICT, fileParams
         )
 
     if (
@@ -188,7 +188,7 @@ def run_dashboard_creation(
                 siteData = siteData.coarsen(time=window, boundary="trim").mean()
                 logger.info(f"Succesfully coarsened time with window of *{window}*.")
                 
-    if site in calculate_dict:
+    if site in CALCULATE_DICT:
         logger.info(f"calculating parameters for {site}...")
         
         siteData, calc_fileParams = run_calculations_for_site(site, siteData)
@@ -196,7 +196,7 @@ def run_dashboard_creation(
 
     for param in paramList:
         logger.info(f"parameter: {param}")
-        variableParams = variable_dict[param].strip('"').split(",")
+        variableParams = VARIABLE_DICT[param].strip('"').split(",")
         parameterList = [value for value in variableParams if value in fileParams]
         if len(parameterList) == 0:
             logger.warning(f"Error retriving parameter: {param} from the xarray...")
@@ -205,22 +205,22 @@ def run_dashboard_creation(
                 # Yparam = parameterList[0]
                 # set up plotting parameters
                 if len(parameterList) > 1:
-                    imageName_base = plotDir + site + "_" + Yparam
+                    imageName_base = PLOT_DIR_STR + site + "_" + Yparam
                     plotTitle = site + " " + Yparam
                 else:
-                    imageName_base = plotDir + site + "_" + param
+                    imageName_base = PLOT_DIR_STR + site + "_" + param
                     plotTitle = site + " " + param
                 logger.info(imageName_base)
-                paramMin = float(variable_paramDict[param]["min"])
-                paramMax = float(variable_paramDict[param]["max"])
-                profile_paramMin = float(variable_paramDict[param]["profileMin"])
-                profile_paramMax = float(variable_paramDict[param]["profileMax"])
+                paramMin = float(VARIABLE_PARAM_DICT[param]["min"])
+                paramMax = float(VARIABLE_PARAM_DICT[param]["max"])
+                profile_paramMin = float(VARIABLE_PARAM_DICT[param]["profileMin"])
+                profile_paramMax = float(VARIABLE_PARAM_DICT[param]["profileMax"])
                 # default local range to standard range if not defined
                 paramMin_local = paramMin
                 paramMax_local = paramMax
                 profile_paramMin_local = profile_paramMin
                 profile_paramMax_local = profile_paramMax
-                localRange = localRange_dict[site][param]
+                localRange = LOCAL_RANGE_DICT[site][param]
 
                 if "local" in localRange:
                     paramMin_local = localRange["local"][0]
@@ -229,7 +229,7 @@ def run_dashboard_creation(
                     profile_paramMin_local = localRange["local_profile"][0]
                     profile_paramMax_local = localRange["local_profile"][1]
 
-                yLabel = variable_paramDict[param]["label"]
+                yLabel = VARIABLE_PARAM_DICT[param]["label"]
 
                 # Load overlayData
                 overlayData_clim = {}
@@ -246,7 +246,7 @@ def run_dashboard_creation(
 
                 if "PROFILER" in plotInstrument:
                     profileList = dashboard.loadProfiles(site)
-                    pressureParams = variable_dict["pressure"].strip('"').split(",")
+                    pressureParams = VARIABLE_DICT["pressure"].strip('"').split(",")
                     pressureParamList = [
                         value for value in pressureParams if value in fileParams
                     ]
@@ -258,7 +258,7 @@ def run_dashboard_creation(
                         flagParams = [item for item in qcParams if Yparam in item]
                         flagParams.extend((Yparam, pressParam))
                         overlayData_flag = siteData[flagParams].chunk("auto")
-                        colorMap = "cmo." + variable_paramDict[param]["colorMap"]
+                        colorMap = "cmo." + VARIABLE_PARAM_DICT[param]["colorMap"]
                         depthMinMax = stageDict[site]["depthMinMax"].strip('"').split(",")
                         if "None" not in depthMinMax:
                             yMin = int(depthMinMax[0])

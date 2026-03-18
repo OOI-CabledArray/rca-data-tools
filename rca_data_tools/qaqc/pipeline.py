@@ -16,12 +16,12 @@ from loguru import logger
 from prefect.deployments import run_deployment
 
 from rca_data_tools.qaqc.constants import (
-    instrument_dict,
-    sites_dict,
-    stage2_dict,
-    stage3_dict,
+    INSTRUMENT_DICT,
+    SITES_DICT,
+    STAGE2_DICT,
+    STAGE3_DICT,
     SPAN_DICT,
-    all_configs_dict,
+    ALL_CONFIGS_DICT,
 )
 from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS, CAM_SPANS, THROTTLE_SPANS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
@@ -67,11 +67,11 @@ class QAQCPipeline:
     def __setup(self):
         # TODO Don S: data filtering/verification should occur in this class
         self.created_dt = datetime.datetime.utcnow()
-        if self.site not in all_configs_dict:
+        if self.site not in ALL_CONFIGS_DICT:
             raise ValueError(
-                f"{self.site} is not available. Available sites {','.join(list(all_configs_dict.keys()))}"  # noqa
+                f"{self.site} is not available. Available sites {','.join(list(ALL_CONFIGS_DICT.keys()))}"  # noqa
             )
-        self._site_ds = all_configs_dict[self.site]
+        self._site_ds = ALL_CONFIGS_DICT[self.site]
 
         self.plotInstrument = self._site_ds.get('instrument', None)
         if 'CAM' in self.site:
@@ -89,11 +89,11 @@ class QAQCPipeline:
     
     def _lookup_stage(self):
         # instance needs to be aware of what stage its instrument is
-        if self.site in sites_dict.keys():
+        if self.site in SITES_DICT.keys():
             return 1
-        elif self.site in stage2_dict.keys():
+        elif self.site in STAGE2_DICT.keys():
             return 2
-        elif self.site in stage3_dict.keys():
+        elif self.site in STAGE3_DICT.keys():
             return 3
 
     def __repr__(self):
@@ -113,7 +113,7 @@ class QAQCPipeline:
         OOI plot parameters
         """
         return (
-            instrument_dict[self.plotInstrument]['plotParameters']
+            INSTRUMENT_DICT[self.plotInstrument]['plotParameters']
             .replace('"', '')
             .split(',')
         )
@@ -232,11 +232,11 @@ def main():
             "Run either individual sites OR stage groups of instruments.")
 
     if args.stage1 is True:
-        run_stage(sites_dict, args)
+        run_stage(SITES_DICT, args)
     if args.stage2 is True:
-        run_stage(stage2_dict, args)
+        run_stage(STAGE2_DICT, args)
     if args.stage3 is True:
-        run_stage(stage3_dict, args)
+        run_stage(STAGE3_DICT, args)
 
     if args.site is not None:
         # Creates only one pipeline instance, useful for testing

@@ -16,12 +16,12 @@ from rca_data_tools.qaqc.plots import (
 from rca_data_tools.qaqc.utils import get_s3_kwargs
 from rca_data_tools.qaqc.visual_data import cam_qaqc_stacked_bar
 from rca_data_tools.qaqc.constants import (
-    S3_BUCKET, 
+    S3_BUCKET,
     SPAN_DICT,
-    instrument_dict,
-    sites_dict,
-    stage2_dict,
-    stage3_dict,
+    INSTRUMENT_DICT,
+    SITES_DICT,
+    STAGE2_DICT,
+    STAGE3_DICT,
 )
 
 
@@ -39,13 +39,13 @@ def dashboard_creation_task(
     """
     Prefect task for running dashboard creation
     """
-    stage_map = {1: sites_dict, 2: stage2_dict, 3: stage3_dict}
+    stage_map = {1: SITES_DICT, 2: STAGE2_DICT, 3: STAGE3_DICT}
     stage_dict = stage_map[stage]
 
     site_ds = stage_dict[site]
     plotInstrument = site_ds['instrument']
     paramList = (
-        instrument_dict[plotInstrument]['plotParameters']
+        INSTRUMENT_DICT[plotInstrument]['plotParameters']
         .replace('"', '')
         .split(',')
     )

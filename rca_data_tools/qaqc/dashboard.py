@@ -35,7 +35,7 @@ import textwrap as tw
 import xml.etree.ElementTree as et
 
 from rca_data_tools.qaqc.utils import select_logger, save_fig, get_s3_kwargs
-from rca_data_tools.qaqc.constants import variable_paramDict, statusColors, all_configs_dict, qc_flags
+from rca_data_tools.qaqc.constants import VARIABLE_PARAM_DICT, STATUS_COLORS, ALL_CONFIGS_DICT, QC_FLAGS
 from rca_data_tools.qaqc.calculate import QartodRunner
 INPUT_BUCKET = "ooi-data/"
 
@@ -445,7 +445,7 @@ def plotProfilesGrid(
         fig.set_size_inches(5, 1.75)
         fig.patch.set_facecolor('white')
         plt.title(plotTitle, fontsize=4, loc='left')
-        plt.title(statusString, fontsize=4, fontweight=0, color=statusColors[statusString], loc='right', style='italic' )
+        plt.title(statusString, fontsize=4, fontweight=0, color=STATUS_COLORS[statusString], loc='right', style='italic' )
         plt.ylabel(pressLabel, fontsize=4)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
@@ -569,7 +569,7 @@ def plotProfilesGrid(
         plotFunc = "meshgrid"
         pressLabel = "Depth (m)"
 
-    staticParam = variable_paramDict[paramNickname]['static']
+    staticParam = VARIABLE_PARAM_DICT[paramNickname]['static']
     
     scatterX = baseDS.time.values
     scatterY = np.array([])
@@ -1125,7 +1125,7 @@ def plotProfilesScatter(
         fig.set_size_inches(4, 2)
         fig.patch.set_facecolor('white')
         plt.title(plotTitle, fontsize=4, loc='left')
-        plt.title(statusString, fontsize=4, fontweight=0, color=statusColors[statusString], loc='right', style='italic' )
+        plt.title(statusString, fontsize=4, fontweight=0, color=STATUS_COLORS[statusString], loc='right', style='italic' )
         plt.ylabel(yLabel, fontsize=4)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
@@ -1210,12 +1210,12 @@ def plotProfilesScatter(
             
             if homebrew_qartod:
                 # here QartodRunner is invoked in a loop which might cause github to api limit us
-                qartodRunner = QartodRunner(site, Xparam, baseDS, False, qc_flags, qcDS)
+                qartodRunner = QartodRunner(site, Xparam, baseDS, False, QC_FLAGS, qcDS)
                 qcDS = qartodRunner.create_qartod_viz_ds() # overwrite CI based qcDS with homebrew qartod results
                 qcDS = qcDS.sel(time=slice(timeSpan[0], timeSpan[1]))
 
-            for flagType in qc_flags.keys():
-                flagString = Xparam + qc_flags[flagType]['param']
+            for flagType in QC_FLAGS.keys():
+                flagString = Xparam + QC_FLAGS[flagType]['param']
                 if flagString in qcDS:
                     if 'gross' in flagString:
                         flagStatus = {'fail':{'value':4,'color':'r'}, 'suspect':{'value':3,'color':'orange'}}
@@ -1230,7 +1230,7 @@ def plotProfilesScatter(
                             n = len(flag_X)
                             legendString = f'{flagType} {level}: {n} points'
                             flag_Y = flaggedDS[pressParam].values
-                            flagLine = plt.plot(flag_X,-flag_Y,qc_flags[flagType]['symbol'],color=flagStatus[level]['color'],
+                            flagLine = plt.plot(flag_X,-flag_Y,QC_FLAGS[flagType]['symbol'],color=flagStatus[level]['color'],
                             	    markersize=1,label='%s' % legendString,
                             	    )
                         else:
@@ -1694,7 +1694,7 @@ def plotScatter(
         fig.set_size_inches(5, 1.75)
         fig.patch.set_facecolor('white')
         plt.title(plotTitle, fontsize=4, loc='left')
-        plt.title(statusString, fontsize=4, fontweight=0, color=statusColors[statusString], loc='right', style='italic' )
+        plt.title(statusString, fontsize=4, fontweight=0, color=STATUS_COLORS[statusString], loc='right', style='italic' )
         plt.ylabel(yLabel, fontsize=4)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
@@ -2052,12 +2052,12 @@ def plotScatter(
                 # retrieve flags
                 qcDS = retrieve_qc(qcDS)
                 # if homebrew_qartod, overwrite qcDS with homebrew qartod array
-                if homebrew_qartod and "FIXED" in all_configs_dict[site]['instrument']: 
-                    qartodRunner = QartodRunner(site, Yparam, baseDS, False, qc_flags, qcDS)
+                if homebrew_qartod and "FIXED" in ALL_CONFIGS_DICT[site]['instrument']: 
+                    qartodRunner = QartodRunner(site, Yparam, baseDS, False, QC_FLAGS, qcDS)
                     qcDS = qartodRunner.create_qartod_viz_ds() # overwrite CI qcDS with homebrew qartod results
 
-                for flagType in qc_flags.keys():
-                    flagString = Yparam + qc_flags[flagType]['param']
+                for flagType in QC_FLAGS.keys():
+                    flagString = Yparam + QC_FLAGS[flagType]['param']
                     if flagString in qcDS:
                         print(f'parameters found for {flagString}')
                         if 'gross' in flagString:
@@ -2076,7 +2076,7 @@ def plotScatter(
                                 plt.plot(
                                     flag_X, # flagged times 
                                     flag_Y, # flagged parameter values
-                            	    qc_flags[flagType]['symbol'],
+                            	    QC_FLAGS[flagType]['symbol'],
                             	    color=flagStatus[level]['color'],
                             	    markersize=flagMarker,
                             	    label='%s' % legendString,   
@@ -2154,12 +2154,12 @@ def retrieve_qc(ds):
 
     # for each variable with qc tests applied
     for var in variables:
-        # set the qc_results and qc_executed variable names and the new qc_flags variable name
+        # set the qc_results and qc_executed variable names and the new QC_FLAGS variable name
         qc_result = var + '_qc_results'
         qc_executed = var + '_qc_executed'
         qc_summary = var + '_qc_summary_flag'
 
-        # create the initial qc_flags array
+        # create the initial QC_FLAGS array
         flags = np.tile(np.array([0, 0, 0, 0, 0, 0, 0, 0]), (len(ds.time), 1))
         # the list of tests run, and their bit positions are:
         #    0: dataqc_globalrangetest
@@ -2175,7 +2175,7 @@ def retrieve_qc(ds):
         executed = np.bitwise_or.reduce(ds[qc_executed].values.astype('uint8'))
         executed_bits = np.unpackbits(executed.astype('uint8'))
 
-        # for each test executed, reset the qc_flags for pass == 1, suspect == 3, or fail == 4
+        # for each test executed, reset the QC_FLAGS for pass == 1, suspect == 3, or fail == 4
         for index, value in enumerate(executed_bits[::-1]):
             if value:
                 if index in [2, 3, 4, 5, 6, 7]:
@@ -2189,7 +2189,7 @@ def retrieve_qc(ds):
                 flags[m, index] = 1   # True == pass
                 flags[~m, index] = flag  # False == suspect/fail
 
-        # add the qc_flags to the dataset, rolling up the results into a single value
+        # add the QC_FLAGS to the dataset, rolling up the results into a single value
         ds[qc_summary] = ('time', flags.max(axis=1, initial=1).astype(np.int32))
 
     ## create a list of the variables that have had QARTOD tests applied
