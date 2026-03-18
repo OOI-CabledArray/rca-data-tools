@@ -62,6 +62,7 @@ def run_calculations_for_site(site, siteData):
     if site not in CALCULATE_DICT:
         return siteData, fileParams
 
+    logger.info(f"Calculating suplimentary data arrays for {site}.")
     for calc_name in CALCULATE_DICT[site]:
         meta = CALCULATE_CALLS_DICT[calc_name]
         func = FUNCTION_REGISTRY[meta["function_key"]]
