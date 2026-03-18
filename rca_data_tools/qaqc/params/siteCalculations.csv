@@ -6,3 +6,4 @@ RS01SBPS-SF01A-3B-OPTAAD101,opt_internal_temp|opt_external_temp|opt_calculate_al
 RS01SLBS-LJ01A-11-OPTAAC103,opt_internal_temp|opt_external_temp|opt_calculate_all_optical_products
 CE04OSBP-LJ01C-08-OPTAAC104,opt_internal_temp|opt_external_temp|opt_calculate_all_optical_products
 CE02SHBP-LJ01D-08-OPTAAD106,opt_internal_temp|opt_external_temp|opt_calculate_all_optical_products
+CE02SHBP-LJ01D-09-PCO2WB103,pco2_test_function

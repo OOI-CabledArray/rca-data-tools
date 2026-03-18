@@ -336,3 +336,14 @@ def opt_calculate_all_optical_products(
         xr.DataArray(chl,         coords=coords, dims=[time_dim], name="estimated_chlorophyll"),
         xr.DataArray(poc,         coords=coords, dims=[time_dim], name="estimated_poc"),
     )
+
+
+def pco2_test_function(ds, site):
+    param_da = ds["pco2_seawater"]
+
+    logger.info(f"generating a test array for site: {site}")
+    test_da = xr.full_like(param_da, 1)
+
+    ds["test_advanced_qaqc"] = test_da
+
+    return ds
