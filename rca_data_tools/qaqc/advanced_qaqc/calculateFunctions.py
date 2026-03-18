@@ -344,6 +344,6 @@ def pco2_test_function(ds, site):
     logger.info(f"generating a test array for site: {site}")
     test_da = xr.full_like(param_da, 1)
 
-    ds["test_advanced_qaqc"] = test_da
+    test_da
 
-    return ds
+    return test_da
