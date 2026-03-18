@@ -14,7 +14,8 @@ aws ecr-public get-login-password --region us-east-1 | docker login --username A
 docker buildx build --platform linux/amd64,linux/arm64 -t public.ecr.aws/p0l4c7i2/rca-data-tools:latest --push .
 ```
 
-# Configuration Files (`rca_data_tools/qaqc/params/`)
+# Configuration Files 
+`rca_data_tools/qaqc/params/`
 
 | File | Description |
 |------|-------------|
