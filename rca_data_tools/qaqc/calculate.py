@@ -9,7 +9,7 @@ through OOI/M2M.
 import ast
 import xarray as xr
 import numpy as np
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from rca_data_tools.qaqc.qartod import loadStagedQARTOD, loadQARTOD
 from rca_data_tools.qaqc.constants import ALL_CONFIGS_DICT, VARIABLE_DICT, QARTOD_SKIP_DICT
@@ -23,7 +23,7 @@ class QartodRunner:
         self,
         refdes: str,
         param: str,
-        da: xr.DataArray | xr.Dataset,
+        da: Union[xr.DataArray, xr.Dataset],
         use_production_tables: bool,
         qc_flags: Dict,
         qartod_ds: Optional[xr.Dataset] = None,
