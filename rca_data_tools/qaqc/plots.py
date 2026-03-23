@@ -221,7 +221,10 @@ def run_dashboard_creation(
                 paramMax_local = paramMax
                 profile_paramMin_local = profile_paramMin
                 profile_paramMax_local = profile_paramMax
-                localRange = LOCAL_RANGE_DICT[site][param]
+                try:
+                    localRange = LOCAL_RANGE_DICT[site][param]
+                except KeyError:
+                    logger.warning("No local range found. Defaulting to full range.")
 
                 if "local" in localRange:
                     paramMin_local = localRange["local"][0]
