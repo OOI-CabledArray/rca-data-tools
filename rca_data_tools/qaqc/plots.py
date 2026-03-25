@@ -3,7 +3,6 @@
 This module contains code for plot creations from various instruments.
 
 """
-from asyncio.log import logger
 from datetime import datetime
 from dateutil import parser
 import gc
@@ -15,9 +14,11 @@ from typing import List
 import xarray as xr
 import matplotlib.pyplot as plt
 
-from rca_data_tools.qaqc import dashboard, decimate 
+from rca_data_tools.qaqc import dashboard, decimate
 from rca_data_tools.qaqc.qartod import loadQARTOD
 from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
+
+logger = select_logger()
 
 from rca_data_tools.qaqc.constants import (
     SPAN_DICT,
@@ -54,16 +55,18 @@ def run_calculations_for_site(site, siteData):
         CALCULATE_CALLS_DICT,
         FUNCTION_REGISTRY
     """
-
+    logger.info(f"Starting calculations for {site}...")
     fileParams = []
 
     if site not in CALCULATE_DICT:
+        logger.info(f"No calculations configured for {site}. Skipping calculation step.")
         return siteData, fileParams
 
     logger.info(f"Calculating supplementary data arrays for {site}.")
     for calc_name in CALCULATE_DICT[site]:
         meta = CALCULATE_CALLS_DICT[calc_name]
         func = FUNCTION_REGISTRY[meta["function_key"]]
+        logger.info(f"Running calculation: {calc_name} using function: {func.__name__}")
 
         # --- gather inputs ---
         args = []
@@ -79,6 +82,7 @@ def run_calculations_for_site(site, siteData):
 
         # --- run calculation ---
         result = func(*args, **kwargs)
+        logger.info(f"Calculation {calc_name} complete. Result type: {type(result)}")
 
         # --- handle outputs ---
         outputs = meta["outputs"]
@@ -93,6 +97,8 @@ def run_calculations_for_site(site, siteData):
                 )
             siteData[out_name] = value
             fileParams.append(out_name)
+            
+    logger.info(f"Finished calculations for {site}. New parameters added: {fileParams}")
 
     return siteData, fileParams
 
