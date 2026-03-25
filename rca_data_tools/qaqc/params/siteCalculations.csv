@@ -8,4 +8,4 @@ CE04OSBP-LJ01C-08-OPTAAC104,opt_internal_temp|opt_external_temp|opt_calculate_al
 CE02SHBP-LJ01D-08-OPTAAD106,opt_internal_temp|opt_external_temp|opt_calculate_all_optical_products,False
 CE02SHBP-LJ01D-09-PCO2WB103,pco2_test_function,True
 RS01SBPS-PC01A-4B-PHSENA102,ph_advanced_flags,True
-RS03AXPS-SF03A-4A-NUTNRA301,nutnr_advanced_flags|nutnr_plant2023,True
+RS03AXPS-SF03A-4A-NUTNRA301,nutnr_plant2023|nutnr_advanced_flags,False

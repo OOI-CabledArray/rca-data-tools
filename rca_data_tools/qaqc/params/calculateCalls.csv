@@ -5,4 +5,4 @@ opt_calculate_all_optical_products,opt_calculate_all_optical_products,DATASET|si
 pco2_test_function,pco2_test_function,DATASET|site,,qartod_test_variable
 ph_advanced_flags,ph_advanced_flags,DATASET,,advanced_qc_flags
 nutnr_advanced_flags,nutnr_advanced_flags,DATASET,,advanced_qc_flags
-nutnr_plant2023,nutnr_plant2023,DATASET|site,,nutnr_plant2023
+nutnr_plant2023,nutnr_plant2023,DATASET|site,,dissolved_nitrate|nutnr_fitting_function|nutnr_rmse

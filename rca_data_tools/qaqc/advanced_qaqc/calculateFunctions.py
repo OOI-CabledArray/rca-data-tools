@@ -477,12 +477,27 @@ def ph_advanced_flags(ph):
 ###
 
 def nutnr_advanced_flags(nutnr):
+    
+    # "Absorption: The data output of the SUNA V2 is the absorption at 350 nm and 254 nm
+    # (A350 and A254). These wavelengths are outside the nitrate absorption range and can be
+    # used to make an estimate of the impact of CDOM. If absorption is high (>1.3 AU), the
+    # SUNA will not be able to collect adequate light to make a measurement." SUNA V2 vendor
+    # documentation (Sea-Bird Scientific Document# SUNA180725)
+    
+    # "RMSE: The root-mean-square error parameter from the SUNA V2 can be used to make
+    # an estimate of how well the nitrate spectral fit is. This should usually be less than 1E-3. If
+    # it is higher, there is spectral shape (likely due to CDOM) that adversely impacts the nitrate
+    # estimate." SUNA V2 vendor documentation (Sea-Bird Scientific Document# SUNA180725)
 
     # Invalid: points where spectra - dark is negative, inf, or nan
     invalid_mask = (
-        ((nutnr.spectral_channels - nutnr.nutnr_dark_value_used_for_fit) < 0) |
+        ((nutnr.spectral_channels - nutnr.nutnr_dark_value_used_for_fit) <= 0) |
         np.isinf(nutnr.spectral_channels) |
         nutnr.spectral_channels.isnull()
+    )
+    # Blocked absorption channel or failed lamp
+    channel_mask = (
+        (nutnr.nutnr_spectrum_average < 10000) 
     )
     # CDOM interference: where A254 or A350 > 1.3 AU
     cdom_mask = (
@@ -493,9 +508,10 @@ def nutnr_advanced_flags(nutnr):
     rmse_mask = (nutnr.nutnr_fit_rmse > 0.001)
     if "nutnr_rmse" in nutnr:
         rmse_mask = rmse_mask | (nutnr.nutnr_rmse > 0.001)
-
+        
     base = xr.full_like(nutnr.salinity_corrected_nitrate, 1)
     tests = [
+        ('channel', channel_mask),
         ('invalid', invalid_mask),
         ('CDOM',    cdom_mask),
         ('RMSE',    rmse_mask),
@@ -613,17 +629,33 @@ def nutnr_plant2023(nutnr, site):
                                
     n_data_packets = data_in.shape[0]
 
-    if np.isscalar(wllower):
-        wllower = np.tile(wllower, n_data_packets)
-    if np.isscalar(wlupper):
-        wlupper = np.tile(wlupper, n_data_packets)
-    if np.isscalar(cal_temp):
-        cal_temp = np.tile(cal_temp, n_data_packets)
-        
-    wl = np.tile(wl, (n_data_packets, 1))
-    di = np.tile(di, (n_data_packets, 1))
-    eno3 = np.tile(eno3, (n_data_packets, 1))
-    eswa = np.tile(eswa, (n_data_packets, 1))
+    cal_index = coeffs["index"]
+
+    # Ensure 2D (n_cal_rows x n_wavelengths) before indexing
+    if wl.ndim == 1:
+        wl = wl[np.newaxis, :]
+        di = di[np.newaxis, :]
+        eno3 = eno3[np.newaxis, :]
+        eswa = eswa[np.newaxis, :]
+
+    # Expand 1D cal arrays to n_data_packets using cal_index
+    if np.ndim(wllower) == 0:
+        wllower = np.full(n_data_packets, float(wllower))
+    else:
+        wllower = wllower[cal_index]
+    if np.ndim(wlupper) == 0:
+        wlupper = np.full(n_data_packets, float(wlupper))
+    else:
+        wlupper = wlupper[cal_index]
+    if np.ndim(cal_temp) == 0:
+        cal_temp = np.full(n_data_packets, float(cal_temp))
+    else:
+        cal_temp = cal_temp[cal_index]
+
+    wl = wl[cal_index, :]
+    di = di[cal_index, :]
+    eno3 = eno3[cal_index, :]
+    eswa = eswa[cal_index, :]
 
     c0 = 1.46380e-02
     c1 = 1.67660e-03
@@ -652,7 +684,8 @@ def nutnr_plant2023(nutnr, site):
             SW = np.array(data_in[i, useindex], dtype='float64')
 
             SWcorr = SW - dark_value[i]
-            Absorbance = np.log10(DI / SWcorr)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                Absorbance = np.log10(DI / SWcorr)
 
             WL_prime = (WL - 210.0)
             f_prime = (c0 + c1 * WL_prime + c2 * WL_prime**2 + c3 * WL_prime**3 
