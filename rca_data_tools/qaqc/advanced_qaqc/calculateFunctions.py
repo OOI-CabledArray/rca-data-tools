@@ -15,7 +15,9 @@ from rca_data_tools.qaqc.utils import select_logger, get_calibration_dataset, br
 
 logger = select_logger()
 
+###
 ### OPTAA functions
+###
 
 def opt_internal_temp(traw):
     """
@@ -338,6 +340,40 @@ def opt_calculate_all_optical_products(
     )
 
 
+def combine_qc_flags(base_da, tests):
+    """
+    Combine a list of (name, mask) QC tests into a single positional string flag DataArray.
+
+    Each flag is 1 (pass) or 3 (fail). The result is a string like "113" where each
+    character corresponds to a test in order. Uses integer arithmetic to avoid dask
+    string-concatenation issues.
+
+    Parameters
+    ----------
+    base_da : xr.DataArray
+        Template DataArray (e.g. xr.full_like(ds.some_var, 1)); determines shape/coords.
+    tests : list of (str, xr.DataArray)
+        Ordered list of (test_name, boolean_mask) where True means the point fails.
+
+    Returns
+    -------
+    xr.DataArray
+        String DataArray with attrs['tests_executed'] set to comma-joined test names.
+    """
+    n = len(tests)
+    combined = sum(
+        base_da.where(~mask, 3) * (10 ** (n - 1 - i))
+        for i, (_, mask) in enumerate(tests)
+    )
+    result = combined.astype(str)
+    result.attrs['tests_executed'] = ','.join(name for name, _ in tests)
+    return result
+
+
+###
+### pCO2 functions
+###
+
 def pco2_test_function(ds, site):
     param_da = ds["pco2_seawater"]
 
@@ -347,3 +383,308 @@ def pco2_test_function(ds, site):
     test_da
 
     return test_da
+
+
+
+###
+### pH functions
+###
+
+def ph_advanced_flags(ph):
+    """
+    adapted from https://github.com/oceanobservatories/ooi-data-explorations/blob/master/python/ooi_data_explorations/uncabled/process_phsen.py#L152
+    """
+    # unpack the light and reference measurements arrays into named variables
+    nrec = len(ph['time'].values)
+    light = np.array(np.vstack(ph['ph_light_measurements'].values), dtype='int32')
+    light = np.atleast_3d(light)
+    light = np.reshape(light, (nrec, 23, 4))  # 4 sets of 23 seawater measurements
+    reference_434 = light[:, :, 0]            # reference signal, 434 nm
+    signal_434 = light[:, :, 1]               # signal intensity, 434 nm (PH434SI_L0)
+    reference_578 = light[:, :, 2]            # reference signal, 578 nm
+    signal_578 = light[:, :, 3]               # signal intensity, 578 nm (PH578SI_L0)
+
+    refrnc = np.array(np.vstack(ph['reference_light_measurements'].values), dtype='int32')
+    refrnc = np.atleast_3d(refrnc)
+    refrnc = np.reshape(refrnc, (nrec, 4, 4))   # 4 sets of 4 DI water measurements (blanks)
+    blank_refrnc_434 = refrnc[:, :, 0]  # DI blank reference, 434 nm
+    blank_signal_434 = refrnc[:, :, 1]  # DI blank signal, 434 nm
+    blank_refrnc_578 = refrnc[:, :, 2]  # DI blank reference, 578 nm
+    blank_signal_578 = refrnc[:, :, 3]  # DI blank signal, 578 nm
+
+    # max measurement value
+    max_bits = 4096
+
+    # test suspect indicator signals -- values starting to get too low for a good calculation
+    # values based on what would be considered too low for blanks, which should be the highest signals in the system.
+    # If these are getting too low, it could indicate a problem with the pump or flow cell that is starting to
+    # impact measurements, even if the blank measurements themselves haven't failed yet.
+
+    low_indicator_signal_mask = ( (signal_434 < max_bits / 12).any(axis=1) |
+                 (signal_578 < max_bits / 12).any(axis=1)
+                )
+
+    # test suspect flat indicator signals
+    # indicates pump might be starting to fail or otherwise become obstructed.
+    # if value is 3x the fail level, it is likely that the pump isn't completely failed yet,
+    # but is starting to show signs of failure that could impact measurements.
+
+    flat_indicator_signal_mask = ( (signal_434.std(axis=1) < 180) |
+                 (signal_578.std(axis=1) < 180)
+                )
+
+    # test for suspect reference measurements
+    # erratic reference measurements, with larger than usual variability
+    # value based on 5x of normal standard deviations
+
+    erratic_reference_mask = ( (reference_434.std(axis=1) > 10) |
+                 (reference_578.std(axis=1) > 10)
+                )
+
+    # test for failed blank measurements -- blank measurements either too high (saturated signal) or too low.
+    failed_blank_mask = ( (blank_signal_434 > max_bits - max_bits / 20).any(axis=1) |
+                    (blank_signal_434 < max_bits / 12).any(axis=1) |
+                    (blank_signal_578 > max_bits - max_bits / 20).any(axis=1) |
+                    (blank_signal_578 < max_bits / 12).any(axis=1)
+                )
+
+    # test for failed intensity measurements -- intensity measurements either too high (saturated signal) or too low.
+    failed_intensity_mask = ( (signal_434 > max_bits - max_bits / 20).any(axis=1) |
+                    (signal_434 < 5).any(axis=1) |
+                    (signal_578 > max_bits - max_bits / 20).any(axis=1) |
+                    (signal_578 < 5).any(axis=1)
+                )
+
+    # test for flat intensity measurements -- indicates pump isn't working or the flow cell is otherwise obstructed.
+    flat_intensity_mask = ( (signal_434.std(axis=1) < 60) |
+                    (signal_578.std(axis=1) < 60)
+                )
+
+    base = xr.full_like(ph.ph_seawater, 1)
+    tests = [
+        ('low_indicator_signal',  low_indicator_signal_mask),
+        ('flat_indicator_signal', flat_indicator_signal_mask),
+        ('erratic_reference',     erratic_reference_mask),
+        ('failed_blank',          failed_blank_mask),
+        ('failed_intensity',      failed_intensity_mask),
+        ('flat_intensity',        flat_intensity_mask),
+    ]
+    return combine_qc_flags(base, tests)
+
+
+###
+### NUTNR functions
+###
+
+def nutnr_advanced_flags(nutnr):
+
+    # Invalid: points where spectra - dark is negative, inf, or nan
+    invalid_mask = (
+        ((nutnr.spectral_channels - nutnr.nutnr_dark_value_used_for_fit) < 0) |
+        np.isinf(nutnr.spectral_channels) |
+        nutnr.spectral_channels.isnull()
+    )
+    # CDOM interference: where A254 or A350 > 1.3 AU
+    cdom_mask = (
+        (nutnr.nutnr_absorbance_at_254_nm > 1.3) |
+        (nutnr.nutnr_absorbance_at_350_nm > 1.3)
+    )
+    # onboard-RMSE: if rmse > 0.001; also include plant2023 RMSE if present
+    rmse_mask = (nutnr.nutnr_fit_rmse > 0.001)
+    if "nutnr_rmse" in nutnr:
+        rmse_mask = rmse_mask | (nutnr.nutnr_rmse > 0.001)
+
+    base = xr.full_like(nutnr.salinity_corrected_nitrate, 1)
+    tests = [
+        ('invalid', invalid_mask),
+        ('CDOM',    cdom_mask),
+        ('RMSE',    rmse_mask),
+    ]
+    return combine_qc_flags(base, tests)
+
+def nutnr_plant2023(nutnr, site):
+    """
+    Description:
+
+        The code below calculates the Dissolved Nitrate Concentration
+        with the Plant et al (2023) updates to the 
+        Sakamoto et. al. (2009) algorithm that uses the observed
+        sample salinity and temperature to subtract the bromide component
+        of the overall seawater UV absorption spectrum before solving for
+        the nitrate concentration. Additionally, this adds the pressure
+        correction from Sakamoto 2017.
+
+        The output represents the OOI L2 Dissolved Nitrate Concentration,
+        Temperature and Salinity Corrected (NITRTSC).
+
+    Implemented by:
+
+        2014-05-22: Craig Risien. Initial Code
+        2014-05-27: Craig Risien. This function now looks for the light vs
+                    dark frame measurements and only calculates nitrate
+                    concentration based on the light frame measurements.
+        2015-04-09: Russell Desiderio. CI is now implementing cal coeffs
+                    by tiling in time, requiring coding changes. The
+                    tiling includes the wllower and wlupper variables
+                    when supplied by CI.
+        2025-09-19: Andrew Reed. Updates for improved T,S,P corrections
+                    following Plant et al 2023 and Sakamoto et al 2017
+
+    Usage:
+
+        NO3_conc = ts_corrected_nitrate(cal_temp, wl, eno3, eswa, di,
+                                        dark_value, ctd_t, ctd_sp, data_in,
+                                        frame_type, wllower, wlupper)
+
+            where
+
+        cal_temp = Calibration water temperature value
+        wl = (256,) array of wavelength bins
+        eno3 = (256,) array of wavelength-dependent nitrate
+                extinction coefficients
+        eswa = (256,) array of seawater extinction coefficients
+        di = (256,) array of deionized water reference spectrum
+        dark_value = (N,) array of dark average scalar value
+        ctd_t = (N,) array of water temperature values from
+                colocated CTD [deg C].
+                (see 1341-00010_Data_Product_Spec_TEMPWAT)
+        ctd_sp = (N,) array of practical salinity values from
+                colocated CTD [unitless].
+                (see 1341-00040_Data_Product_Spec_PRACSAL)
+        ctd_p = (N,) array of ctd pressure in dbar
+        data_in = (N x 256) array of nitrate measurement values
+                from the UV absorption spectrum data product
+                (L0 NITROPT) [unitless]
+        NO3_conc = L2 Dissolved Nitrate Concentration, Temperature and
+                Corrected (NITRTSC) [uM]
+        frame_type = (N,) array of Frame type, either a light or dark
+                measurement. This function only uses the data from light
+                frame measurements.
+        wllower = Lower wavelength limit for spectra fit.
+                  From DPS: 217 nm (1-cm pathlength probe tip) or
+                            220 nm (4-cm pathlength probe tip)
+        wlupper = Upper wavelength limit for spectra fit.
+                  From DPS: 240 nm (1-cm pathlength probe tip) or
+                            245 nm (4-cm pathlength probe tip)
+    Notes:
+
+    References:
+
+        OOI (2014). Data Product Specification for NUTNR Data Products.
+            Document Control Number 1341-00620.
+            https://alfresco.oceanobservatories.org/ (See: Company Home >>
+            OOI >> Controlled >> 1000 System Level >>
+            1341-00620_Data_Product_Spec_NUTNR_OOI.pdf)
+        Johnson, K. S., and L. J. Coletti. 2002. In situ ultraviolet
+            spectrophotometry for high resolution and long-term monitoring
+            of nitrate, bromide and bisulfide in the ocean. Deep-Sea Res.
+            I 49:1291-1305
+        Sakamoto, C.M., K.S. Johnson, and L.J. Coletti (2009). Improved
+            algorithm for the computation of nitrate concentrations in
+            seawater using an in situ ultraviolet spectrophotometer.
+            Limnology and Oceanography: Methods 7: 132-143
+        Plant, J. N., Sakamoto, C. M., Johnson, K. S., Maurer, T. L., & Bif, M. B. (2023).
+            Updated temperature correction for computing seawater nitrate with in situ 
+            ultraviolet spectrophotometer and submersible ultraviolet nitrate analyzer 
+            nitrate sensors. Limnology and Oceanography: Methods 21(10): 581–593. 
+            https://doi.org/10.1002/lom3.10566
+    """
+    logger.info(nutnr)
+    logger.info("Loading calibrations")
+    cals = get_calibration_dataset(site)
+
+    logger.info("Building calibration index (no broadcast)...")
+    coeffs = broadcast_calibrations(cals, nutnr.time)
+    cal_tables = coeffs["tables"]
+
+    cal_temp = cal_tables["CC_cal_temp"]
+    wl = cal_tables["CC_wl"]
+    eno3 = cal_tables["CC_eno3"]
+    eswa = cal_tables["CC_eswa"]
+    di = cal_tables["CC_di"]
+    wllower = cal_tables["CC_lower_wavelength_limit_for_spectra_fit"]
+    wlupper = cal_tables["CC_upper_wavelength_limit_for_spectra_fit"]
+    
+    dark_value = nutnr.nutnr_dark_value_used_for_fit.values
+    ctd_t = nutnr.sea_water_temperature.values
+    ctd_sp = nutnr.sea_water_practical_salinity.values
+    data_in = nutnr.spectral_channels.values
+    frame_type = nutnr.frame_type.values
+                               
+    n_data_packets = data_in.shape[0]
+
+    if np.isscalar(wllower):
+        wllower = np.tile(wllower, n_data_packets)
+    if np.isscalar(wlupper):
+        wlupper = np.tile(wlupper, n_data_packets)
+    if np.isscalar(cal_temp):
+        cal_temp = np.tile(cal_temp, n_data_packets)
+        
+    wl = np.tile(wl, (n_data_packets, 1))
+    di = np.tile(di, (n_data_packets, 1))
+    eno3 = np.tile(eno3, (n_data_packets, 1))
+    eswa = np.tile(eswa, (n_data_packets, 1))
+
+    c0 = 1.46380e-02
+    c1 = 1.67660e-03
+    c2 = 2.91898e-05
+    c3 = -7.56395e-06
+    c4 = 1.27353e-07
+
+    NO3_conc = np.ones(n_data_packets)
+    fitting_function = np.empty(n_data_packets, dtype=object)
+    rmse = np.ones(n_data_packets)
+
+    for i in range(0, n_data_packets):
+
+        if frame_type[i] == 'SDB' or frame_type[i] == 'SDF' or frame_type[i] == "NDF":
+            NO3_conc[i] = np.nan
+            fitting_function[i] = np.nan
+            rmse[i] = np.nan
+
+        else:
+            useindex = np.logical_and(wllower[i] <= wl[i, :], wl[i, :] <= wlupper[i])
+
+            WL = wl[i, useindex]
+            ENO3 = eno3[i, useindex]
+            ESWA = eswa[i, useindex]
+            DI = np.array(di[i, useindex], dtype='float64')
+            SW = np.array(data_in[i, useindex], dtype='float64')
+
+            SWcorr = SW - dark_value[i]
+            Absorbance = np.log10(DI / SWcorr)
+
+            WL_prime = (WL - 210.0)
+            f_prime = (c0 + c1 * WL_prime + c2 * WL_prime**2 + c3 * WL_prime**3 
+                       + c4 * WL_prime**4)
+
+            SWA_Ext_at_T = (ESWA * np.exp(f_prime * (ctd_t[i] - cal_temp[i])))
+
+            A_SWA = ctd_sp[i] * SWA_Ext_at_T
+            Acomp = np.array(Absorbance - A_SWA, ndmin=2).T
+
+            subset_array_size = np.shape(ENO3)
+            Ones = np.ones((subset_array_size[0],), dtype='float64') / 100
+            M = np.vstack((ENO3, Ones, WL / 1000)).T
+
+            C = np.dot(np.linalg.pinv(M), Acomp)
+
+            NO3_conc[i] = C[0, 0]
+
+            # Reconstruct the fitted absorbance from the solved coefficients
+            Afit = np.dot(M, C).flatten()
+            # Compute RMSE between the fitted and measured absorbance
+            residuals = Acomp.flatten() - Afit
+            rmse[i] = np.sqrt(np.mean(residuals**2))
+            # Store the fitting function as the coefficients array [NO3, baseline_const, slope]
+            fitting_function[i] = C.flatten()
+
+    coords = {"time": nutnr["time"]}
+
+    logger.info("Wrapping outputs into DataArrays")
+
+    return (
+        xr.DataArray(NO3_conc,        coords=coords, dims=["time"], name="dissolved_nitrate"),
+        xr.DataArray(fitting_function, coords=coords, dims=["time"], name="nutnr_fitting_function"),
+        xr.DataArray(rmse,            coords=coords, dims=["time"], name="nutnr_rmse"),
+    )

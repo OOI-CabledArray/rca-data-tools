@@ -3,3 +3,6 @@ opt_internal_temp,opt_internal_temp,internal_temp_raw,,int_temp
 opt_external_temp,opt_external_temp,external_temp_raw,,ext_temp
 opt_calculate_all_optical_products,opt_calculate_all_optical_products,DATASET|site,chl_line_height=0.020,estimated_chlorophyll|estimated_poc|ratio_cdom|ratio_carotenoids|ratio_phycobilins|ratio_qband 
 pco2_test_function,pco2_test_function,DATASET|site,,qartod_test_variable
+ph_advanced_flags,ph_advanced_flags,DATASET,,advanced_flags
+nutnr_advanced_flags,nutnr_advanced_flags,DATASET,,advanced_qc_flags
+nutnr_plant2023,nutnr_plant2023,DATASET|site,,nutnr_plant2023
