@@ -56,6 +56,7 @@ def run_calculations_for_site(site, siteData):
         FUNCTION_REGISTRY
     """
     logger.info(f"Starting calculations for {site}...")
+    logger.info(f"calculate dict: {CALCULATE_DICT}")
     fileParams = []
 
     if site not in CALCULATE_DICT:
