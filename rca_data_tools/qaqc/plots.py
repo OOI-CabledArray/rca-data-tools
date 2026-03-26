@@ -194,8 +194,9 @@ def run_dashboard_creation(
                 siteData = siteData.coarsen(time=window, boundary="trim").mean()
                 logger.info(f"Succesfully coarsened time with window of *{window}*.")
     
-    # TODO test that PHSEN102 for example does not run during the viz rca-data-tools pipeline
-    if site in CALCULATE_DICT and CALCULATE_DICT['runDuringHarvest'][site] == False:
+    # TODO do not run PH, PC02 example during rca-data-tools pipline, needs logic below to do this and way 
+    # to ingest runDuringHarvest column
+    if site in CALCULATE_DICT:
         logger.info(f"calculating parameters for {site}...")
         
         siteData, calc_fileParams = run_calculations_for_site(site, siteData)
