@@ -365,7 +365,7 @@ def combine_qc_flags(base_da, tests):
         base_da.where(~mask, 3) * (10 ** (n - 1 - i))
         for i, (_, mask) in enumerate(tests)
     )
-    result = combined.astype(str)
+    result = combined.astype(int).astype(str)
     result.attrs['tests_executed'] = ','.join(name for name, _ in tests)
     return result
 
