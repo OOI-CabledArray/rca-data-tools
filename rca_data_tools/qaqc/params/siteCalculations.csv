@@ -7,5 +7,12 @@ RS01SLBS-LJ01A-11-OPTAAC103,opt_internal_temp|opt_external_temp|opt_calculate_al
 CE04OSBP-LJ01C-08-OPTAAC104,opt_internal_temp|opt_external_temp|opt_calculate_all_optical_products,False
 CE02SHBP-LJ01D-08-OPTAAD106,opt_internal_temp|opt_external_temp|opt_calculate_all_optical_products,False
 CE02SHBP-LJ01D-09-PCO2WB103,pco2_test_function,True
+CE04OSPS-SF01B-2B-PHSENA108,ph_advanced_flags,True
+CE04OSPS-PC01B-4B-PHSENA106,ph_advanced_flags,True
 RS01SBPS-PC01A-4B-PHSENA102,ph_advanced_flags,True
-RS03AXPS-SF03A-4A-NUTNRA301,nutnr_plant2023|nutnr_advanced_flags,False
+RS01SBPS-SF01A-2D-PHSENA101,ph_advanced_flags,True
+RS03AXPS-PC03A-4B-PHSENA302,ph_advanced_flags,True
+RS03AXPS-SF03A-2D-PHSENA301,ph_advanced_flags,True
+CE04OSPS-SF01B-4A-NUTNRA102,nutnr_plant2023|nutnr_advanced_flags,True
+RS01SBPS-SF01A-4A-NUTNRA101,nutnr_plant2023|nutnr_advanced_flags,True
+RS03AXPS-SF03A-4A-NUTNRA301,nutnr_plant2023|nutnr_advanced_flags,True
