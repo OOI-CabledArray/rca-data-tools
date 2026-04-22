@@ -1,7 +1,6 @@
 import pandas as pd
 import yaml
 from pathlib import Path
-import csv
 
 from rca_data_tools.qaqc.utils import build_function_registry, load_calc_metadata, load_site_calculations
 
@@ -64,25 +63,15 @@ QC_FLAGS = {
     }
 
 # create dictionary of sites key for filePrefix, nearestNeighbors
-SITES_DICT = (
+_all_sites_df = (
     pd.read_csv(PARAMS_DIR.joinpath('sitesDictionary.csv'))
     .set_index('refDes')
-    .T.to_dict('series')
 )
 
-STAGE2_DICT = (
-    pd.read_csv(PARAMS_DIR.joinpath('stage2Dictionary.csv'))
-    .set_index('refDes')
-    .T.to_dict('series')
-)
-
-STAGE3_DICT = (
-    pd.read_csv(PARAMS_DIR.joinpath('stage3Dictionary.csv'))
-    .set_index('refDes')
-    .T.to_dict('series')
-)
-
-ALL_CONFIGS_DICT = {**SITES_DICT, **STAGE2_DICT, **STAGE3_DICT}
+SITES_DICT = _all_sites_df[_all_sites_df['stage'] == 1].drop(columns='stage').T.to_dict('series')
+STAGE2_DICT = _all_sites_df[_all_sites_df['stage'] == 2].drop(columns='stage').T.to_dict('series')
+STAGE3_DICT = _all_sites_df[_all_sites_df['stage'] == 3].drop(columns='stage').T.to_dict('series')
+ALL_CONFIGS_DICT = _all_sites_df.drop(columns='stage').T.to_dict('series')
 
 # create dictionary of parameter vs variable Name
 VARIABLE_DICT = pd.read_csv(PARAMS_DIR.joinpath('variableMap.csv'), index_col=0).iloc[:, 0].to_dict()
