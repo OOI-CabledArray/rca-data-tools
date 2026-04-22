@@ -19,7 +19,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t public.ecr.aws/p0l4c7i
 
 | File | Description |
 |------|-------------|
-| `sitesDictionary.csv` | Authoritative registry of all RCA instruments that are QAQCed by data team. Each row is one refDes with a `stage` column controlling pipeline routing and support status: `1` = standard sensors (CTD, fluorometer, pH, PCO2, ADCP, etc.), `2` = computationaly intensive processing (VEL3D-C, OPTAA, SPKIR), `3` = cameras (CAMDS, CAMHD), `9` = instruments with alternate processing routines. |
+| `sitesDictionary.csv` | Authoritative registry of all RCA instruments that are QAQCed by data team. Each row is one refDes with a `stage` column controlling pipeline routing and support status: `1` = standard sensors (CTD, fluorometer, pH, PCO2, ADCP, etc.), `2` = computationaly intensive processing (VEL3D-C, OPTAA, SPKIR), `3` = cameras (CAMDS, CAMHD), `9` = acoustic and seismeic instruments with alternate processing routines ie `ooi-hyd-tools` and `rca-echo-tools`. |
 | `archiveDictionary.csv` | Same structure as `sitesDictionary.csv` for profiler/archive instruments. |
 | `plotParameters.csv` | Maps instrument type to the ordered list of parameters that appear on its dashboard plot. |
 | `variableMap.csv` | Maps canonical parameter names (e.g. `temperature`) to the actual NetCDF/Zarr variable names used across different instruments. |
