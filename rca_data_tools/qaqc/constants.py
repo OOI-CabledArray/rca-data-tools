@@ -110,7 +110,7 @@ DEPLOYED_RANGE_DICT = (
 QARTOD_SKIP_DICT = yaml.safe_load(open(PARAMS_DIR.joinpath("qartod_skip.yaml"))) 
 
 # create a dictonary of auxilliary parameters to be calculated
-CALCULATE_DICT = (load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv')))
+CALCULATE_DICT = load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv'), during_harvest=False)
 
 # create a dictonary of calculations and inputs as executable strings
 CALCULATE_CALLS_DICT = (load_calc_metadata(PARAMS_DIR.joinpath('calculateCalls.csv')))

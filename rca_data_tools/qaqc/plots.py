@@ -47,24 +47,28 @@ def extractMulti(ds, inst, multi_dict, fileParams):
         fileParams.append(newParam)
     return ds, fileParams
 
-def run_calculations_for_site(site, siteData):
+def run_calculations_for_site(site, siteData, calculate_dict=None):
     """
     Run all configured calculations for a site and append outputs to siteData.
     Requires globals:
         CALCULATE_DICT,
         CALCULATE_CALLS_DICT,
         FUNCTION_REGISTRY
+    If no calculate_dict is provided, defaults to CALCULATE_DICT from constants.py
     """
+    if calculate_dict is None:
+        calculate_dict = CALCULATE_DICT
+        
     logger.info(f"Starting calculations for {site}...")
-    logger.info(f"calculate dict: {CALCULATE_DICT}")
+    logger.info(f"calculate dict: {calculate_dict}")
     fileParams = []
 
-    if site not in CALCULATE_DICT:
+    if site not in calculate_dict:
         logger.info(f"No calculations configured for {site}. Skipping calculation step.")
         return siteData, fileParams
 
     logger.info(f"Calculating supplementary data arrays for {site}.")
-    for calc_name in CALCULATE_DICT[site]:
+    for calc_name in calculate_dict[site]:
         meta = CALCULATE_CALLS_DICT[calc_name]
         func = FUNCTION_REGISTRY[meta["function_key"]]
         logger.info(f"Running calculation: {calc_name} using function: {func.__name__}")

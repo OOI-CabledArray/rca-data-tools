@@ -339,8 +339,10 @@ def load_calc_metadata(calc_csv_path):
     return calc_meta
 
 # Load site_calculations.csv → SITE_CALCULATIONS
-def load_site_calculations(site_csv_path):
+def load_site_calculations(site_csv_path, during_harvest=None):
     df = pd.read_csv(site_csv_path)
+    if during_harvest is not None:
+        df = df[df['runDuringHarvest'] == during_harvest]
     return {
         row["refDes"]: [c.strip() for c in row["calculations"].split("|")]
         for _, row in df.iterrows()
