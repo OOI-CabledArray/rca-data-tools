@@ -60,7 +60,7 @@ def run_calculations_for_site(site, siteData, calculate_dict=None):
         calculate_dict = CALCULATE_DICT
         
     logger.info(f"Starting calculations for {site}...")
-    logger.info(f"calculate dict: {calculate_dict}")
+    #logger.info(f"calculate dict: {CALCULATE_DICT}")
     fileParams = []
 
     if site not in calculate_dict:

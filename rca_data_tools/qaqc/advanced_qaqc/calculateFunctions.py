@@ -45,20 +45,182 @@ def combine_qc_flags(base_da, tests):
     result.attrs['tests_executed'] = ','.join(name for name, _ in tests)
     return result
 
-###
+
+### -------------------------------------------------------------------------------------
 ### ADCP functions
-###
+### -------------------------------------------------------------------------------------
+
+# Can use these based on NDBC but recommend using the
+# TRDI QAQC Model rev12-1
+ADCP_QCThresholds = {
+    'error_velocity': {
+        'pass': 0.05,
+        'fail': 0.20 },
+    'correlation_magnitude': {
+        'pass': 115,
+        'fail': 63 },
+    'vertical_velocity': {
+        'pass': 0.30,
+        'fail': 0.50 },
+    'horizontal_speed': {
+        'pass': 1.00,
+        'fail': 2.50 },
+    'percent_good': {
+        'ADCPT': {
+            'pass': 56,
+            'fail': 45 },
+        'ADCPS': {
+            'pass': 48,
+            'fail': 38 }
+    }
+}
+
+def sidelobe_depth(ds: xr.Dataset, theta: int = 20) -> xr.DataArray:
+    """
+    Calculate the sidelobe contamination depth for the given ADCP.
+
+    The sidelobe interference depth is calculated following Lentz et al.
+    (2022) where:
+
+        z_ic = ha * [1 - cos(theta)] + 3 * delta_Z / 2
+
+    z_ic is the depth above which there is sidelobe interference, ha is
+    the transducer face depth, theta is the beam angle, and delta_Z is
+    the cell-bin depth. Instrument tilt is ignored.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        A TRDI ADCP dataset from OOI.
+    theta : int, default 20
+        Beam angle of the ADCP in degrees.
+
+    Returns
+    -------
+    z_ic : xr.DataArray
+        Sidelobe contamination depth (m).
+    """
+    ha = ds['depth_from_pressure'].chunk({'time': -1}).interpolate_na(dim='time', method='linear')
+    theta = np.deg2rad(theta)
+    delta_z = ds['cell_length'].mean(skipna=True) / 100   # cm → m
+    z_ic = ha * (1 - np.cos(theta)) + 3 * delta_z / 2
+    return z_ic
+
+def adcp_advanced_flags(ds: xr.Dataset, instrument_type: str = 'ADCPT') -> xr.DataArray:
+    """
+    Assessment of TRDI ADCP data quality using QARTOD-style combined flags.
+
+    Applies six tests — sidelobe contamination, error velocity, vertical
+    velocity, horizontal speed, correlation magnitude, and percent good —
+    and returns a positional string flag DataArray via combine_qc_flags.
+    Thresholds are taken from ADCP_QCThresholds and follow the TRDI ADCP
+    Data QA-QC Model rev12-1.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        TRDI ADCP dataset downloaded from OOINet in NetCDF format.
+    instrument_type : str, default 'ADCPT'
+        Instrument subtype used to select percent-good thresholds;
+        one of 'ADCPT' or 'ADCPS'.
+
+    Returns
+    -------
+    xr.DataArray
+        Positional string flag DataArray with attrs['tests_executed'].
+    """
+    thresholds = ADCP_QCThresholds
+
+    # Sidelobe contamination — bins shallower than z_ic are flagged
+    z_ic = sidelobe_depth(ds)
+    sidelobe_mask = ds['bin_depths'] < z_ic
+
+    # Error velocity
+    ev_fail = thresholds['error_velocity']['fail']
+    ev_mask = np.abs(ds['error_seawater_velocity']) > ev_fail
+
+    # Vertical velocity
+    vv_fail = thresholds['vertical_velocity']['fail']
+    vv_mask = np.abs(ds['upward_seawater_velocity']) > vv_fail
+
+    # Horizontal speed — fail if either east or north component exceeds threshold
+    hs_fail = thresholds['horizontal_speed']['fail']
+    hs_mask = (
+        (np.abs(ds['eastward_seawater_velocity']) > hs_fail) |
+        (np.abs(ds['northward_seawater_velocity']) > hs_fail)
+    )
+
+    # Correlation magnitude — fail if fewer than 2 of 4 beams pass
+    cm_pass = thresholds['correlation_magnitude']['pass']
+    beams = xr.concat([
+        ds['correlation_magnitude_beam1'],
+        ds['correlation_magnitude_beam2'],
+        ds['correlation_magnitude_beam3'],
+        ds['correlation_magnitude_beam4'],
+    ], dim='beam')
+    cm_mask = (beams > cm_pass).sum(dim='beam') < 2
+
+# Percent good — fail if fewer than 3 of 4 beams pass
+    pg_pass = thresholds['percent_good'][instrument_type]['pass']
+    beams = xr.concat([
+        ds['percent_good_beam1'],
+        ds['percent_good_beam2'],
+        ds['percent_good_beam3'],
+        ds['percent_good_beam4'],
+    ], dim='beam')
+    pg_mask = (beams > pg_pass).sum(dim='beam') < 3
+
+    base = xr.full_like(ds['eastward_seawater_velocity'], 1)
+    tests = [
+        ('sidelobe',             sidelobe_mask),
+        ('error_velocity',       ev_mask),
+        ('vertical_velocity',    vv_mask),
+        ('horizontal_speed',     hs_mask),
+        ('correlation_magnitude', cm_mask),
+        ('percent_good',         pg_mask),
+    ]
+    return combine_qc_flags(base, tests)
 
 
-
-### 
+### -------------------------------------------------------------------------------------
 ### FLOR functions
-###
+### -------------------------------------------------------------------------------------
+
+def flor_advanced_flags(flor):
+    """
+    Assessment of the raw data and the calculated parameters for quality.
+    Works for data streams with and without CDOM; CDOM tests are added 
+    only when CDOM variables are present in the dataset.
+    """
+    max_counts = 4125   # counts should be greater than 0 and less than 4120 +/- 5
+
+    # test raw signal ranges
+    raw_backscatter_mask = (
+        (flor.raw_signal_beta <= 0) | (flor.raw_signal_beta > max_counts)
+    )
+    raw_chlorophyll_mask = (
+        (flor.raw_signal_chl <= 0) | (flor.raw_signal_chl > max_counts)
+    )
+
+    base = xr.full_like(flor.fluorometric_chlorophyll_a, 1)
+    tests = [
+        ('raw_signal_beta', raw_backscatter_mask),
+        ('raw_signal_chl', raw_chlorophyll_mask),
+    ]
+
+    # CDOM raw signal test — only for data streams that include CDOM variables
+    if 'raw_signal_cdom' in flor.variables:
+        raw_cdom_mask = (
+            (flor.raw_signal_cdom <= 0) | (flor.raw_signal_cdom > max_counts)
+        )
+        tests += [('raw_signal_cdom', raw_cdom_mask)]
+
+    return combine_qc_flags(base, tests)
 
 
-###
+### -------------------------------------------------------------------------------------
 ### NUTNR functions
-###
+### -------------------------------------------------------------------------------------
 
 def nutnr_advanced_flags(nutnr):
     
@@ -308,9 +470,9 @@ def nutnr_plant2023(nutnr, site):
     
     
     
-###
+### -------------------------------------------------------------------------------------
 ### OPTAA functions
-###
+### -------------------------------------------------------------------------------------
 
 def opt_internal_temp(traw):
     """
@@ -366,7 +528,6 @@ def opt_internal_temp(traw):
     
     return degC
 
-
 def opt_external_temp(traw):
     """
     Description:
@@ -416,7 +577,6 @@ def opt_external_temp(traw):
     
     return degC.astype(float)
 
-
 def opt_pressure(praw, offset, sfactor):
     """
     Description:
@@ -459,7 +619,6 @@ def opt_pressure(praw, offset, sfactor):
     ###logger.info(f"Calculated depth: {depth.values}")
     
     return depth
-
 
 def opt_calculate_all_optical_products(
     optaa,
@@ -633,9 +792,10 @@ def opt_calculate_all_optical_products(
     )
 
 
-###
+
+### -------------------------------------------------------------------------------------
 ### pCO2 functions
-###
+### -------------------------------------------------------------------------------------
 
 def pco2_test_function(ds, site):
     param_da = ds["pco2_seawater"]
@@ -647,11 +807,94 @@ def pco2_test_function(ds, site):
 
     return test_da
 
+def pco2w_advanced_flags(pco2w, site):
+    """
+    Assessment of the raw data and the calculated seawater pCO2 for quality.
+    Test names encode severity: suspect_* for high-interest points, failed_* for
+    outright failures. Each test is a binary pass/fail encoded as a positional
+    character in the returned flag string (1 = pass, 3 = fail).
+
+    :param pco2w: xarray dataset reformatted by pco2w_instrument or pco2w_datalogger
+    :return: combined QC flag DataArray with attrs['tests_executed']
+    """
+    
+    logger.info("Loading calibrations")
+    cals = get_calibration_dataset(site)
+
+    logger.info("Building calibration index (no broadcast)...")
+    coeffs = broadcast_calibrations(cals, pco2w.time)
+    cal_index = coeffs["index"]
+    cal_tables = coeffs["tables"]
+
+    calRange = cal_tables["CC_cal_range"]
+    
+     # unpack the light and reference measurements arrays into named variables
+    light = pco2w.light_measurements.astype('int32')
+    dark_reference = light[:, [0, 8]].values    # dark reference
+    dark_signal = light[:, [1, 9]].values       # dark signal
+    reference_434 = light[:, [2, 10]].values    # reference signal, 434 nm
+    signal_434 = light[:, [3, 11]].values       # signal intensity, 434 nm
+    reference_620 = light[:, [4, 12]].values    # reference signal, 620 nm
+    signal_620 = light[:, [5, 13]].values       # signal intensity, 620 nm 
+    
+    # suspect dark reference & signal values -- values based on vendor documentation
+    suspect_dark_mask = (
+        (dark_reference < 50) | (dark_reference > 200)
+    ).any(axis=1) | (
+        (dark_signal < 50) | (dark_signal > 200)
+    ).any(axis=1)
+
+    # suspect signal levels -- values based on vendor documentation
+    suspect_signal_mask = (
+        (signal_434 > 4000) | (signal_620 > 4000)
+    ).any(axis=1)
+
+    # failed signal levels -- values based on limits used with the SAMI-pH data
+    failed_signal_mask = (
+        (signal_434 < 5) | (signal_620 < 5)
+    ).any(axis=1)
+
+    # failed absorbance blank ratio values (less than 20% of full scale)
+    failed_blank_mask = (
+        (pco2w.pco2w_a_absorbance_blank_434 < 16384 * 0.20) | (pco2w.pco2w_a_absorbance_blank_620 < 16384 * 0.20)
+    )
+    
+    # abrupt steps in the absorbance blanks -- indicates solenoid pump failure to clear reagent/DI water
+    failed_blank_step_mask = (
+        (np.abs(pco2w.pco2w_a_absorbance_blank_434.diff('time')) > 2800) |
+        (np.abs(pco2w.pco2w_a_absorbance_blank_620.diff('time')) > 2800)
+    ).reindex_like(pco2w.pco2_seawater, fill_value=False)
+
+    # abrupt steps in pCO2 -- indicates failure in raw parameters used in the ratio-based calculation
+    failed_pco2_step_mask = (
+        np.abs(pco2w.pco2_seawater.diff('time')) > 1600
+    ).reindex_like(pco2w.pco2_seawater, fill_value=False)
+
+    # pCO2 values outside the instrument calibration range
+    cal_range_min = xr.DataArray(calRange[cal_index, 0], dims=["time"], coords={"time": pco2w.time})
+    cal_range_max = xr.DataArray(calRange[cal_index, 1], dims=["time"], coords={"time": pco2w.time})
+    failed_cal_range_mask = (
+        (pco2w.pco2_seawater < cal_range_min) |
+        (pco2w.pco2_seawater > cal_range_max)
+    )
+
+    base = xr.full_like(pco2w.pco2_seawater, 1)
+    tests = [
+        ('suspect_dark',       suspect_dark_mask),
+        ('suspect_signal',     suspect_signal_mask),
+        ('failed_signal',      failed_signal_mask),
+        ('failed_blank',       failed_blank_mask),
+        ('failed_blank_step',  failed_blank_step_mask),
+        ('failed_pco2_step',   failed_pco2_step_mask),
+        ('failed_cal_range',   failed_cal_range_mask),
+    ]
+    return combine_qc_flags(base, tests)
 
 
-###
+
+### -------------------------------------------------------------------------------------
 ### pH functions
-###
+### -------------------------------------------------------------------------------------
 
 def ph_advanced_flags(ph):
     """
@@ -735,12 +978,98 @@ def ph_advanced_flags(ph):
     return combine_qc_flags(base, tests)
 
 
-###
-### vel3d functions
-###
 
-
-
-###
+### -------------------------------------------------------------------------------------
 ### velpt functions
-###
+### -------------------------------------------------------------------------------------
+
+def velpt_advanced_flags(velpt):
+    """
+    Assessment of pitch, roll, speed of sound, and pressure for the VELPT for quality.
+    """
+    # test for pitch out of range
+    suspect_pitch_mask = np.abs(velpt.pitch_decidegree) > 20
+    failed_pitch_mask = np.abs(velpt.pitch_decidegree) >= 30
+
+    # test for roll out of range
+    suspect_roll_mask = np.abs(velpt.roll_decidegree) > 20
+    failed_roll_mask = np.abs(velpt.roll_decidegree) >= 30
+
+    # test for valid speed of sound values (between 1400 and 1700 m/s)
+    failed_speed_of_sound_mask = (velpt.sound_speed_dms <= 1400) | (velpt.sound_speed_dms >= 1700)
+
+    # test for pressure out of range
+    failed_pressure_mask = velpt.int_ctd_pressure <= 0
+    
+    base = xr.full_like(velpt.pitch_decidegree, 1)
+    tests = [
+        ('suspect_pitch',          suspect_pitch_mask),
+        ('failed_pitch',           failed_pitch_mask),
+        ('suspect_roll',           suspect_roll_mask),
+        ('failed_roll',            failed_roll_mask),
+        ('failed_speed_of_sound',  failed_speed_of_sound_mask),
+        ('failed_pressure',        failed_pressure_mask),
+    ]
+    return combine_qc_flags(base, tests)
+
+
+
+### -------------------------------------------------------------------------------------
+### vel3d functions
+### -------------------------------------------------------------------------------------
+
+def vel3d_advanced_flags(vel3d):
+    """
+    Assessment of the pitch and roll and pressure values for the VEL3D.
+    """
+    base = xr.DataArray(
+        np.ones(vel3d.time.size, dtype=int),
+        dims=['time'],
+        coords={'time': vel3d.time}
+    )
+    tests = []
+
+    # test for pitch and roll out of range (greater than 30 degrees)
+    if 'pitch' in vel3d.variables:
+        tests += [
+            ('suspect_pitch', np.abs(vel3d.pitch) > 20),
+            ('failed_pitch',  np.abs(vel3d.pitch) >= 30),
+        ]
+
+    if 'roll' in vel3d.variables:
+        tests += [
+            ('suspect_roll', np.abs(vel3d.roll) > 20),
+            ('failed_roll',  np.abs(vel3d.roll) >= 30),
+        ]
+
+    # test for valid speed of sound values (between 1400 and 1700 m/s)
+    if 'speed_of_sound' in vel3d.variables:
+        tests.append(('failed_speed_of_sound',
+                      (vel3d.speed_of_sound < 1400) | (vel3d.speed_of_sound > 1700)))
+
+    # test for pressure out of range
+    if 'sea_water_pressure' in vel3d.variables:
+        tests.append(('failed_pressure', vel3d.sea_water_pressure <= 15))
+
+    # test for any error codes, which indicate a problem with the instrument
+    if 'error_code' in vel3d.variables:
+        tests.append(('failed_error_code', (vel3d.error_code.astype(int) & 1) == 1))
+
+    # vector: test for low correlation values (less than 50%) from any of the three beams
+    if 'correlation_beam1' in vel3d.variables:
+        tests.append(('failed_correlation',
+                      (vel3d.correlation_beam1 < 50) | (vel3d.correlation_beam2 < 50) | (vel3d.correlation_beam3 < 50)))
+
+    # aquadopp: test for low correlation values (less than 50%) from any of the three data sets
+    if 'correlation_1' in vel3d.variables:
+        tests.append(('failed_correlation',
+                      (vel3d.correlation_1 < 50) | (vel3d.correlation_2 < 50) | (vel3d.correlation_3 < 50)))
+
+    # aquadopp: test for velocity values greater than the ambiguity velocity
+    if 'ambiguity_velocity' in vel3d.variables:
+        tests.append(('failed_ambiguity',
+                      (np.abs(vel3d.velocity_1) > vel3d.ambiguity_velocity) |
+                      (np.abs(vel3d.velocity_2) > vel3d.ambiguity_velocity) |
+                      (np.abs(vel3d.velocity_3) > vel3d.ambiguity_velocity)))
+
+    return combine_qc_flags(base, tests)

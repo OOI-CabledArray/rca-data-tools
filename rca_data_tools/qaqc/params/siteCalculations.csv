@@ -16,3 +16,9 @@ RS03AXPS-SF03A-2D-PHSENA301,ph_advanced_flags,True
 CE04OSPS-SF01B-4A-NUTNRA102,nutnr_plant2023|nutnr_advanced_flags,True
 RS01SBPS-SF01A-4A-NUTNRA101,nutnr_plant2023|nutnr_advanced_flags,True
 RS03AXPS-SF03A-4A-NUTNRA301,nutnr_plant2023|nutnr_advanced_flags,True
+RS01SLBS-LJ01A-10-ADCPTE101,adcp_advanced_flags,False
+RS01SBPS-PC01A-4C-FLORDD103,flor_advanced_flags,False
+CE04OSPS-SF01B-3A-FLORTD104,flor_advanced_flags,False
+CE04OSPS-PC01B-4D-PCO2WA105,pco2w_advanced_flags,False
+CE04OSPS-SF01B-4B-VELPTD106,velpt_advanced_flags,False
+RS01SLBS-MJ01A-12-VEL3DB101,vel3d_advanced_flags,False
