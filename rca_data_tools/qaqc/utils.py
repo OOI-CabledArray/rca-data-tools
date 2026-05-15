@@ -344,7 +344,7 @@ def load_site_calculations(site_csv_path, during_harvest=None):
     if during_harvest is not None:
         df = df[df['runDuringHarvest'] == during_harvest]
     return {
-        row["refDes"]: [c.strip() for c in row["calculations"].split("|")]
+        row["zarrFile"]: [c.strip() for c in row["calculations"].split("|")]
         for _, row in df.iterrows()
     }
 

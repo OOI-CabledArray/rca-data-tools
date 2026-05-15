@@ -143,3 +143,6 @@ _build
 # plot directory
 QAQC_plots/
 HITL_notes/
+
+# ai/vibe/slop 
+.claude

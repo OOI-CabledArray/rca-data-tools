@@ -47,28 +47,30 @@ def extractMulti(ds, inst, multi_dict, fileParams):
         fileParams.append(newParam)
     return ds, fileParams
 
-def run_calculations_for_site(site, siteData, calculate_dict=None):
+def run_calculations_for_site(zarr_file, siteData, calculate_dict=None):
     """
-    Run all configured calculations for a site and append outputs to siteData.
+    Run all configured calculations for a zarr file and append outputs to siteData.
     Requires globals:
         CALCULATE_DICT,
         CALCULATE_CALLS_DICT,
         FUNCTION_REGISTRY
-    If no calculate_dict is provided, defaults to CALCULATE_DICT from constants.py
+    If no calculate_dict is provided, defaults to CALCULATE_DICT from constants.py.
     """
     if calculate_dict is None:
         calculate_dict = CALCULATE_DICT
-        
-    logger.info(f"Starting calculations for {site}...")
+
+    site = "-".join(zarr_file.split("-")[:4])  # refdes for calculation functions that need it
+
+    logger.info(f"Starting calculations for {zarr_file}...")
     #logger.info(f"calculate dict: {CALCULATE_DICT}")
     fileParams = []
 
-    if site not in calculate_dict:
-        logger.info(f"No calculations configured for {site}. Skipping calculation step.")
+    if zarr_file not in calculate_dict:
+        logger.info(f"No calculations configured for {zarr_file}. Skipping calculation step.")
         return siteData, fileParams
 
-    logger.info(f"Calculating supplementary data arrays for {site}.")
-    for calc_name in calculate_dict[site]:
+    logger.info(f"Calculating supplementary data arrays for {zarr_file}.")
+    for calc_name in calculate_dict[zarr_file]:
         meta = CALCULATE_CALLS_DICT[calc_name]
         func = FUNCTION_REGISTRY[meta["function_key"]]
         logger.info(f"Running calculation: {calc_name} using function: {func.__name__}")
@@ -102,8 +104,8 @@ def run_calculations_for_site(site, siteData, calculate_dict=None):
                 )
             siteData[out_name] = value
             fileParams.append(out_name)
-            
-    logger.info(f"Finished calculations for {site}. New parameters added: {fileParams}")
+
+    logger.info(f"Finished calculations for {zarr_file}. New parameters added: {fileParams}")
 
     return siteData, fileParams
 
@@ -200,11 +202,12 @@ def run_dashboard_creation(
     
     # TODO do not run PH, PC02 example during rca-data-tools pipline, needs logic below to do this and way 
     # to ingest runDuringHarvest column
-    if site in CALCULATE_DICT:
+    site_zarr = stageDict[site]['zarrFile']
+    if site_zarr in CALCULATE_DICT:
         logger.info(f"calculating parameters for {site}...")
-        
-        siteData, calc_fileParams = run_calculations_for_site(site, siteData)
-        fileParams.extend(calc_fileParams)    
+
+        siteData, calc_fileParams = run_calculations_for_site(site_zarr, siteData)
+        fileParams.extend(calc_fileParams)
 
     for param in paramList:
         logger.info(f"parameter: {param}")
