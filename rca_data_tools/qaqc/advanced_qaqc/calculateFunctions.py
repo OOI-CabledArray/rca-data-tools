@@ -410,14 +410,13 @@ def nutnr_plant2023(nutnr, site):
     c4 = 1.27353e-07
 
     NO3_conc = np.ones(n_data_packets)
-    fitting_function = np.empty(n_data_packets, dtype=object)
+    fitting_function = np.full((n_data_packets, 3), np.nan)
     rmse = np.ones(n_data_packets)
 
     for i in range(0, n_data_packets):
 
         if frame_type[i] == 'SDB' or frame_type[i] == 'SDF' or frame_type[i] == "NDF":
             NO3_conc[i] = np.nan
-            fitting_function[i] = np.nan
             rmse[i] = np.nan
 
         else:
@@ -464,7 +463,7 @@ def nutnr_plant2023(nutnr, site):
 
     return (
         xr.DataArray(NO3_conc,        coords=coords, dims=["time"], name="dissolved_nitrate"),
-        xr.DataArray(fitting_function, coords=coords, dims=["time"], name="nutnr_fitting_function"),
+        xr.DataArray(fitting_function, coords=coords, dims=["time", "coefficient"], name="nutnr_fitting_function"),
         xr.DataArray(rmse,            coords=coords, dims=["time"], name="nutnr_rmse"),
     )
     
