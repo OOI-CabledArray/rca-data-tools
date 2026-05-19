@@ -19,6 +19,9 @@ velpt_d_upward_velocity: climatology
 eastward_turbulent_velocity: climatology
 northward_turbulent_velocity: climatology
 upward_turbulent_velocity: climatology
+vel3d_c_eastward_turbulent_velocity: climatology
+vel3d_c_northward_turbulent_velocity: climatology
+vel3d_c_upward_turbulent_velocity: climatology
 pressure_temp: [climatology, gross_range] 
 temperature01: climatology
 temperature02: climatology
