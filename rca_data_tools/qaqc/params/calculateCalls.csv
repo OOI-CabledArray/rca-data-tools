@@ -10,3 +10,4 @@ adcp_advanced_flags,adcp_advanced_flags,DATASET,,advanced_qc_flags
 flor_advanced_flags,flor_advanced_flags,DATASET,,advanced_qc_flags
 pco2w_advanced_flags,pco2w_advanced_flags,DATASET|site,,advanced_qc_flags
 velpt_advanced_flags,velpt_advanced_flags,DATASET,,advanced_qc_flags
+vel3d_advanced_flags,vel3d_advanced_flags,DATASET,,advanced_qc_flags
