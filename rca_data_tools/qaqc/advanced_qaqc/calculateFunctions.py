@@ -1037,8 +1037,8 @@ def vel3d_advanced_flags(vel3d):
 
     if 'roll' in vel3d.variables:
         tests += [
-            ('suspect_roll', np.abs(vel3d.roll) > 20),
-            ('failed_roll',  np.abs(vel3d.roll) >= 30),
+            ('suspect_roll', np.abs(vel3d['roll']) > 20),
+            ('failed_roll',  np.abs(vel3d['roll']) >= 30),
         ]
 
     # test for valid speed of sound values (between 1400 and 1700 m/s)
