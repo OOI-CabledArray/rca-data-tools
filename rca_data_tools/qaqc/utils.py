@@ -357,3 +357,11 @@ def build_function_registry(calc_meta, module_name="advanced_qaqc.calculateFunct
         registry[func_key] = getattr(module, func_key)
     return registry
 
+
+def load_max_coordinate_sizes(path):
+    df = pd.read_csv(path)
+    result = {}
+    for _, row in df.iterrows():
+        result.setdefault(row["instrument"], {})[row["coordinate"]] = int(row["max_size"])
+    return result
+

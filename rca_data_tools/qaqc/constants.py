@@ -2,7 +2,7 @@ import pandas as pd
 import yaml
 from pathlib import Path
 
-from rca_data_tools.qaqc.utils import build_function_registry, load_calc_metadata, load_site_calculations
+from rca_data_tools.qaqc.utils import build_function_registry, load_calc_metadata, load_site_calculations, load_max_coordinate_sizes
 
 # visual data constants
 CAM_URL_DICT = {
@@ -108,6 +108,8 @@ DEPLOYED_RANGE_DICT = (
 )
 
 QARTOD_SKIP_DICT = yaml.safe_load(open(PARAMS_DIR.joinpath("qartod_skip.yaml"))) 
+
+MAX_COORD_SIZES = load_max_coordinate_sizes(PARAMS_DIR / 'maxCoordinateSizes.csv')
 
 # create a dictonary of auxilliary parameters to be calculated
 CALCULATE_DICT = load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv'), during_harvest=False)
