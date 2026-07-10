@@ -14,6 +14,26 @@ aws ecr-public get-login-password --region us-east-1 | docker login --username A
 docker buildx build --platform linux/amd64,linux/arm64 -t public.ecr.aws/p0l4c7i2/rca-data-tools:latest --push .
 ```
 
+# Previewing proposed QARTOD changes
+
+Run the pipeline with staged (homebrew) QARTOD tables and publish the output to a
+dashboard **archive** instead of the live dashboard. The `--prefix` flag routes
+plots to `archives/internal/<slug>/QAQC_plots/`; without it, a `--homebrew-qartod`
+sync is refused so live plots are never overwritten.
+
+1. In the dashboard admin UI, create an internal archive (e.g. `proposed-qartod`).
+   This registers the archive and snapshots the current dashboard as a baseline.
+2. Generate staged-QARTOD plots into that archive prefix:
+   ```
+   qaqc_pipeline --stage1 --stage3 --cloud --s3-sync --homebrew-qartod --run \
+     --span 30 --prefix archives/internal/proposed-qartod
+   ```
+3. Rebuild the archive's index:
+   ```
+   qaqc_index --cloud --prefix archives/internal/proposed-qartod
+   ```
+4. Log in to the dashboard → Internal tab → select the archive to review.
+
 # Configuration Files 
 `rca_data_tools/qaqc/params/`
 

@@ -67,10 +67,13 @@ def create_local_index():
 @click.command()
 @click.option('--cloud', is_flag=True, help='Create cloud index if set.')
 @click.option('--bucket', default=S3_BUCKET, help='Bucket name for cloud index if not default. (ie staging/test buckets)')
-def main(cloud, bucket):
+@click.option('--prefix', default='', help='S3 key prefix before QAQC_plots/ (e.g. archives/internal/proposed-qartod) to index an archive instead of the live dashboard.')
+def main(cloud, bucket, prefix):
     from loguru import logger
 
     if cloud:
+        if prefix:
+            bucket = "/".join([bucket, prefix.strip("/")])
         create_cloud_index(bucket_url=f"s3://{bucket}", logger=logger)
     else:
         create_local_index()

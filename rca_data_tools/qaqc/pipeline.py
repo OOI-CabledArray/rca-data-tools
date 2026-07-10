@@ -211,6 +211,14 @@ def parse_args():
         help="S3 Bucket to store the plots.",
     )
     arg_parser.add_argument(
+        '--prefix',
+        type=str,
+        default='',
+        help="S3 key prefix prepended before QAQC_plots/ (e.g. "
+             "archives/internal/proposed-qartod) to target a dashboard archive "
+             "instead of the live QAQC_plots/ path.",
+    )
+    arg_parser.add_argument(
         '--span',
         type=str,
         default='7',
@@ -230,6 +238,17 @@ def main():
     if args.site and any([args.stage1, args.stage2, args.stage3]):
         raise ValueError("Do not use `--site` and `--stage` arguments together. "
             "Run either individual sites OR stage groups of instruments.")
+
+    # Guard: never push staged (homebrew) QARTOD plots onto the live dashboard.
+    if args.homebrew_qartod and args.s3_sync and not args.prefix:
+        raise ValueError(
+            "Refusing to sync homebrew (staged) QARTOD plots to the live dashboard. "
+            "Pass --prefix archives/internal/<slug> to target an archive.")
+
+    # Every S3 path is built as "<s3_bucket>/QAQC_plots/...", so folding the prefix
+    # into the bucket string routes output to e.g. archives/internal/<slug>/QAQC_plots/.
+    if args.prefix:
+        args.s3_bucket = "/".join([args.s3_bucket, args.prefix.strip("/")])
 
     if args.stage1 is True:
         run_stage(SITES_DICT, args)
