@@ -38,6 +38,17 @@ earthquake,RS03ASHS-MJ03B-06-OBSSPA301,,none
 earthquake,RS03ECAL-MJ03E-05-OBSSPA303,,none
 earthquake,RS03ECAL-MJ03E-08-OBSSPA304,,none
 earthquake,RS03INT2-MJ03D-05-OBSSPA305,,none
+earthquake,RS01SLBS-MJ01A-05-HYDLFA101,,none
+earthquake,RS01SUM1-LJ01B-05-HYDLFA104,,none
+earthquake,RS03AXBS-MJ03A-05-HYDLFA301,,none
+earthquake,RS03ECAL-MJ03E-09-HYDLFA304,,none
+earthquake,RS03CCAL-MJ03F-06-HYDLFA305,,none
+earthquake,RS01SLBS-LJ01A-09-HYDBBA102,,none
+earthquake,RS01SBPS-PC01A-08-HYDBBA103,,none
+earthquake,CE04OSBP-LJ01C-11-HYDBBA105,,none
+earthquake,CE02SHBP-LJ01D-11-HYDBBA106,,none
+earthquake,RS03AXBS-LJ03A-09-HYDBBA302,,none
+earthquake,RS03AXPS-PC03A-08-HYDBBA303,,none
 volcano,RS03CCAL-MJ03F-05-BOTPTA301,mean_seafloor_depth,none
 volcano,RS03CCAL-MJ03F-05-BOTPTA301,seafloor_uplift_10m,none
 volcano,RS03ECAL-MJ03E-06-BOTPTA302,mean_seafloor_depth,none
@@ -58,6 +69,7 @@ volcano,RS03AXBS-MJ03A-05-HYDLFA301,,none
 volcano,RS03ECAL-MJ03E-09-HYDLFA304,,none
 volcano,RS03CCAL-MJ03F-06-HYDLFA305,,none
 volcano,RS03AXBS-LJ03A-09-HYDBBA302,,none
+volcano,RS03AXPS-PC03A-08-HYDBBA303,,none
 volcano,RS03INT1-MJ03C-10-TRHPHA301,vent_temperature,none
 volcano,RS03INT1-MJ03C-10-TRHPHA301,resistivity_5,none
 volcano,RS03INT1-MJ03C-09-TRHPHA302,vent_temperature,none
