@@ -167,6 +167,7 @@ def downsample(
     raw_ds: xr.Dataset,
     threshold: int,
     logger: Optional[logging.Logger] = None,
+    max_points_factor: int = 10,
 ) -> pd.DataFrame:
     """
     Performs downsampling on the dataset.
@@ -180,6 +181,12 @@ def downsample(
         total number of data points at the end.
     logger : logging.Logger
         Logger instance to be used for logging
+    max_points_factor : int
+        Cap, as a multiple of ``threshold``, on how many points are
+        materialized per variable before LTTB. Oversized (e.g. 365-day
+        velocity) arrays are lazily strided down to this cap first so the
+        full array never lands in memory. LTTB then runs on the reduced
+        array to preserve visually significant points.
 
     Returns
     -------
@@ -191,8 +198,20 @@ def downsample(
     logger.info("Get list of data arrays")
     da_list = (raw_ds[var] for var in raw_ds)
 
+    cap = threshold * max_points_factor
     df_list = []
     for da in da_list:
+        # Lazily stride down before materializing so huge dask-backed arrays
+        # never land in memory all at once (prevents OOM on long spans).
+        n_time = da.time.size
+        if n_time > cap:
+            stride = math.ceil(n_time / cap)
+            logger.info(
+                f"Pre-striding {da.name}: {n_time} -> ~{n_time // stride} points "
+                f"(stride {stride}) before LTTB"
+            )
+            da = da.isel(time=slice(None, None, stride))
+
         logger.info(f"Executing decimation for {da.name}")
         decdf = _perform_decimation(da, threshold)
         df_list.append(decdf)
