@@ -29,6 +29,7 @@ from matplotlib.cm import ScalarMappable
 import matplotlib.colors as colors
 from matplotlib.colors import ListedColormap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 import cmocean # noqa
 from scipy.interpolate import griddata
 import textwrap as tw
@@ -37,7 +38,12 @@ import xml.etree.ElementTree as et
 from rca_data_tools.qaqc.utils import select_logger, save_fig, get_s3_kwargs
 from rca_data_tools.qaqc.constants import VARIABLE_PARAM_DICT, STATUS_COLORS, ALL_CONFIGS_DICT, QC_FLAGS
 from rca_data_tools.qaqc.calculate import QartodRunner
+
 INPUT_BUCKET = "ooi-data/"
+
+# Chunk Agg paths so dense (e.g. 365-day velocity) plots don't raise
+# OverflowError: "Exceeded cell block limit in Agg". 0 (default) disables chunking.
+matplotlib.rcParams["agg.path.chunksize"] = 20000
 
 
 def loadAnnotations(site):
