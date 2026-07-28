@@ -52,7 +52,8 @@ STATUS_COLORS = {
     'OFFLINE': 'blue',
     'UNCABLED': 'blue',
     'DATA_QUALITY': 'red',
-    'NOT_DEPLOYED': 'blue'
+    'NOT_DEPLOYED': 'blue',
+    'UNAVAILABLE': 'gray'
 }
 
 QC_FLAGS = {

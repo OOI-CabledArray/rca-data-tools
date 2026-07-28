@@ -288,10 +288,18 @@ def loadProfiles(refDes):
 
 
 def loadStatus():
-    statusResponse = requests.get("https://nereus.ooirsn.uw.edu/api/public/v1/instruments/operational-status").text
-    status = json.loads(statusResponse)
-
-    return status
+    # Runs at import time, so a nereus outage must never raise — that would
+    # crash the whole flow at load. Degrade to an empty dict; call sites fall
+    # back to an 'UNAVAILABLE' status string.
+    try:
+        statusResponse = requests.get(
+            "https://nereus.ooirsn.uw.edu/api/public/v1/instruments/operational-status",
+            timeout=30,
+        ).text
+        return json.loads(statusResponse)
+    except Exception as e:
+        select_logger().warning(f"nereus status unavailable, defaulting to UNAVAILABLE: {e}")
+        return {}
 
 
 def loadData(site, sites_dict):
@@ -437,7 +445,7 @@ def plotProfilesGrid(
     unix_epoch = np.datetime64(0, 's')
     one_second = np.timedelta64(1, 's')
 
-    statusString = statusDict[site]
+    statusString = statusDict.get(site, 'UNAVAILABLE')
 
 
     def plotter(Xx, Yy, Zz, plotType, colorBar, annotation, params, pressLabel, plotFunction=None):
@@ -1111,7 +1119,7 @@ def plotProfilesScatter(
     yLabel = 'pressure, m'
     profileStart = 'peak' if Xparam in descentSamples else 'start'
     profileEnd = 'end' if Xparam in descentSamples else 'peak'
-    statusString = statusDict[site]
+    statusString = statusDict.get(site, 'UNAVAILABLE')
     baseDS = None           # set in non-deploy branch; defined here so plotOverlays closure always has it
     _flag_precomputed = None  # loaded once per branch; plotOverlays uses it instead of re-reading
 
@@ -1527,7 +1535,7 @@ def plotScatter(
     balanceBig = plt.get_cmap('cmo.balance', 512)
     balanceBlue = ListedColormap(balanceBig(np.linspace(0, 0.5, 256)))
 
-    statusString = statusDict[site]
+    statusString = statusDict.get(site, 'UNAVAILABLE')
 
 
     def setPlot():
