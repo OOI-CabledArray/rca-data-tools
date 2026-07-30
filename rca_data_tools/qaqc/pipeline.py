@@ -159,7 +159,7 @@ class QAQCPipeline:
                         name=deployment_name,
                         parameters=parameters,
                         flow_run_name=run_name,
-                        timeout=10
+                        timeout=0  # return immediately; launches are staggered in run_stage
                     )
                 # otherwise run the default deployment with default compute resources        
                 else:
@@ -167,7 +167,7 @@ class QAQCPipeline:
                         name="qaqc-pipeline-flow/2vcpu_16gb",
                         parameters=parameters,
                         flow_run_name=run_name,
-                        timeout=10 # timeout might need to be increase if we have race condition errors
+                        timeout=0  # return immediately; launches are staggered in run_stage
                     )
             else:
                 qaqc_pipeline_flow(**parameters)
@@ -189,8 +189,10 @@ def run_stage(stage_dict, args):
         )
         if args.run is True:
             pipeline.run()
-        # Add 20s delay for each run #TODO is this really necessary? 
-        time.sleep(20)
+        # Stagger ECS task launches (push pool has no concurrency limit, so this
+        # is the throttle). run_deployment now returns immediately (timeout=0),
+        # so this sleep is the sole, explicit gap between launches.
+        time.sleep(10)
 
 
 def parse_args():
