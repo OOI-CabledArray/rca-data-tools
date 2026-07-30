@@ -6,6 +6,22 @@ import pandas as pd
 from rca_data_tools.qaqc.utils import select_logger
 
 
+# Gross-range tables are one CSV per sensorType covering all sites/params, so
+# cache the parsed DataFrame by URL — otherwise it re-downloads once per param.
+_GROSS_RANGE_CACHE = {}
+
+
+def _load_gross_range_df(url):
+    if url not in _GROSS_RANGE_CACHE:
+        download = requests.get(url)
+        _GROSS_RANGE_CACHE[url] = (
+            pd.read_csv(io.StringIO(download.content.decode("utf-8")))
+            if download.status_code == 200
+            else None
+        )
+    return _GROSS_RANGE_CACHE[url]
+
+
 def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
     renameMap = {
         "sea_water_temperature": "seawater_temperature",
@@ -44,9 +60,8 @@ def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
         githubBaseURL + sensorType + "/" + sensorType + "_qartod_gross_range_test_values.csv"
     )
 
-    download = requests.get(grossRange_URL)
-    if download.status_code == 200:
-        df_grossRange = pd.read_csv(io.StringIO(download.content.decode("utf-8")))
+    df_grossRange = _load_gross_range_df(grossRange_URL)
+    if df_grossRange is not None:
         qcConfig = df_grossRange.qcConfig[
             (df_grossRange.subsite == site)
             & (df_grossRange.node == node)

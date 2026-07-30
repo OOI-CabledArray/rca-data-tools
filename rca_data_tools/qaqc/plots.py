@@ -209,6 +209,12 @@ def run_dashboard_creation(
         siteData, calc_fileParams = run_calculations_for_site(site_zarr, siteData)
         fileParams.extend(calc_fileParams)
 
+    # Loop-invariant loads: annotations and profile index depend only on site,
+    # not on the parameter, so fetch them once instead of per-parameter.
+    overlayData_anno = dashboard.loadAnnotations(site)
+    if "PROFILER" in plotInstrument:
+        profileList = dashboard.loadProfiles(site)
+
     for param in paramList:
         logger.info(f"parameter: {param}")
         variableParams = VARIABLE_DICT[param].strip('"').split(",")
@@ -258,11 +264,7 @@ def run_dashboard_creation(
                 overlayData_near = {}
                 # overlayData_near = loadNear(site)
 
-                overlayData_anno = {}
-                overlayData_anno = dashboard.loadAnnotations(site)
-
                 if "PROFILER" in plotInstrument:
-                    profileList = dashboard.loadProfiles(site)
                     pressureParams = VARIABLE_DICT["pressure"].strip('"').split(",")
                     pressureParamList = [
                         value for value in pressureParams if value in fileParams
