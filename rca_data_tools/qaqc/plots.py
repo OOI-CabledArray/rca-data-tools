@@ -273,16 +273,10 @@ def run_dashboard_creation(
                         logger.info("Error retriving pressure parameter!")
                     else:
                         pressParam = pressureParamList[0]
-                        # Materialize once: the grid + profile-scatter + per-depth
-                        # scatters each re-`.where()`/`.compute()` these, so a lazy
-                        # dask array is re-read from zarr ~9x per parameter. .load()
-                        # makes those downstream ops cheap in-memory numpy. Safe on
-                        # span 7/30 (a profiler window fits in memory) and on 365,
-                        # which is LTTB-decimated upstream before this point.
-                        paramData = siteData[[Yparam, pressParam]].load()
+                        paramData = siteData[[Yparam, pressParam]].chunk("auto")
                         flagParams = [item for item in qcParams if Yparam in item]
                         flagParams.extend((Yparam, pressParam))
-                        overlayData_flag = siteData[flagParams].load()
+                        overlayData_flag = siteData[flagParams].chunk("auto")
                         colorMap = "cmo." + VARIABLE_PARAM_DICT[param]["colorMap"]
                         depthMinMax = stageDict[site]["depthMinMax"].strip('"').split(",")
                         if "None" not in depthMinMax:
