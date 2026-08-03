@@ -13,6 +13,7 @@ RS01SBPS-PC01A-4B-PHSENA102-streamed-phsen_data_record,ph_advanced_flags,True
 RS01SBPS-SF01A-2D-PHSENA101-streamed-phsen_data_record,ph_advanced_flags,True
 RS03AXPS-PC03A-4B-PHSENA302-streamed-phsen_data_record,ph_advanced_flags,True
 RS03AXPS-SF03A-2D-PHSENA301-streamed-phsen_data_record,ph_advanced_flags,True
+CE02SHBP-LJ01D-10-PHSEND103-streamed-phsen_data_record,ph_advanced_flags,True
 CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags,True
 RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags,True
 RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags,True
