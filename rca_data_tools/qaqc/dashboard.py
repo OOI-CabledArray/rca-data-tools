@@ -316,7 +316,7 @@ def listDeployTimes(deployDict):
     deployTimes = []
     for deploy in deployDict:
         deployTimes.append(deploy['deployDate'])
-        
+
     return deployTimes
 
 
@@ -1190,7 +1190,11 @@ def plotProfilesScatter(
             if 'day' in spanString:
                 climMonths = [pd.to_datetime(timeSpan[0]).month]
             else:
-                climMonths = sorted(set(range(pd.to_datetime(timeSpan[0]).month, pd.to_datetime(timeSpan[1]).month + 1)))
+                # walk month starts: range(m0, m1+1) gave [] across a new year
+                # and only one month for a 365 span (Aug->Aug = range(8, 9))
+                t0, t1 = pd.to_datetime(timeSpan[0]), pd.to_datetime(timeSpan[1])
+                monthStarts = pd.date_range(t0.normalize().replace(day=1), t1, freq='MS')
+                climMonths = sorted({m.month for m in monthStarts})
             climatology = extractClimProfiles(climMonths, overlayData_clim)
             if climatology:
                 xLimits = plt.gca().get_xlim()
@@ -1374,18 +1378,21 @@ def plotProfilesScatter(
         save_at_all_scales(fig, ax, fileName, timeSpan)
         profileIterator += 1
 
-        # Weekly sub-plots around deployment
-        iterList_pre = sorted({k.week for k in dataDict_pre.keys()}) if dataDict_pre else []
-        iterList_post = sorted({k.week for k in dataDict_post.keys()}) if dataDict_post else []
-        preText = False
+        # Weekly sub-plots around deployment. Set union, not concat - the deploy
+        # week is in both pre and post. ISO year+week so it sorts across new year.
+        isoWeek = lambda k: tuple(k.isocalendar())[:2]
+        iterList_pre = {isoWeek(k) for k in dataDict_pre}
+        iterList_post = {isoWeek(k) for k in dataDict_post}
 
-        for spanIter in iterList_pre + iterList_post:
+        for spanIter in sorted(iterList_pre | iterList_post):
             fig, ax = setPlot()
+            preText = False  # per-figure, not per-loop
+            weekZ = []
             if plot_pre:
                 try:
-                    scatterX_pre = np.concatenate([dataDict_pre[i]['scatterX'] for i in dataDict_pre if i.week == spanIter])
-                    scatterY_pre = np.concatenate([dataDict_pre[i]['scatterY'] for i in dataDict_pre if i.week == spanIter])
-                    scatterZ_pre = np.concatenate([dataDict_pre[i]['scatterZ'] for i in dataDict_pre if i.week == spanIter])
+                    scatterX_pre = np.concatenate([dataDict_pre[i]['scatterX'] for i in dataDict_pre if isoWeek(i) == spanIter])
+                    scatterY_pre = np.concatenate([dataDict_pre[i]['scatterY'] for i in dataDict_pre if isoWeek(i) == spanIter])
+                    scatterZ_pre = np.concatenate([dataDict_pre[i]['scatterZ'] for i in dataDict_pre if isoWeek(i) == spanIter])
                 except ValueError as e:
                     logger.warning(f'ValueError concatenating pre-deploy data for week {spanIter}: {e}')
                     scatterX_pre = []
@@ -1393,19 +1400,23 @@ def plotProfilesScatter(
                     plt.scatter(scatterX_pre, scatterY_pre, s=1, c=scatterZ_pre, cmap='Greens', rasterized=True)
                     plt.text(.01, .99, np.datetime_as_string(scatterZ_pre[0], unit='D'), size=4, color='#12541f', ha='left', va='top', transform=ax.transAxes)
                     preText = True
+                    weekZ.append(scatterZ_pre)
             if plot_post:
                 try:
-                    scatterX_post = np.concatenate([dataDict_post[i]['scatterX'] for i in dataDict_post if i.week == spanIter])
-                    scatterY_post = np.concatenate([dataDict_post[i]['scatterY'] for i in dataDict_post if i.week == spanIter])
-                    scatterZ_post = np.concatenate([dataDict_post[i]['scatterZ'] for i in dataDict_post if i.week == spanIter])
+                    scatterX_post = np.concatenate([dataDict_post[i]['scatterX'] for i in dataDict_post if isoWeek(i) == spanIter])
+                    scatterY_post = np.concatenate([dataDict_post[i]['scatterY'] for i in dataDict_post if isoWeek(i) == spanIter])
+                    scatterZ_post = np.concatenate([dataDict_post[i]['scatterZ'] for i in dataDict_post if isoWeek(i) == spanIter])
                 except ValueError as e:
                     logger.warning(f'ValueError concatenating post-deploy data for week {spanIter}: {e}')
                     scatterX_post = []
                 if len(scatterX_post) > 0:
                     plt.scatter(scatterX_post, scatterY_post, s=1, c=scatterZ_post, cmap='Blues', rasterized=True)
                     plt.text(.01, .90 if preText else .99, np.datetime_as_string(scatterZ_post[0], unit='D'), size=4, color='#1f78b4', ha='left', va='top', transform=ax.transAxes)
+                    weekZ.append(scatterZ_post)
             fileName = fileName_base + '_' + str(profileIterator).zfill(3) + 'profile_' + spanString + '_none'
-            save_at_all_scales(fig, ax, fileName, timeSpan)
+            # this week's span, not the whole window - overlays take clim months from it
+            weekSpan = [min(z[0] for z in weekZ), max(z[-1] for z in weekZ)] if weekZ else timeSpan
+            save_at_all_scales(fig, ax, fileName, weekSpan)
             profileIterator += 1
 
     else:
