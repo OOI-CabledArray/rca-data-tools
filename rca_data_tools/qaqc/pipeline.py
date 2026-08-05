@@ -44,7 +44,6 @@ class QAQCPipeline:
         cloud_run=True,
         s3_bucket=S3_BUCKET,
         s3_sync=True,
-        s3fs_kwargs={},
     ):
         self.site = site
         self.time = time
@@ -57,7 +56,6 @@ class QAQCPipeline:
         self._cloud_run = cloud_run
         self.s3_bucket = s3_bucket
         self.s3_sync = s3_sync
-        self.s3fs_kwargs = s3fs_kwargs
         self.valid_spans = SPAN_DICT
         self._site_ds = {}
         self._params_valid = True
@@ -131,7 +129,6 @@ class QAQCPipeline:
             'stage': self.stage,
             'homebrew_qartod': self.homebrew_qartod,
             'express': self.express,
-            'fs_kwargs': self.s3fs_kwargs,
             'sync_to_s3': self.s3_sync,
             's3_bucket': self.s3_bucket,
         }
