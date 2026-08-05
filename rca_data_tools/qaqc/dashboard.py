@@ -1529,7 +1529,7 @@ def plotScatter(
     # Data Ranges
     ranges = ['full', 'standard', 'local']
 
-    lineColors = [ # we need to extend this every year or find a more permanent solution
+    lineColors = [ # index wraps at the use site
         '#1f78b4',
         '#a6cee3',
         '#b2df8a',
@@ -1542,6 +1542,10 @@ def plotScatter(
         '#6e409c',
         '#16f5f5',
         '#A19D9C',
+        '#cab2d6',
+        '#b15928',
+        '#f781bf',
+        '#808000',
     ]
     balanceBig = plt.get_cmap('cmo.balance', 512)
     balanceBlue = ListedColormap(balanceBig(np.linspace(0, 0.5, 256)))
@@ -1769,7 +1773,7 @@ def plotScatter(
                     timeY = np.array([])
                     if len(timeX) > 0:
                         timeY = timeDS.values
-                    c = lineColors[yearDiff]
+                    c = lineColors[yearDiff % len(lineColors)] # instruments with more years wrap
                     if 'large' in plotMarkerSize:
                         plt.plot(timeX, timeY,'.',markersize=2,c=c,label='%s' % legendString,)
                     elif 'medium' in plotMarkerSize:
