@@ -215,6 +215,33 @@ def run_dashboard_creation(
     if "PROFILER" in plotInstrument:
         profileList = dashboard.loadProfiles(site)
 
+    # ADCP current vectors: one quiver per site/span, not per parameter. Short
+    # spans show tidal flow; long spans average past the tidal Nyquist and show
+    # subtidal circulation, which the title labels as an N-day mean.
+    if "ADCP" in plotInstrument:
+        vecVars = []
+        for vecParam in ("velocity_east", "velocity_north", "pressure"):
+            match = [v for v in VARIABLE_DICT[vecParam].strip('"').split(",") if v in fileParams]
+            vecVars.append(match[0] if match else None)
+        if all(vecVars):
+            uVar, vVar, pressVar = vecVars
+            plots = dashboard.plotADCPVectors(
+                uVar,
+                vVar,
+                pressVar,
+                siteData[[uVar, vVar, pressVar]],
+                site + " currents",
+                timeRef,
+                PLOT_DIR_STR + site,
+                span,
+                spanString,
+                statusDict,
+                site,
+            )
+            plotList.append(plots)
+        else:
+            logger.warning(f"cannot build ADCP vectors for {site}, missing one of {vecVars}")
+
     for param in paramList:
         logger.info(f"parameter: {param}")
         variableParams = VARIABLE_DICT[param].strip('"').split(",")
