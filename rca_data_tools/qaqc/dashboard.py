@@ -1032,17 +1032,24 @@ def plotADCPVectors(
         # order of magnitude above the real water column and squash every other
         # arrow to a speck. The few that exceed it just draw longer.
         sRef = float(np.nanpercentile(speed, 95)) if np.isfinite(speed).any() else 0.0
+        units = sub[uParam].attrs.get('units', 'm/s')
         graph = ax.quiver(tGrid, depth, u, v, speed, cmap='cmo.speed',
                           angles='uv', pivot='mid', scale_units='width',
                           scale=(sRef * 42) or None, width=0.002, rasterized=True)
         if sRef > 0:
+            # color saturates at the 95th percentile (extend flags this on the
+            # colorbar); reference arrow makes lengths quantitative
             graph.set_clim(0, sRef)
+            keyV = float(f'{sRef:.1g}')  # round to one significant figure
+            ax.quiverkey(graph, 0.5, 1.07, keyV, f'{keyV:g} {units}',
+                         labelpos='E', coordinates='axes',
+                         fontproperties={'size': 4})
         if timeRef_deploy is not None:
             plt.axvline(timeRef_deploy, linewidth=1, color='k', linestyle='-.')
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="2%", pad=0.05)
-        cbar = plt.colorbar(graph, cax=cax)
-        cbar.ax.set_ylabel("Speed (m/s)", fontsize=4)
+        cbar = plt.colorbar(graph, cax=cax, extend='max' if sRef > 0 else 'neither')
+        cbar.ax.set_ylabel(f"Speed ({units})", fontsize=4)
         cbar.ax.tick_params(length=2, width=0.5, labelsize=4)
         cbar.solids.set_edgecolor("face")
 
