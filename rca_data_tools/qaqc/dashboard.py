@@ -14,6 +14,7 @@ from prefect import task
 import gc
 import io
 import json
+import math
 import numpy as np
 import pandas as pd
 import re
@@ -916,6 +917,156 @@ def plotProfilesGrid(
             if 'none' not in overlay:
                 fileName = fileName_base + '_' + spanString + '_' + overlay
                 save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
+
+    return fileNameList
+
+
+@task
+def plotADCPVectors(
+    uParam,  # eastward velocity variable
+    vParam,  # northward velocity variable
+    pressParam,  # bin_depths variable
+    paramData,  # xr.Dataset with uParam, vParam, pressParam
+    plotTitle,
+    timeRef,
+    fileName_base,
+    span,
+    spanString,
+    statusDict,
+    site,
+    nTime=55,  # arrows across time
+    nDepth=12,  # arrows down the bin axis
+    maxTimePoints=20_000,  # pre-stride budget before averaging
+):
+    """Quiver plot of ADCP currents on the time x depth grid.
+
+    Framing matches plotProfilesGrid so the image drops into the dashboard
+    alongside the scalar velocity panels.
+    """
+    logger = select_logger()
+    plt.close('all')
+    fileNameList = []
+    dpi = 300
+
+    if 'deploy' in spanString:
+        # span 0 has no width of its own; use +/-15 days around the latest
+        # deployment like the other deploy plots
+        deployHistory = loadDeploymentHistory(site)
+        deployTimes = listDeployTimes(deployHistory[site])
+        timeRef_deploy = deployTimes[0]
+        startDate = timeRef_deploy - timedelta(days=15)
+        endDate = timeRef_deploy + timedelta(days=15)
+        spanDays = 30
+    else:
+        timeRef_deploy = None
+        endDate = timeRef
+        spanDays = int(span)
+        startDate = timeRef - timedelta(days=spanDays)
+    xMin = startDate - timedelta(days=spanDays * 0.002)
+    xMax = endDate + timedelta(days=spanDays * 0.002)
+
+    baseDS = paramData.sel(time=slice(startDate, endDate))
+    nT, nB = baseDS.time.size, baseDS.bin.size
+    statusString = statusDict.get(site, 'UNAVAILABLE')
+
+    # Each arrow averages span/nTime of record. Past the tidal Nyquist (~6h) the
+    # tide is filtered out and this becomes a subtidal/mean current plot, so say
+    # so rather than letting it read as instantaneous flow.
+    winHours = spanDays * 24 / nTime
+    if winHours > 6.2:
+        plotTitle += f" ({winHours / 24:.1f} d mean)" if winHours >= 24 else f" ({winHours:.0f} h mean)"
+
+    plt.rcParams["font.family"] = "serif"
+    fig, ax = plt.subplots()
+    fig.set_size_inches(5, 1.75)
+    fig.patch.set_facecolor('white')
+    plt.title(plotTitle, fontsize=4, loc='left')
+    plt.title(statusString, fontsize=4, fontweight=0, color=STATUS_COLORS[statusString],
+              loc='right', style='italic')
+    plt.ylabel("Depth (m)", fontsize=4)
+    ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
+    ax.ticklabel_format(useOffset=False)
+    locator = mdates.AutoDateLocator()
+    formatter = mdates.ConciseDateFormatter(locator)
+    formatter.formats = ['%y', '%b', '%m/%d', '%H h', '%H:%M', '%S.%f']
+    formatter.zero_formats = ['', '%b-%Y', '%m/%d', '%m/%d', '%H', '%M']
+    formatter.offset_formats = ['', '', '', '', '', '']
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
+    ax.grid(False)
+    ax.invert_yaxis()
+    plt.xlim(xMin, xMax)
+
+    if nT < 2:
+        plt.annotate('No Data Available', xy=(0.3, 0.5), xycoords='axes fraction')
+    else:
+        # Two stage reduction: stride lazily to bound what gets materialized,
+        # then average down to the arrow count. A flat pre-stride budget keeps
+        # the strided interval well under the tidal Nyquist (~6h), so each
+        # arrow averages resolved data instead of aliased samples. 20k x 12
+        # bins is ~2 MB regardless of span.
+        binStride = max(1, math.ceil(nB / nDepth))
+        timeStride = max(1, math.ceil(nT / maxTimePoints))
+        sub = baseDS.isel(time=slice(None, None, timeStride), bin=slice(None, None, binStride))
+        window = max(1, math.ceil(sub.time.size / nTime))
+        if window > 1:
+            sub = sub.coarsen(time=window, boundary='trim').mean()
+        logger.info(
+            f"ADCP vectors {site} span {span}: {nT}x{nB} -> "
+            f"{sub.time.size}x{sub.bin.size} (time stride {timeStride}, mean over {window}, "
+            f"bin stride {binStride})"
+        )
+        sub = sub.compute()
+
+        u, v = sub[uParam].T.values, sub[vParam].T.values  # (bin, time) to match Y
+        depth = sub[pressParam].T.values
+        # datetime64, not date2num floats: xlim is set with datetimes, so the axis
+        # carries a date converter and raw floats get mapped off the visible range
+        tGrid = np.broadcast_to(sub.time.values, depth.shape)
+        speed = np.sqrt(u ** 2 + v ** 2)
+
+        # angles='uv' keeps arrow direction true despite the time/depth axis
+        # mismatch; scale is explicit because autoscaling on mixed units renders
+        # arrows either invisible or off the axes.
+        # Scale on the 95th percentile, not the max: bad surface bins run an
+        # order of magnitude above the real water column and squash every other
+        # arrow to a speck. The few that exceed it just draw longer.
+        sRef = float(np.nanpercentile(speed, 95)) if np.isfinite(speed).any() else 0.0
+        units = sub[uParam].attrs.get('units', 'm/s')
+        graph = ax.quiver(tGrid, depth, u, v, speed, cmap='cmo.speed',
+                          angles='uv', pivot='mid', scale_units='width',
+                          scale=(sRef * 42) or None, width=0.002, rasterized=True)
+        if sRef > 0:
+            # color saturates at the 95th percentile (extend flags this on the
+            # colorbar); reference arrow makes lengths quantitative
+            graph.set_clim(0, sRef)
+            keyV = float(f'{sRef:.1g}')  # round to one significant figure
+            ax.quiverkey(graph, 0.5, 1.07, keyV, f'{keyV:g} {units}',
+                         labelpos='E', coordinates='axes',
+                         fontproperties={'size': 4})
+        if timeRef_deploy is not None:
+            plt.axvline(timeRef_deploy, linewidth=1, color='k', linestyle='-.')
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="2%", pad=0.05)
+        cbar = plt.colorbar(graph, cax=cax, extend='max' if sRef > 0 else 'neither')
+        cbar.ax.set_ylabel(f"Speed ({units})", fontsize=4)
+        cbar.ax.tick_params(length=2, width=0.5, labelsize=4)
+        cbar.solids.set_edgecolor("face")
+
+    if nT < 2:
+        # keep the axes width identical to the scalar panels
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="2%", pad=0.05)
+        for axis in ['top', 'bottom', 'left', 'right']:
+            cax.spines[axis].set_linewidth(0)
+        cax.set_xticks([])
+        cax.set_yticks([])
+
+    # Same figure under all three dataRange tags: there is no separate standard/
+    # local range for a vector field, but the dashboard range selector expects
+    # all three to exist.
+    fileName = fileName_base + '_vectors_' + spanString + '_none'
+    save_fig(fig, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
 
     return fileNameList
 

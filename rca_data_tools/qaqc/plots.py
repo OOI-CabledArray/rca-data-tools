@@ -3,9 +3,10 @@
 This module contains code for plot creations from various instruments.
 
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil import parser
 import gc
+import math
 import os
 import fsspec
 import time
@@ -190,15 +191,28 @@ def run_dashboard_creation(
                 siteData = siteData.swap_dims({"index": "time"})
                 siteData = siteData.reset_coords()
 
-    elif stageDict[site]["decimationAlgo"] == "coarsen":  # use a cruder method for ADCP etc
+    elif stageDict[site]["decimationAlgo"] == "coarsen":  # gridded ADCPs
         if int(span) in [30, 365]:
-            if len(siteData["time"]) > decimationThreshold:
-                window = int(len(siteData["time"]) / decimationThreshold)
-                logger.info(
-                    f"{site} unable to be decimated using LTTB. Using xr.coarsen instead"
-                )
+            # These plots are pcolormesh grids, so columns beyond the rendered
+            # width are invisible: coarsen to a pixel budget instead of the LTTB
+            # threshold (which left 500k-2.6M columns at span 365 - the VADCP
+            # OOM). Slice to the span first so the mean only reads this window.
+            pad = timedelta(days=int(span) * 0.002)
+            siteData = siteData.sel(
+                time=slice(timeRef - timedelta(days=int(span)) - pad, timeRef + pad)
+            )
+            # qartod flags are only drawn by the scatter plots, which ADCPs skip;
+            # dropping them here skips their chunks in the S3 read entirely
+            siteData = siteData.drop_vars(qcParams)
+            qcParams = []
+            nCols = 10_000  # ~6x plot pixel width; headroom for large displays
+            if siteData.time.size > nCols:
+                window = math.ceil(siteData.time.size / nCols)
                 siteData = siteData.coarsen(time=window, boundary="trim").mean()
-                logger.info(f"Succesfully coarsened time with window of *{window}*.")
+                logger.info(f"Coarsened {site} to {siteData.time.size} columns (window {window}).")
+            # now ~10k x nBins: load once so the per-parameter plot tasks reuse
+            # it in memory instead of each re-reading the window from s3
+            siteData = siteData.load()
     
     # TODO do not run PH, PC02 example during rca-data-tools pipline, needs logic below to do this and way 
     # to ingest runDuringHarvest column
@@ -214,6 +228,33 @@ def run_dashboard_creation(
     overlayData_anno = dashboard.loadAnnotations(site)
     if "PROFILER" in plotInstrument:
         profileList = dashboard.loadProfiles(site)
+
+    # ADCP current vectors: one quiver per site/span, not per parameter. Short
+    # spans show tidal flow; long spans average past the tidal Nyquist and show
+    # subtidal circulation, which the title labels as an N-day mean.
+    if "ADCP" in plotInstrument:
+        vecVars = []
+        for vecParam in ("velocity_east", "velocity_north", "pressure"):
+            match = [v for v in VARIABLE_DICT[vecParam].strip('"').split(",") if v in fileParams]
+            vecVars.append(match[0] if match else None)
+        if all(vecVars):
+            uVar, vVar, pressVar = vecVars
+            plots = dashboard.plotADCPVectors(
+                uVar,
+                vVar,
+                pressVar,
+                siteData[[uVar, vVar, pressVar]],
+                site + " currents",
+                timeRef,
+                PLOT_DIR_STR + site,
+                span,
+                spanString,
+                statusDict,
+                site,
+            )
+            plotList.append(plots)
+        else:
+            logger.warning(f"cannot build ADCP vectors for {site}, missing one of {vecVars}")
 
     for param in paramList:
         logger.info(f"parameter: {param}")
