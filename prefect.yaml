@@ -112,3 +112,38 @@ deployments:
       memory: 106496
   schedule:
   is_schedule_active: true
+
+# --- QAQC_dashboard workflow triggers -------------------------------------
+# Reliable clock in front of the GitHub Actions
+# Condensed to 3 deployments: one per fire-time. The 11:00
+# batch carries the day-of-week split (Mon weekly variants, Tue-Fri daily)
+# Each only makes a few HTTP dispatch calls, so they request minimal Fargate resources (0.5 vCPU/1GB).
+- name: trigger-echo-chain
+  tags: [scheduler]
+  description: harvest -> wait for zarr write -> echograms
+  entrypoint: rca_data_tools/qaqc/scheduler.py:trigger_echo_chain
+  parameters: {}
+  work_pool:
+    name: scope-push-pool
+    job_variables: {cpu: 512, memory: 1024}
+  schedule: {cron: "0 10 * * *", timezone: UTC}
+  is_schedule_active: true
+- name: trigger-profile-indices
+  tags: [scheduler]
+  entrypoint: rca_data_tools/qaqc/scheduler.py:trigger_workflow
+  parameters: {workflow_file: profile_indices.yaml}
+  work_pool:
+    name: scope-push-pool
+    job_variables: {cpu: 512, memory: 1024}
+  schedule: {cron: "30 10 * * *", timezone: UTC}
+  is_schedule_active: true
+- name: trigger-daily-batch
+  tags: [scheduler]
+  description: 11:00 UTC hydrophones + weekday-split pipeline/seismometer
+  entrypoint: rca_data_tools/qaqc/scheduler.py:trigger_daily_batch
+  parameters: {}
+  work_pool:
+    name: scope-push-pool
+    job_variables: {cpu: 512, memory: 1024}
+  schedule: {cron: "0 11 * * *", timezone: UTC}
+  is_schedule_active: true
