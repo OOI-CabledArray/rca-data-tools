@@ -126,7 +126,7 @@ deployments:
   work_pool:
     name: scope-push-pool
     job_variables: {cpu: 512, memory: 1024}
-  schedule: {cron: "0 10 * * *", timezone: UTC}
+  schedule: {cron: "0 12 * * *", timezone: UTC}
   is_schedule_active: true
 - name: trigger-profile-indices
   tags: [scheduler]
