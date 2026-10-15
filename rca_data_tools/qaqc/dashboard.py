@@ -2065,8 +2065,9 @@ def plotScatter(
                 elif 'small' in plotMarkerSize:
                     flagMarker = 0.25
                     plt.plot(scatterX, scatterY, ',', color=lineColors[0], label='%s' % legendString,)
-                # slice overlayData_flag so we're not working on whole dataset
-                qcDS = overlayData_flag.sel(time=slice(startDate, endDate))
+                # slice overlayData_flag so we're not working on whole dataset; load the
+                # window once so each flag type/level below doesn't re-read it from s3
+                qcDS = overlayData_flag.sel(time=slice(startDate, endDate)).load()
                 print(qcDS)
                 # retrieve flags
                 qcDS = retrieve_qc(qcDS)

@@ -314,10 +314,10 @@ def run_dashboard_creation(
                         logger.info("Error retriving pressure parameter!")
                     else:
                         pressParam = pressureParamList[0]
-                        paramData = siteData[[Yparam, pressParam]].chunk("auto")
+                        paramData = siteData[[Yparam, pressParam]]
                         flagParams = [item for item in qcParams if Yparam in item]
                         flagParams.extend((Yparam, pressParam))
-                        overlayData_flag = siteData[flagParams].chunk("auto")
+                        overlayData_flag = siteData[flagParams]
                         colorMap = "cmo." + VARIABLE_PARAM_DICT[param]["colorMap"]
                         depthMinMax = stageDict[site]["depthMinMax"].strip('"').split(",")
                         if "None" not in depthMinMax:
@@ -432,7 +432,7 @@ def run_dashboard_creation(
                     paramData = siteData[Yparam]
                     flagParams = [item for item in qcParams if Yparam in item]
                     flagParams.append(Yparam)
-                    overlayData_flag = siteData[flagParams].chunk("auto")
+                    overlayData_flag = siteData[flagParams]
 
                     if overlayData_clim:
                         overlayData_clim_extract = dashboard.extractClim(
@@ -477,6 +477,7 @@ def run_dashboard_creation(
 
 
 def organize_images(sync_to_s3=False, bucket_name=S3_BUCKET, fs_kwargs={}):
+    local_paths, s3_paths = [], []
     for i in PLOT_DIR.iterdir():
         if i.is_file():
             if i.suffix == ".png" or i.suffix == ".svg":
@@ -489,20 +490,17 @@ def organize_images(sync_to_s3=False, bucket_name=S3_BUCKET, fs_kwargs={}):
                 destination = subsite_dir / fname
                 i.replace(destination)
 
-                # Sync to s3
-                if sync_to_s3 is True:
-                    import fsspec
-
-                    S3FS = fsspec.filesystem("s3", **fs_kwargs)
-
-                    fs_path = "/".join([bucket_name, PLOT_DIR.name, subsite_dir.name, fname])
-                    if S3FS.exists(fs_path):
-                        S3FS.rm(fs_path)
-                    S3FS.put(str(destination.absolute()), fs_path)
+                local_paths.append(str(destination.absolute()))
+                s3_paths.append("/".join([bucket_name, PLOT_DIR.name, subsite_dir.name, fname]))
             else:
                 print(f"{i} is not a `png` or `svg` file ... will not sort ...")
         else:
             print(f"{i} is not a file ... will not sort ...")
+
+    # one concurrent batch; put overwrites, so no per-file exists/rm round trips
+    if sync_to_s3 is True and local_paths:
+        S3FS = fsspec.filesystem("s3", **fs_kwargs)
+        S3FS.put(local_paths, s3_paths)
 
 
 def delete_outdated_images(
