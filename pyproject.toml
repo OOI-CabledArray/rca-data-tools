@@ -29,14 +29,14 @@ dependencies = [
     "netcdf4",
     "numba",
     "numpy>2",
-    "pandas>2",
+    "pandas>2,<3",
     "pathlib",
     "prefect>=3.8",
     "prefect-aws",
     "requests",
     "s3fs>=2024",
     "scipy",
-    "xarray>=2024.1.1",
+    "xarray>=2024.1.1,<2026.4",  # 2026.4 dropped zarr 2; we pin zarr<3
     "zarr<3.0.0",
 ]
 

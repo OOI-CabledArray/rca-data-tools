@@ -145,7 +145,7 @@ def extractClim(timeRef, profileDepth, overlayData_clim):
         )
         climSeries.set_index(['climTime'], inplace=True)
 
-        upsampled_hour = climSeries.resample('H')
+        upsampled_hour = climSeries.resample('h')
         climInterpolated_hour = upsampled_hour.interpolate(method='linear')
 
     return climInterpolated_hour
