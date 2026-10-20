@@ -73,6 +73,11 @@ def create_daily_cam_df(base_url: str, str_date: str, img_size_cutoff: int): #cu
             else:
                 img_data_list.append(img_data)
 
+        # day folder exists but has no images yet (e.g. today, before the first upload)
+        if not img_data_list:
+            logger.info(f"no images listed for date: {parsed_date}")
+            return None
+
         day_df = pd.DataFrame(img_data_list)
         day_df["size_int"] = day_df["size"].apply(extract_numeric, full_url=full_url)
         # create a categorical variables `possibly blank` if img size is less than a cutoff specific to each cam
