@@ -7,9 +7,7 @@ from datetime import datetime, timedelta
 from dateutil import parser
 import gc
 import math
-import os
 import fsspec
-import time
 import pandas as pd
 from typing import List
 import xarray as xr
@@ -540,50 +538,26 @@ def delete_outdated_images(
         logger.info("No s3 sync - no outdated images to delete.")
 
 
-def delete_outdated_annotations(
+def delete_legacy_anno_pngs(
     site: str,
     span_string: str,
     sync_to_s3: bool,
     bucket_name: str,
     s3fs: fsspec.filesystem,
 ) -> None:
+    """Remove annotation-view PNGs left from before those views were always SVG.
 
+    Annotation views used to be PNG with no annotations and SVG with some, so
+    the stale twin had to be cleaned up each run. Now they are always SVG and
+    simply overwrite; this only clears the old PNGs. Run after the upload so a
+    view is never missing.
+    """
+    # TODO remove this function and its call in flow.py once every span has run on
+    # always-SVG annotations; the deploy span runs once a year, so by ~Nov 2027.
     logger = select_logger()
-    time.sleep(1) # allow s3 time to reflect newly updated files
-
     if sync_to_s3:
         site_prefix = site.split("-")[0]
-        existing_instrument_files = s3fs.glob(
-            f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*"
-        )
-
-        existing_anno_files = [
-            f for f in existing_instrument_files if "anno" in f and span_string in f
-        ]
-        anno_svgs = [os.path.splitext(f)[0] for f in existing_anno_files if "svg" in f]
-        anno_pngs = [os.path.splitext(f)[0] for f in existing_anno_files if "png" in f]
-
-        anno_files_modified_dict = {}  # k=file : v=when it was modified
-
-        for fpath in existing_anno_files:
-            last_modified = s3fs.info(fpath)["LastModified"]
-            anno_files_modified_dict[fpath] = last_modified
-
-        overlapping_files = list(set(anno_svgs) & set(anno_pngs))
-
-        outdated_annos_to_delete = []
-        for f in overlapping_files:
-            svg_time_created = anno_files_modified_dict[f"{f}.svg"]
-            png_time_created = anno_files_modified_dict[f"{f}.png"]
-
-            if svg_time_created < png_time_created:
-                outdated_annos_to_delete.append(f"{f}.svg")
-            elif png_time_created < svg_time_created:
-                outdated_annos_to_delete.append(f"{f}.png")
-
-        for f in outdated_annos_to_delete:
-            s3fs.rm(f)
-
-        logger.info(f"These outdated files were deleted from s3: {outdated_annos_to_delete}")
-    else:
-        logger.info("No s3 sync - no outdated images to delete.")
+        legacy = s3fs.glob(f"{bucket_name}/QAQC_plots/{site_prefix}/{site}*_{span_string}_anno_*.png")
+        if legacy:
+            s3fs.rm(legacy)
+        logger.info(f"{len(legacy)} legacy annotation PNGs deleted.")

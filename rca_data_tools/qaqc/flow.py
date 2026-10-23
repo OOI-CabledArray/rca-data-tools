@@ -11,7 +11,7 @@ from rca_data_tools.qaqc.plots import (
     organize_images,
     run_dashboard_creation,
     delete_outdated_images,
-    delete_outdated_annotations,
+    delete_legacy_anno_pngs,
 )
 from rca_data_tools.qaqc.utils import get_s3_kwargs
 from rca_data_tools.qaqc.visual_data import cam_qaqc_stacked_bar
@@ -73,20 +73,13 @@ def delete_outdated_images_task(
     bucket_name: str, 
     s3fs: fsspec.filesystem) -> None:
     """
-    Prefect task for deleting outdating image files that would otherwise not be overwritten.
+    Prefect task for deleting profile image files that would otherwise not be overwritten
+    (the number of profile sub-plots varies run to run).
     """
     span_string = SPAN_DICT[span]
 
     delete_outdated_images(
         plot_list=plotList,
-        site=site,
-        span_string=span_string,
-        sync_to_s3=sync_to_s3,
-        bucket_name=bucket_name,
-        s3fs=s3fs,
-    )
-
-    delete_outdated_annotations(
         site=site,
         span_string=span_string,
         sync_to_s3=sync_to_s3,
@@ -159,7 +152,7 @@ def qaqc_pipeline_flow(
         
     fs_kwargs = get_s3_kwargs()
     S3FS = fsspec.filesystem('s3', **fs_kwargs)
-    # Delete outdated profile and annotation images
+    # Delete outdated profile images
     delete_outdated_images_task(
         plotList=plotList,
         site=site,
@@ -175,4 +168,13 @@ def qaqc_pipeline_flow(
         sync_to_s3=sync_to_s3,
         fs_kwargs=fs_kwargs,
         s3_bucket=s3_bucket,
+    )
+
+    # After the upload, so the SVG that replaces a legacy annotation PNG is already there
+    delete_legacy_anno_pngs(
+        site=site,
+        span_string=SPAN_DICT[span],
+        sync_to_s3=sync_to_s3,
+        bucket_name=s3_bucket,
+        s3fs=S3FS,
     )
