@@ -26,7 +26,6 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.lines as mlines
-from matplotlib.cm import ScalarMappable
 import matplotlib.colors as colors
 from matplotlib.colors import ListedColormap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -115,25 +114,13 @@ def extractClim(timeRef, profileDepth, overlayData_clim):
         climInterpolated_hour = pd.DataFrame()
     else:
         for i in range(1, 13):
-            climMonth = i
-            climatology = ast.literal_eval(
-                overlayData_clim[str(climMonth)][str(climBracket)]
-            )
-            # current year
-            climTime.append(datetime(timeRef.year, i, 15))
-            climMinus3std.append(climatology[0])
-            climPlus3std.append(climatology[1])
-            climData.append(st.mean([climatology[0], climatology[1]]))
-            # extend climatology to previous year
-            climTime.append(datetime(timeRef.year - 1, i, 15))
-            climMinus3std.append(climatology[0])
-            climPlus3std.append(climatology[1])
-            climData.append(st.mean([climatology[0], climatology[1]]))
-            # extend climatology to next year
-            climTime.append(datetime(timeRef.year + 1, i, 15))
-            climMinus3std.append(climatology[0])
-            climPlus3std.append(climatology[1])
-            climData.append(st.mean([climatology[0], climatology[1]]))
+            climatology = ast.literal_eval(overlayData_clim[str(i)][str(climBracket)])
+            # current year, extended to the previous and next year
+            for year in (timeRef.year, timeRef.year - 1, timeRef.year + 1):
+                climTime.append(datetime(year, i, 15))
+                climMinus3std.append(climatology[0])
+                climPlus3std.append(climatology[1])
+                climData.append(st.mean([climatology[0], climatology[1]]))
 
         zipped = zip(climTime, climMinus3std, climPlus3std, climData)
         zipped = list(zipped)
@@ -268,7 +255,7 @@ def loadProfiles(refDes):
     gh_baseURL = 'https://raw.githubusercontent.com/OOI-CabledArray/profileIndices/main/'
 
     page = requests.get(github_url).text
-    fileNames = list(set(re.findall(site + '_profiles_[0-9]{4}\.csv',page)))
+    fileNames = list(set(re.findall(site + r'_profiles_[0-9]{4}\.csv',page)))
 
     if fileNames:
         profiles_partial = []
@@ -307,18 +294,12 @@ def loadData(site, sites_dict):
     fs = s3fs.S3FileSystem(**get_s3_kwargs())
     zarrDir = INPUT_BUCKET + sites_dict[site]['zarrFile']
     zarr_store = fs.get_mapper(zarrDir)
-    # NOTE: in future only request parameters listed in sites_dict[site][dataParameters]?
-    # requestParams = sites_dict[site]['dataParameters'].strip('"').split(',')
     ds = xr.open_zarr(zarr_store, consolidated=True)
 
     return ds
 
 def listDeployTimes(deployDict):
-    deployTimes = []
-    for deploy in deployDict:
-        deployTimes.append(deploy['deployDate'])
-
-    return deployTimes
+    return [deploy['deployDate'] for deploy in deployDict]
 
 
 
@@ -345,6 +326,58 @@ def annoXnormalize(startDate,endDate,annoMinDate,annoMaxDate):
     annoXmax =  (annoMaxDate - startDate) / (endDate - startDate)
 
     return annoXmin,annoXmax
+
+
+def annotationsInRange(overlayData_anno, startDate, endDate):
+    """Annotations overlapping the plot window, keyed by where their line starts."""
+    plotAnnotations = {}
+    for i in overlayData_anno:
+        annoStart = datetime.fromtimestamp(int(i['beginDT'])/1000)
+        annoEnd = datetime.fromtimestamp(int(i['endDT'])/1000) if i['endDT'] is not None else None
+        inRange, startAnnoLine, endAnnoLine = annoInRange(startDate, endDate, annoStart, annoEnd)
+        if inRange:
+            plotAnnotations[startAnnoLine] = {'endAnnoLine': endAnnoLine, 'annotation': i['annotation']}
+    return plotAnnotations
+
+
+def conciseDateAxis(ax):
+    """Compact date ticks shared by the time-series plots."""
+    locator = mdates.AutoDateLocator()
+    formatter = mdates.ConciseDateFormatter(locator)
+    formatter.formats = ['%y', '%b', '%m/%d', '%H h', '%H:%M', '%S.%f']
+    formatter.zero_formats = ['', '%b-%Y', '%m/%d', '%m/%d', '%H', '%M']
+    formatter.offset_formats = ['', '', '', '', '', '']
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
+
+
+def blankCax(ax):
+    """Invisible colorbar-width spacer so plots without a colorbar line up with those that have one."""
+    cax = make_axes_locatable(ax).append_axes("right", size="2%", pad=0.05)
+    for axis in ['top', 'bottom', 'left', 'right']:
+        cax.spines[axis].set_linewidth(0)
+    cax.set_xticks([])
+    cax.set_yticks([])
+
+
+def markerLegend(ax, marker=None):
+    """Legend with small marker swatches; marker=None keeps each line's own marker."""
+    handles, labels = ax.get_legend_handles_labels()
+    patches = [
+        mlines.Line2D([], [], color=h.get_color(), marker=marker or h.get_marker(),
+                      markersize=1, linewidth=0, label=l)
+        for h, l in zip(handles, labels)
+    ]
+    return ax.legend(handles=patches, loc="upper right", fontsize=3)
+
+
+def gridRangeParams(zMin, zMax, zMin_local, zMax_local):
+    """plotter() params for the full / standard / local color ranges."""
+    return [
+        ('full', {'range': 'full'}),
+        ('standard', {'range': 'standard', 'vmin': zMin, 'vmax': zMax}),
+        ('local', {'range': 'local', 'vmin': zMin_local, 'vmax': zMax_local}),
+    ]
 
 
 
@@ -415,7 +448,6 @@ def plotProfilesGrid(
     fileName_base,
     overlayData_anno,
     overlayData_clim,
-    overlayData_near,
     span,
     spanString,
     profileList,
@@ -428,17 +460,10 @@ def plotProfilesGrid(
     ### QC check for grid...this will be replaced with a new range for "gross range"
     if 'pco2' in Yparam:
         paramData = paramData.where((paramData[Yparam] < 2000).compute(), drop=True)
-    #if 'par' in Yparam:
-    #    paramData = paramData.where((paramData[Yparam] > 0) & (paramData[Yparam] < 2000), drop=True)
 
-    # Initiate fileName list
     fileNameList = []
     dpi = 300
-    # Plot Overlays
     overlays = ['clim', 'anno', 'none']
-
-    # Data Ranges
-    ranges = ['full', 'standard', 'local']
 
     balanceBig = plt.get_cmap('cmo.balance', 512)
     balanceBlue = ListedColormap(balanceBig(np.linspace(0, 0.5, 256)))
@@ -464,36 +489,7 @@ def plotProfilesGrid(
         plt.ylabel(pressLabel, fontsize=4)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
-        locator = mdates.AutoDateLocator()
-        formatter = mdates.ConciseDateFormatter(locator)
-        formatter.formats = [
-            '%y',  # ticks are mostly years
-            '%b',  # ticks are mostly months
-            '%m/%d',  # ticks are mostly days
-            '%H h',  # hrs
-            '%H:%M',  # min
-            '%S.%f',
-        ]  # secs
-        formatter.zero_formats = [
-            '',  # ticks are mostly years, no need for zero_format
-            '%b-%Y',  # ticks are mostly months, mark month/year
-            '%m/%d',  # ticks are mostly days, mark month/year
-            '%m/%d',  # ticks are mostly hours, mark month and day
-            '%H',  # ticks are montly mins, mark hour
-            '%M',
-        ]  # ticks are mostly seconds, mark minute
-
-        formatter.offset_formats = [
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-        ]
-
-        ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(formatter)
+        conciseDateAxis(ax)
         ax.grid(False)
         ax.invert_yaxis()
         plt.xlim(xMin, xMax)
@@ -523,12 +519,7 @@ def plotProfilesGrid(
             cbar.solids.set_edgecolor("face")
         
         if 'empty' in plotType:
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="2%", pad=0.05)
-            for axis in ['top','bottom','left','right']:
-                cax.spines[axis].set_linewidth(0)
-            cax.set_xticks([])
-            cax.set_yticks([])
+            blankCax(ax)
             plt.annotate(annotation, xy=(0.3, 0.5), xycoords='figure fraction')
 
         if 'clim' in plotType:
@@ -543,9 +534,6 @@ def plotProfilesGrid(
             else:
                 graph = ax.contourf(Xx, Yy, Zz, cbarticks, cmap=colorBar,vmin=params['vmin'],
                                 vmax=params['vmax'], rasterized=True)
-            m = ScalarMappable(cmap=graph.get_cmap())
-            m.set_array(graph.get_array())
-            m.set_clim(graph.get_clim())
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="2%", pad=0.05)
             cbar = plt.colorbar(graph, cax=cax)
@@ -666,103 +654,31 @@ def plotProfilesGrid(
         for overlay in overlays:
             if 'anno' in overlay:
                 if overlayData_anno:
-                    plotAnnotations = {}
-                    for i in overlayData_anno:
-                        annoStart = datetime.fromtimestamp(int(i['beginDT'])/1000)
-                        if i['endDT'] is not None:
-                            annoEnd = datetime.fromtimestamp(int(i['endDT'])/1000)
+                    plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate)
+                    for plotRange, params in gridRangeParams(zMin, zMax, zMin_local, zMax_local):
+                        profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
+                        if 'deploy' in spanString:
+                            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+                        fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
+                        if plotAnnotations:
+                            annoLines = []
+                            for i, k in enumerate(plotAnnotations):
+                                annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
+                                A = ax.axhline(yMax,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
+                                A.set_gid(f'anno_{i}')
+                                annoLines.append(A)
+                                annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
+                                annoText = ax.annotate(annotationString,
+                                           xy=(k,yMax),xytext=(0.25,0.25), textcoords='axes fraction',
+                                           bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
+                                           zorder = 1, clip_on=True
+                                )
+                                annoText.set_gid(f'label_{i}')
+                            f=io.BytesIO()
+                            plt.savefig(f, format="svg",dpi=300)
+                            saveAnnos_SVG(annoLines,f,fileName)
                         else:
-                            annoEnd = i['endDT']
-                        inRange,startAnnoLine,endAnnoLine = annoInRange(startDate,endDate,annoStart,annoEnd)
-                        if inRange:
-                            plotAnnotations[startAnnoLine] = {'endAnnoLine': endAnnoLine, 'annotation': i['annotation']}
-                    params = {'range':'full'}
-                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
-                    if 'deploy' in spanString:
-                            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                    if plotAnnotations:
-                        annoLines = []
-                        i = 0
-                        for k in plotAnnotations.keys():
-                            annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
-                            A = ax.axhline(yMax,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
-                            A.set_gid(f'anno_{i}')
-                            annoLines.append(A)
-                            annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
-                            annoText = ax.annotate(annotationString,
-                                       xy=(k,yMax),xytext=(0.25,0.25), textcoords='axes fraction',
-                                       bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
-                                       zorder = 1, clip_on=True
-                            )
-                            annoText.set_gid(f'label_{i}')
-                            i += 1
-                        f=io.BytesIO()
-                        plt.savefig(f, format="svg",dpi=300)
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_full'
-                        saveAnnos_SVG(annoLines,f,fileName)
-                    else:
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_full'
-                        profilePlot.savefig(fileName + '.png', dpi=300)
-
-                    params = {'range':'standard'}
-                    params['vmin'] = zMin
-                    params['vmax'] = zMax
-                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
-                    if 'deploy' in spanString:
-                            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                    if plotAnnotations:
-                        annoLines = []
-                        i = 0
-                        for k in plotAnnotations.keys():
-                            annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
-                            A = ax.axhline(yMax,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
-                            A.set_gid(f'anno_{i}')
-                            annoLines.append(A)
-                            annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
-                            annoText = ax.annotate(annotationString,
-                                       xy=(k,yMax),xytext=(0.25,0.25), textcoords='axes fraction',
-                                       bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
-                                       zorder = 1, clip_on=True
-                            )
-                            annoText.set_gid(f'label_{i}')
-                            i += 1
-                        f=io.BytesIO()
-                        plt.savefig(f, format="svg",dpi=300)
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_standard'
-                        saveAnnos_SVG(annoLines,f,fileName)
-                    else:
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_standard'
-                        profilePlot.savefig(fileName + '.png', dpi=300)
-
-                    params = {'range':'local'}
-                    params['vmin'] = zMin_local
-                    params['vmax'] = zMax_local
-                    profilePlot, ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
-                    if 'deploy' in spanString:
-                            plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                    if plotAnnotations:
-                        annoLines = []
-                        i = 0
-                        for k in plotAnnotations.keys():
-                            annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
-                            A = ax.axhline(yMax,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
-                            A.set_gid(f'anno_{i}')
-                            annoLines.append(A)
-                            annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
-                            annoText = ax.annotate(annotationString,
-                                       xy=(k,yMax),xytext=(0.25,0.25), textcoords='axes fraction',
-                                       bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
-                                       zorder = 1, clip_on=True
-                            )
-                            annoText.set_gid(f'label_{i}')
-                            i += 1
-                        f=io.BytesIO()
-                        plt.savefig(f, format="svg",dpi=300)
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_local'
-                        saveAnnos_SVG(annoLines,f,fileName)
-                    else:
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_local'
-                        profilePlot.savefig(fileName + '.png', dpi=300)
+                            profilePlot.savefig(fileName + '.png', dpi=300)
 
             if 'clim' in overlay:
                 if overlayData_clim:
@@ -772,53 +688,13 @@ def plotProfilesGrid(
                     climList = []
                     for key in overlayData_clim:
                         for subKey in overlayData_clim[key]:
-                            climatology = ast.literal_eval(
-                                overlayData_clim[key][subKey]
-                            )
-                            climList.append(
-                                st.mean([climatology[0], climatology[1]])
-                            )
-                            depthList.append(ast.literal_eval(subKey)[0])
-                            timeList.append(
-                                np.datetime64(
-                                    "{0}-{1}-{2}".format(
-                                        str(timeRef.year),
-                                        str(key).zfill(2),
-                                        15,
-                                    ),
-                                    'D',
-                                )
-                            )
-                            # extend climatology to previous year
-                            climList.append(
-                                st.mean([climatology[0], climatology[1]])
-                            )
-                            depthList.append(ast.literal_eval(subKey)[0])
-                            timeList.append(
-                                np.datetime64(
-                                    "{0}-{1}-{2}".format(
-                                        str(timeRef.year - 1),
-                                        str(key).zfill(2),
-                                        15,
-                                    ),
-                                    'D',
-                                )
-                            )
-                            # extend climatology to next year
-                            climList.append(
-                                st.mean([climatology[0], climatology[1]])
-                            )
-                            depthList.append(ast.literal_eval(subKey)[0])
-                            timeList.append(
-                                np.datetime64(
-                                    "{0}-{1}-{2}".format(
-                                        str(timeRef.year + 1),
-                                        str(key).zfill(2),
-                                        15,
-                                    ),
-                                    'D',
-                                )
-                            )
+                            climatology = ast.literal_eval(overlayData_clim[key][subKey])
+                            # current year, extended to the previous and next year
+                            # (point order is kept: griddata's triangulation depends on it)
+                            for year in (timeRef.year, timeRef.year - 1, timeRef.year + 1):
+                                climList.append(st.mean([climatology[0], climatology[1]]))
+                                depthList.append(ast.literal_eval(subKey)[0])
+                                timeList.append(np.datetime64(f"{year}-{str(key).zfill(2)}-15", 'D'))
 
                     climTime_TS = [
                         ((dt64 - unix_epoch) / one_second) for dt64 in timeList
@@ -843,13 +719,9 @@ def plotProfilesGrid(
                         maxLim = max(
                             abs(np.nanmin(climDiff)), abs(np.nanmax(climDiff))
                         )
-                        # plot filled contours
-                        climParams = {}
-                        climParams['range'] = 'na'
-                        climParams['norm'] = 'no'
-                        climParams['vmin'] = -maxLim
-                        climParams['vmax'] = maxLim
-                        climPlot = plotter(xiDT, yi, climDiff, 'clim', 'cmo.balance', 'no', climParams, pressLabel)
+                        # full range: symmetric about zero
+                        climParams = {'range': 'na', 'norm': 'no', 'vmin': -maxLim, 'vmax': maxLim}
+                        plotter(xiDT, yi, climDiff, 'clim', 'cmo.balance', 'no', climParams, pressLabel)
                         if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                         fileName = fileName_base + '_' + spanString + '_' + 'clim'
@@ -870,29 +742,9 @@ def plotProfilesGrid(
                         else:
                             colorMapStandard = 'cmo.balance'
                             divColor = 'yes'
-                        if 'yes' in divColor:
-                        #    divnorm = colors.TwoSlopeNorm(
-                        #        vmin=climDiffMin, vcenter=0, vmax=climDiffMax
-                        #    )
-                            # plot filled contours
-                            climParams = {}
-                            climParams['range'] = 'na'
-                            climParams['norm'] = 'yes'
-                            ###climParams['norm']['divnorm'] = divnorm
-                            climParams['vmin'] = climDiffMin
-                            climParams['vmax'] = climDiffMax
-                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams, pressLabel)
-
-                        else:
-                            # plot filled contours
-                            climParams = {}
-                            climParams['range'] = 'na'
-                            climParams['norm'] = 'no'
-                            climParams['vmin'] = climDiffMin
-                            climParams['vmax'] = climDiffMax
-                            logger.info("entering climPlot plotter")
-                            climPlot = plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams, pressLabel)
-                            logger.info("climPlot successful")
+                        # standard/local: actual range, diverging norm when it spans zero
+                        climParams = {'range': 'na', 'norm': divColor, 'vmin': climDiffMin, 'vmax': climDiffMax}
+                        plotter(xiDT, yi, climDiff, 'clim', colorMapStandard, 'no', climParams, pressLabel)
 
                         if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
@@ -986,13 +838,7 @@ def plotADCPVectors(
     plt.ylabel("Depth (m)", fontsize=4)
     ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
     ax.ticklabel_format(useOffset=False)
-    locator = mdates.AutoDateLocator()
-    formatter = mdates.ConciseDateFormatter(locator)
-    formatter.formats = ['%y', '%b', '%m/%d', '%H h', '%H:%M', '%S.%f']
-    formatter.zero_formats = ['', '%b-%Y', '%m/%d', '%m/%d', '%H', '%M']
-    formatter.offset_formats = ['', '', '', '', '', '']
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
+    conciseDateAxis(ax)
     ax.grid(False)
     ax.invert_yaxis()
     plt.xlim(xMin, xMax)
@@ -1092,30 +938,26 @@ def create_interpolation_grid(
         profileDepthGrid = 5
     else:
         profileDepthGrid = 0.5 # half meter spacing for depth axis on shallow profilers
-    xMinTimestamp = xMin.timestamp()
-    xMaxTimestamp = xMax.timestamp()
-    if profileList.empty:
-        print('profileList empty...interpolating with old method...')
-            # x grid in seconds, with points every 1 hour (3600 seconds)
-        xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
-        yi_arr = np.arange(yMin, yMax, profileDepthGrid)
-        xi, yi = np.meshgrid(xi_arr, yi_arr)
 
+    def interpolateToGrid():
+        """Fallback grid: linear interpolation onto an hourly x depth mesh."""
+        xi, yi = np.meshgrid(
+            np.arange(xMin.timestamp(), xMax.timestamp(), 3600),
+            np.arange(yMin, yMax, profileDepthGrid),
+        )
         scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
-
-            # interpolate data to grid
-        zi = griddata(
-                (scatterX_TS, scatterY), scatterZ, (xi, yi), method='linear'
-            )
-
+        zi = griddata((scatterX_TS, scatterY), scatterZ, (xi, yi), method='linear')
         xiDT = xi.astype('datetime64[s]')
-            # mask out any time gaps greater than 1 day
+        # mask out time gaps greater than 1 day
         timeGaps = np.where(np.diff(scatterX_TS) > 86400)
         if len(timeGaps[0]) > 1:
-            gaps = timeGaps[0]
-            for gap in gaps:
-                gapMask = (xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])
-                zi[gapMask] = np.nan
+            for gap in timeGaps[0]:
+                zi[(xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])] = np.nan
+        return xi, yi, zi, xiDT
+
+    if profileList.empty:
+        print('profileList empty...interpolating with old method...')
+        xi, yi, zi, xiDT = interpolateToGrid()
     else:
         if yMax > 300:
             profileDepth = yMax
@@ -1124,26 +966,7 @@ def create_interpolation_grid(
         xi_arr, yi_arr, zi = gridProfiles(baseDS, pressParam, Yparam, profileList, profileDepth, profileDepthGrid)
         if xi_arr.shape[0] == 1:
             logger.info('error with gridding profiles...interpolating with old method...')
-                # x grid in seconds, with points every 1 hour (3600 seconds)
-            xi_arr = np.arange(xMinTimestamp, xMaxTimestamp, 3600)
-                # y grid in meters, with points every 1/2 meter
-            yi_arr = np.arange(yMin, yMax, profileDepthGrid)
-            xi, yi = np.meshgrid(xi_arr, yi_arr)
-
-            scatterX_TS = [((dt64 - unix_epoch) / one_second) for dt64 in scatterX]
-
-                # interpolate data to grid
-            zi = griddata(
-                    (scatterX_TS, scatterY), scatterZ, (xi, yi), method='linear'
-                )
-            xiDT = xi.astype('datetime64[s]')
-                # mask out any time gaps greater than 1 day
-            timeGaps = np.where(np.diff(scatterX_TS) > 86400)
-            if len(timeGaps[0]) > 1:
-                gaps = timeGaps[0]
-                for gap in gaps:
-                    gapMask = (xi > scatterX_TS[gap]) & (xi < scatterX_TS[gap + 1])
-                    zi[gapMask] = np.nan
+            xi, yi, zi, xiDT = interpolateToGrid()
         else:
             logger.info('success gridding profiles...')
             xi, yi = np.meshgrid(xi_arr, yi_arr)
@@ -1195,29 +1018,13 @@ def plot_and_save_no_overlay_plots(
             emptySlice = False
 
         else: # for all other parameters
-            params = {'range':'full'}
-            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
-            if 'deploy' in spanString:
-                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
             fileName = fileName_base + '_' + spanString + '_' + 'none'
-            profilePlot.savefig(fileName + '_full.png', dpi=300)
-            fileNameList.append(fileName + '_full.png')
-            params = {'range':'standard'}
-            params['vmin'] = zMin
-            params['vmax'] = zMax
-            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
-            if 'deploy' in spanString:
-                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-            profilePlot.savefig(fileName + '_standard.png', dpi=300)
-            fileNameList.append(fileName + '_standard.png')
-            params = {'range':'local'}
-            params['vmin'] = zMin_local
-            params['vmax'] = zMax_local
-            profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
-            if 'deploy' in spanString:
-                plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-            profilePlot.savefig(fileName + '_local.png', dpi=300)
-            fileNameList.append(fileName + '_local.png')
+            for plotRange, params in gridRangeParams(zMin, zMax, zMin_local, zMax_local):
+                profilePlot,ax = plotter(xiDT, yi, zi, 'contour', colorMap, 'no', params, pressLabel, plotFunc)
+                if 'deploy' in spanString:
+                    plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
+                profilePlot.savefig(f'{fileName}_{plotRange}.png', dpi=300)
+                fileNameList.append(f'{fileName}_{plotRange}.png')
             emptySlice = False
     else:
         params = {'range':'full'}
@@ -1246,7 +1053,6 @@ def plotProfilesScatter(
     overlayData_anno,
     overlayData_clim,
     overlayData_flag,
-    overlayData_near,
     span,
     spanString,
     profileList,
@@ -1263,7 +1069,7 @@ def plotProfilesScatter(
     dpi = 300
     fileNameList = []
     logger = select_logger()
-    overlays = ['anno', 'clim', 'flag', 'near', 'none']
+    overlays = ['anno', 'clim', 'flag']
     descentSamples = ['pco2_seawater', 'ph_seawater']
     logger.info(paramData)
 
@@ -1295,16 +1101,7 @@ def plotProfilesScatter(
         fileName = fileName.replace('none', overlay)
         if 'anno' in overlay:
             if overlayData_anno:
-                plotAnnotations = {}
-                for i in overlayData_anno:
-                    annoStart = datetime.fromtimestamp(int(i['beginDT'])/1000)
-                    if i['endDT'] is not None:
-                        annoEnd = datetime.fromtimestamp(int(i['endDT'])/1000)
-                    else:
-                        annoEnd = i['endDT']
-                    inRange, startAnnoLine, endAnnoLine = annoInRange(startDate, endDate, annoStart, annoEnd)
-                    if inRange:
-                        plotAnnotations[startAnnoLine] = {'endAnnoLine': endAnnoLine, 'annotation': i['annotation']}
+                plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate)
                 if plotAnnotations:
                     annoLines = []
                     i = 0
@@ -1388,12 +1185,7 @@ def plotProfilesScatter(
                 else:
                     print('no paramters found for ', flagString)
                     plt.plot([0], [0], alpha=0, markersize=0, label=f'no {flagType} flags found')
-            handles, labels = ax.get_legend_handles_labels()
-            patches = [
-                mlines.Line2D([], [], color=h.get_color(), marker=h.get_marker(), markersize=1, linewidth=0, label=l)
-                for h, l in zip(handles, labels)
-            ]
-            legend = ax.legend(handles=patches, loc="upper right", fontsize=3)
+            legend = markerLegend(ax)
             figureHandle.savefig(fileName + '.png', dpi=dpi)
             fileNameList.append(fileName + '.png')
             legend.remove()
@@ -1663,7 +1455,6 @@ def plotScatter(
     overlayData_anno,
     overlayData_clim,
     overlayData_flag,
-    overlayData_near,
     plotMarkerSize,
     span,
     spanString,
@@ -1674,10 +1465,7 @@ def plotScatter(
     """Scatter plots for the dashboard's fixed depth and colormap (default) view"""
     fileNameList = []
     dpi = 300
-    # Plot Overlays
-    overlays = ['anno', 'clim', 'flag', 'near', 'time', 'none']
-
-    # Data Ranges
+    overlays = ['anno', 'clim', 'flag', 'time']
     ranges = ['full', 'standard', 'local']
 
     lineColors = [ # index wraps at the use site
@@ -1698,8 +1486,6 @@ def plotScatter(
         '#f781bf',
         '#808000',
     ]
-    balanceBig = plt.get_cmap('cmo.balance', 512)
-    balanceBlue = ListedColormap(balanceBig(np.linspace(0, 0.5, 256)))
 
     statusString = statusDict.get(site, 'UNAVAILABLE')
 
@@ -1717,38 +1503,19 @@ def plotScatter(
         plt.ylabel(yLabel, fontsize=4)
         ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
         ax.ticklabel_format(useOffset=False)
-        locator = mdates.AutoDateLocator()
-        formatter = mdates.ConciseDateFormatter(locator)
-        formatter.formats = [
-            '%y',  # ticks are mostly years
-            '%b',  # ticks are mostly months
-            '%m/%d',  # ticks are mostly days
-            '%H h',  # hrs
-            '%H:%M',  # min
-            '%S.%f',
-        ]  # secs
-        formatter.zero_formats = [
-            '',  # ticks are mostly years, no need for zero_format
-            '%b-%Y',  # ticks are mostly months, mark month/year
-            '%m/%d',  # ticks are mostly days, mark month/year
-            '%m/%d',  # ticks are mostly hours, mark month and day
-            '%H',  # ticks are montly mins, mark hour
-            '%M',
-        ]  # ticks are mostly seconds, mark minute
-
-        formatter.offset_formats = [
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-        ]
-
-        ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(formatter)
+        conciseDateAxis(ax)
         ax.grid(False)
         return (fig, ax)
+
+
+    def plotPoints(x, y, **kwargs):
+        """Data as plt.plot markers sized by plotMarkerSize ('large' / 'medium' / 'small')."""
+        if 'large' in plotMarkerSize:
+            plt.plot(x, y, '.', markersize=2, **kwargs)
+        elif 'medium' in plotMarkerSize:
+            plt.plot(x, y, '.', markersize=0.75, **kwargs)
+        elif 'small' in plotMarkerSize:
+            plt.plot(x, y, ',', **kwargs)
 
     print('plotting scatter for timeSpan: ', span)
 
@@ -1777,12 +1544,7 @@ def plotScatter(
         plotMarkerSize = 'medium'
     fig, ax = setPlot()
     emptySlice = False
-    if 'large' in plotMarkerSize:
-        plt.plot(scatterX, scatterY, '.', color=lineColors[0], markersize=2)
-    elif 'medium' in plotMarkerSize:
-        plt.plot(scatterX, scatterY, '.', color=lineColors[0], markersize=0.75)
-    elif 'small' in plotMarkerSize:
-        plt.plot(scatterX, scatterY, ',', color=lineColors[0])
+    plotPoints(scatterX, scatterY, color=lineColors[0])
     if 'deploy' in spanString:
         plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
     plt.xlim(xMin, xMax)
@@ -1794,12 +1556,7 @@ def plotScatter(
         )
         emptySlice = True
         plt.xlim(xMin, xMax)
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="2%", pad=0.05)
-    for axis in ['top','bottom','left','right']:
-        cax.spines[axis].set_linewidth(0)
-    cax.set_xticks([])
-    cax.set_yticks([])
+    blankCax(ax)
     fileName = fileName_base + '_' + spanString + '_' + 'none'
     save_fig(fig, fileNameList, fileName, dpi, ['_full'])
     ax.set_ylim(yMin, yMax)
@@ -1821,12 +1578,7 @@ def plotScatter(
                 plotYmax = plotYranges[plotRange]['yMax']
                 fig, ax = setPlot()
                 if not emptySlice:
-                    if 'large' in plotMarkerSize:
-                        plt.plot(scatterX, scatterY, '.', color=lineColors[0], markersize=2, rasterized=True)
-                    elif 'medium' in plotMarkerSize:
-                        plt.plot(scatterX, scatterY, '.', color=lineColors[0], markersize=0.75, rasterized=True)
-                    elif 'small' in plotMarkerSize:
-                        plt.plot(scatterX, scatterY, ',', color=lineColors[0], rasterized=True)
+                    plotPoints(scatterX, scatterY, color=lineColors[0], rasterized=True)
                     if 'deploy' in spanString:
                         plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.', rasterized=True)
                     plt.xlim(xMin, xMax)
@@ -1835,49 +1587,28 @@ def plotScatter(
                         'No Data Available', xy=(0.3, 0.5), xycoords='axes fraction'
                     )
                     plt.xlim(xMin, xMax)
-                divider = make_axes_locatable(ax)
-                cax = divider.append_axes("right", size="2%", pad=0.05)
-                for axis in ['top','bottom','left','right']:
-                    cax.spines[axis].set_linewidth(0)
-                cax.set_xticks([])
-                cax.set_yticks([])
+                blankCax(ax)
                 ax.set_ylim(plotYmin, plotYmax)
-                if overlayData_anno:
-                    plotAnnotations = {}
-                    for i in overlayData_anno:
-                        annoStart = datetime.fromtimestamp(int(i['beginDT'])/1000)
-                        if i['endDT'] is not None:
-                            annoEnd = datetime.fromtimestamp(int(i['endDT'])/1000)
-                        else:
-                            annoEnd = i['endDT']
-                        inRange,startAnnoLine,endAnnoLine = annoInRange(startDate,endDate,annoStart,annoEnd)
-                        if inRange:
-                            plotAnnotations[startAnnoLine] = {'endAnnoLine': endAnnoLine, 'annotation': i['annotation']}
-                    if plotAnnotations:
-                        annoLines = []
-                        i = 0
-                        for k in plotAnnotations.keys():
-                            annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
-                            A = ax.axhline(plotYmin,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
-                            A.set_gid(f'anno_{i}')
-                            annoLines.append(A)
-                            annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
-                            annoText = ax.annotate(annotationString,
-                                       xy=(k,plotYmin),xytext=(0.25,0.25), textcoords='axes fraction',
-                                       bbox=dict(boxstyle='round',facecolor='white'),wrap=True,fontsize=5,
-                                       zorder = 20, clip_on=True
-                            )
-                            annoText.set_gid(f'label_{i}')
-                            i += 1
-                        f=io.BytesIO()
-                        plt.savefig(f, format="svg",dpi=dpi)
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
-                        saveAnnos_SVG(annoLines,f,fileName)
-                    else:
-                        fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
-                        plt.savefig(fileName + '.png', dpi=dpi)
+                fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
+                plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate) if overlayData_anno else {}
+                if plotAnnotations:
+                    annoLines = []
+                    for i, k in enumerate(plotAnnotations):
+                        annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
+                        A = ax.axhline(plotYmin,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
+                        A.set_gid(f'anno_{i}')
+                        annoLines.append(A)
+                        annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
+                        annoText = ax.annotate(annotationString,
+                                   xy=(k,plotYmin),xytext=(0.25,0.25), textcoords='axes fraction',
+                                   bbox=dict(boxstyle='round',facecolor='white'),wrap=True,fontsize=5,
+                                   zorder = 20, clip_on=True
+                        )
+                        annoText.set_gid(f'label_{i}')
+                    f=io.BytesIO()
+                    plt.savefig(f, format="svg",dpi=dpi)
+                    saveAnnos_SVG(annoLines,f,fileName)
                 else:
-                    fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
                     plt.savefig(fileName + '.png', dpi=dpi)
 
 
@@ -1925,41 +1656,15 @@ def plotScatter(
                     if len(timeX) > 0:
                         timeY = timeDS.values
                     c = lineColors[yearDiff % len(lineColors)] # instruments with more years wrap
-                    if 'large' in plotMarkerSize:
-                        plt.plot(timeX, timeY,'.',markersize=2,c=c,label='%s' % legendString,)
-                    elif 'medium' in plotMarkerSize:
-                        plt.plot(timeX,timeY,'.',markersize=0.75,c=c,label='%s' % legendString,)
-                    elif 'small' in plotMarkerSize:
-                        plt.plot(timeX,timeY,',',c=c,label='%s' % legendString,)
+                    plotPoints(timeX, timeY, c=c, label=legendString)
                     if 'deploy' in spanString:
                         deployTime_plot = timeTrace[0] + np.timedelta64(timedelta(days=365 * yearDiff))
                         plt.axvline(deployTime_plot,linewidth=1,color=c,linestyle='-.')
                 del timeDS
                 gc.collect()
 
-            # generating custom legend
-            handles, labels = ax.get_legend_handles_labels()
-            patches = []
-            for handle, label in zip(handles, labels):
-                patches.append(
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=handle.get_color(),
-                        marker='o',
-                        markersize=1,
-                        linewidth=0,
-                        label=label,
-                    )
-                )
-
-            legend = ax.legend(handles=patches, loc="upper right", fontsize=3)
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="2%", pad=0.05)
-            for axis in ['top','bottom','left','right']:
-                cax.spines[axis].set_linewidth(0)
-            cax.set_xticks([])
-            cax.set_yticks([])
+            markerLegend(ax, marker='o')
+            blankCax(ax)
             fileName = fileName_base + '_' + spanString + '_' + overlay
             save_fig(fig, fileNameList, fileName, dpi, ['_full'])
             ax.set_ylim(yMin, yMax)
@@ -1974,25 +1679,7 @@ def plotScatter(
                 fig, ax = setPlot()
                 plt.xlim(xMin, xMax)
                 if not overlayData_clim.empty:
-                    if 'large' in plotMarkerSize:
-                        plt.plot(
-                            scatterX,
-                            scatterY,
-                            '.',
-                            color=lineColors[0],
-                            markersize=2,
-                        )
-                    elif 'medium' in plotMarkerSize:
-                        plt.plot(
-                            scatterX,
-                            scatterY,
-                            '.',
-                            color=lineColors[0],
-                            markersize=0.75,
-                        )
-                    elif 'small' in plotMarkerSize:
-                        plt.plot(scatterX, scatterY, ',', color=lineColors[0])
-
+                    plotPoints(scatterX, scatterY, color=lineColors[0])
                     plt.fill_between(
                         overlayData_clim.index,
                         overlayData_clim.climMinus3std,
@@ -2015,22 +1702,13 @@ def plotScatter(
                     )
                 if 'deploy' in spanString:
                     plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                divider = make_axes_locatable(ax)
-                cax = divider.append_axes("right", size="2%", pad=0.05)
-                for axis in ['top','bottom','left','right']:
-                    cax.spines[axis].set_linewidth(0)
-                cax.set_xticks([])
-                cax.set_yticks([])
+                blankCax(ax)
                 fileName = fileName_base + '_' + spanString + '_' + 'clim'
                 save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                 ax.set_ylim(yMin, yMax)
                 save_fig(fig, fileNameList, fileName, dpi, ['_standard'])
                 ax.set_ylim(yMin_local, yMax_local)
                 save_fig(fig, fileNameList, fileName, dpi, ['_local'])
-
-        if 'near' in overlay:
-            # add nearest neighbor data traces
-            print('adding nearest neighbor data to plot')
 
         if 'flag' in overlay:
             # highlight flagged data points
@@ -2042,29 +1720,8 @@ def plotScatter(
                     legendString = 'all data <STAGED QARTOD>'
                 else:
                     legendString = 'all data'
-                if 'large' in plotMarkerSize:
-                    flagMarker = 3
-                    plt.plot(
-                        scatterX, 
-                        scatterY,
-                        '.',
-                        color=lineColors[0],
-                        markersize=2,
-                        label='%s' % legendString,
-                    )
-                elif 'medium' in plotMarkerSize:
-                    flagMarker = 1.5
-                    plt.plot(
-                        scatterX,
-                        scatterY,
-                        '.',
-                        color=lineColors[0],
-                        markersize=0.75,
-                        label='%s' % legendString,
-                    )
-                elif 'small' in plotMarkerSize:
-                    flagMarker = 0.25
-                    plt.plot(scatterX, scatterY, ',', color=lineColors[0], label='%s' % legendString,)
+                flagMarker = 3 if 'large' in plotMarkerSize else 1.5 if 'medium' in plotMarkerSize else 0.25
+                plotPoints(scatterX, scatterY, color=lineColors[0], label=legendString)
                 # slice overlayData_flag so we're not working on whole dataset; load the
                 # window once so each flag type/level below doesn't re-read it from s3
                 qcDS = overlayData_flag.sel(time=slice(startDate, endDate)).load()
@@ -2109,33 +1766,11 @@ def plotScatter(
                         legendString = f'no {flagType} flags found'
                         plt.plot(scatterX, scatterY, alpha=0, markersize=0, label='%s' % legendString)
 
-                # generating custom legend 
-                handles, labels = ax.get_legend_handles_labels()
-                patches = []
-                for handle, label in zip(handles, labels):
-                    patches.append(
-                        mlines.Line2D(
-                            [],  
-                            [],
-                            color=handle.get_color(),
-                            marker=handle.get_marker(),
-                            markersize=1,
-                            linewidth=0,  
-                            label=label,
-                        )
-                    )
-                  
-                legend = ax.legend(handles=patches, loc="upper right", fontsize=3)
-
+                markerLegend(ax)
 
                 if 'deploy' in spanString:
                     plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
-                divider = make_axes_locatable(ax)
-                cax = divider.append_axes("right", size="2%", pad=0.05)
-                for axis in ['top','bottom','left','right']:
-                    cax.spines[axis].set_linewidth(0)
-                cax.set_xticks([])
-                cax.set_yticks([])
+                blankCax(ax)
                 fileName = fileName_base + '_' + spanString + '_' + 'flag'
                 save_fig(fig, fileNameList, fileName, dpi, ['_full'])
                 ax.set_ylim(yMin, yMax)
@@ -2211,20 +1846,6 @@ def retrieve_qc(ds):
 
         # add the QC_FLAGS to the dataset, rolling up the results into a single value
         ds[qc_summary] = ('time', flags.max(axis=1, initial=1).astype(np.int32))
-
-    ## create a list of the variables that have had QARTOD tests applied
-    ##variables = [x.split('_qartod_executed')[0] for x in ds.variables if 'qartod_executed' in x]
-
-    ### for each variable with qc tests applied
-    ##for var in variables:
-    ##    qartodString = var + '_qartod_executed'
-    ##    flagNameBase = var + '_qartod_'
-    ##    testOrder = ds[qartodString][0].tests_executed.strip("'").replace(" ","").split(',')
-    ##    for i in range(0, len(testOrder)):
-    ##        flagString = testOrder[i]
-    ##        flagIndex = testOrder.index(flagString)
-    ##        flagName = flagNameBase + flagString
-    ##        ds[flagName] = [int(i[flagIndex]) for i in ds[qartodString].values.tolist()]
 
     return ds
 

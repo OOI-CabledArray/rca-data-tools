@@ -64,7 +64,6 @@ class QAQCPipeline:
 
     def __setup(self):
         # TODO Don S: data filtering/verification should occur in this class
-        self.created_dt = datetime.datetime.utcnow()
         if self.site not in ALL_CONFIGS_DICT:
             raise ValueError(
                 f"{self.site} is not available. Available sites {','.join(list(ALL_CONFIGS_DICT.keys()))}"  # noqa
@@ -138,7 +137,7 @@ class QAQCPipeline:
         """
         Runs the flow either in the cloud or locally.
         """
-        if self._params_valid == False:
+        if not self._params_valid:
             logger.info(f"{self.name} with span {self.span} is not a valid combination skipping...")
         else:
             if parameters is None:
