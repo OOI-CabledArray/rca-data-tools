@@ -7,7 +7,7 @@ This module contains code for creating pngs to feed into the QAQC dashboard.
 import matplotlib
 
 import ast
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dateutil import parser
 from prefect import task
 
@@ -328,15 +328,21 @@ def annoXnormalize(startDate,endDate,annoMinDate,annoMaxDate):
     return annoXmin,annoXmax
 
 
+def annoTime(ms):
+    """OOI annotation epoch-ms -> naive UTC datetime (data times are naive UTC)."""
+    return datetime.fromtimestamp(int(ms)/1000, tz=timezone.utc).replace(tzinfo=None)
+
+
 def annotationsInRange(overlayData_anno, startDate, endDate):
-    """Annotations overlapping the plot window, keyed by where their line starts."""
-    plotAnnotations = {}
+    """(lineStart, lineEnd, text) for each annotation overlapping the plot window,
+    with the line clipped to the window. A list, so annotations that share a
+    clipped start (all those begun before the window) are all kept."""
+    plotAnnotations = []
     for i in overlayData_anno:
-        annoStart = datetime.fromtimestamp(int(i['beginDT'])/1000)
-        annoEnd = datetime.fromtimestamp(int(i['endDT'])/1000) if i['endDT'] is not None else None
-        inRange, startAnnoLine, endAnnoLine = annoInRange(startDate, endDate, annoStart, annoEnd)
+        annoEnd = annoTime(i['endDT']) if i['endDT'] is not None else None
+        inRange, startAnnoLine, endAnnoLine = annoInRange(startDate, endDate, annoTime(i['beginDT']), annoEnd)
         if inRange:
-            plotAnnotations[startAnnoLine] = {'endAnnoLine': endAnnoLine, 'annotation': i['annotation']}
+            plotAnnotations.append((startAnnoLine, endAnnoLine, i['annotation']))
     return plotAnnotations
 
 
@@ -662,14 +668,14 @@ def plotProfilesGrid(
                         fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
                         if plotAnnotations:
                             annoLines = []
-                            for i, k in enumerate(plotAnnotations):
-                                annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
+                            for i, (lineStart, lineEnd, text) in enumerate(plotAnnotations):
+                                annoXmin,annoXmax = annoXnormalize(startDate,endDate,lineStart,lineEnd)
                                 A = ax.axhline(yMax,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
                                 A.set_gid(f'anno_{i}')
                                 annoLines.append(A)
-                                annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
+                                annotationString = tw.fill(tw.dedent(text.rstrip()), width=50)
                                 annoText = ax.annotate(annotationString,
-                                           xy=(k,yMax),xytext=(0.25,0.25), textcoords='axes fraction',
+                                           xy=(lineStart,yMax),xytext=(0.25,0.25), textcoords='axes fraction',
                                            bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
                                            zorder = 1, clip_on=True
                                 )
@@ -1103,32 +1109,29 @@ def plotProfilesScatter(
             if overlayData_anno:
                 plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate)
                 if plotAnnotations:
-                    annoLines = []
-                    i = 0
+                    annoLines, annoTexts = [], []
                     yLimits = plt.gca().get_ylim()
                     xLimits = plt.gca().get_xlim()
-                    j = len(plotAnnotations)
-                    annoLineColors = list(colors.cnames.values())[0:j]
-                    for k in plotAnnotations.keys():
-                        A = axHandle.axhline(yLimits[0]+3+(i*10), 0.75, 1, linewidth=3, color=annoLineColors[i], linestyle='-')
+                    annoLineColors = plt.get_cmap('Dark2').colors  # visible on white, distinct from the blue data
+                    for i, (_, _, text) in enumerate(plotAnnotations):
+                        A = axHandle.axhline(yLimits[0]+3+(i*10), 0.75, 1, linewidth=3,
+                                             color=annoLineColors[i % len(annoLineColors)], linestyle='-')
                         A.set_gid(f'anno_{i}')
                         annoLines.append(A)
-                        annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
+                        annotationString = tw.fill(tw.dedent(text.rstrip()), width=50)
                         annoText = axHandle.annotate(annotationString,
                                    xy=(xLimits[0], yLimits[0]), xytext=(0.25, 0.25), textcoords='axes fraction',
                                    bbox=dict(boxstyle='round', fc='w'), wrap=True, fontsize=5,
                                    zorder=1, clip_on=True)
                         annoText.set_gid(f'label_{i}')
-                        i += 1
+                        annoTexts.append(annoText)
                     f = io.BytesIO()
                     figureHandle.savefig(f, format="svg", dpi=dpi)
                     saveAnnos_SVG(annoLines, f, fileName)
                     fileNameList.append(fileName + '.svg')
-                    for child in axHandle.get_children():
-                        if isinstance(child, matplotlib.text.Annotation):
-                            child.remove()
-                        if isinstance(child, matplotlib.lines.Line2D):
-                            child.remove()
+                    # remove only what this overlay added; the data (plt.plot on day plots) is a Line2D too
+                    for artist in annoLines + annoTexts:
+                        artist.remove()
                 else:
                     figureHandle.savefig(fileName + '.png', dpi=dpi)
                     fileNameList.append(fileName + '.png')
@@ -1146,15 +1149,15 @@ def plotProfilesScatter(
             climatology = extractClimProfiles(climMonths, overlayData_clim)
             if climatology:
                 xLimits = plt.gca().get_xlim()
+                climLines = []
                 for climMonth in climMonths:
                     climDepth = [-x for x in climatology[str(climMonth)]['depth']]
-                    plt.plot(climatology[str(climMonth)]['climData'], climDepth, '-.', color='r', alpha=0.4, linewidth=0.25)
+                    climLines += plt.plot(climatology[str(climMonth)]['climData'], climDepth, '-.', color='r', alpha=0.4, linewidth=0.25)
                 plt.xlim(xLimits[0], xLimits[1])
                 figureHandle.savefig(fileName + '.png', dpi=dpi)
                 fileNameList.append(fileName + '.png')
-                for child in axHandle.get_children():
-                    if isinstance(child, matplotlib.lines.Line2D):
-                        child.remove()
+                for line in climLines:
+                    line.remove()
 
         elif 'flag' in overlay:
             flag_src = _flag_precomputed if _flag_precomputed is not None else overlayData_flag
@@ -1164,6 +1167,7 @@ def plotProfilesScatter(
                 qartodRunner = QartodRunner(site, Xparam, baseDS, False, QC_FLAGS, qcDS)
                 qcDS = qartodRunner.create_qartod_viz_ds()
                 qcDS = qcDS.sel(time=slice(timeSpan[0], timeSpan[1]))
+            flagLines = []
             for flagType in QC_FLAGS.keys():
                 flagString = Xparam + QC_FLAGS[flagType]['param']
                 if flagString in qcDS:
@@ -1178,20 +1182,19 @@ def plotProfilesScatter(
                         flag_X = flaggedDS[Xparam].values
                         if len(flag_X) > 0:
                             legendString = f'{flagType} {level}: {len(flag_X)} points'
-                            plt.plot(flag_X, -flaggedDS[pressParam].values, QC_FLAGS[flagType]['symbol'],
-                                     color=flagStatus[level]['color'], markersize=1, label=legendString)
+                            flagLines += plt.plot(flag_X, -flaggedDS[pressParam].values, QC_FLAGS[flagType]['symbol'],
+                                                  color=flagStatus[level]['color'], markersize=1, label=legendString)
                         else:
-                            plt.plot([0], [0], color='w', markersize=0, label=f'{flagType} {level}: no points flagged')
+                            flagLines += plt.plot([0], [0], color='w', markersize=0, label=f'{flagType} {level}: no points flagged')
                 else:
                     print('no paramters found for ', flagString)
-                    plt.plot([0], [0], alpha=0, markersize=0, label=f'no {flagType} flags found')
+                    flagLines += plt.plot([0], [0], alpha=0, markersize=0, label=f'no {flagType} flags found')
             legend = markerLegend(ax)
             figureHandle.savefig(fileName + '.png', dpi=dpi)
             fileNameList.append(fileName + '.png')
             legend.remove()
-            for child in axHandle.get_children():
-                if isinstance(child, matplotlib.lines.Line2D):
-                    child.remove()
+            for line in flagLines:
+                line.remove()
 
 
     def build_scatter_data(ds, profiles):
@@ -1590,17 +1593,17 @@ def plotScatter(
                 blankCax(ax)
                 ax.set_ylim(plotYmin, plotYmax)
                 fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
-                plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate) if overlayData_anno else {}
+                plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate) if overlayData_anno else []
                 if plotAnnotations:
                     annoLines = []
-                    for i, k in enumerate(plotAnnotations):
-                        annoXmin,annoXmax = annoXnormalize(startDate,endDate,k,plotAnnotations[k]['endAnnoLine'])
+                    for i, (lineStart, lineEnd, text) in enumerate(plotAnnotations):
+                        annoXmin,annoXmax = annoXnormalize(startDate,endDate,lineStart,lineEnd)
                         A = ax.axhline(plotYmin,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
                         A.set_gid(f'anno_{i}')
                         annoLines.append(A)
-                        annotationString = tw.fill(tw.dedent(plotAnnotations[k]['annotation'].rstrip()), width=50)
+                        annotationString = tw.fill(tw.dedent(text.rstrip()), width=50)
                         annoText = ax.annotate(annotationString,
-                                   xy=(k,plotYmin),xytext=(0.25,0.25), textcoords='axes fraction',
+                                   xy=(lineStart,plotYmin),xytext=(0.25,0.25), textcoords='axes fraction',
                                    bbox=dict(boxstyle='round',facecolor='white'),wrap=True,fontsize=5,
                                    zorder = 20, clip_on=True
                         )
