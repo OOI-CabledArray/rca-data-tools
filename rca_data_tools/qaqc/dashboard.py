@@ -346,6 +346,66 @@ def annotationsInRange(overlayData_anno, startDate, endDate):
     return plotAnnotations
 
 
+ANNO_COLORS = plt.get_cmap('Dark2').colors  # visible on white, distinct from the blue data
+
+
+def annotationLanes(spans):
+    """Lane index for each (x0, x1) span; spans that overlap get different lanes."""
+    lanes, laneEnds = [0] * len(spans), []
+    for i in sorted(range(len(spans)), key=lambda i: spans[i][0]):
+        x0, x1 = spans[i]
+        lane = next((n for n, end in enumerate(laneEnds) if end < x0), len(laneEnds))
+        if lane == len(laneEnds):
+            laneEnds.append(x1)
+        else:
+            laneEnds[lane] = x1
+        lanes[i] = lane
+    return lanes
+
+
+def saveAnnotationSVG(fig, ax, plotAnnotations, fileName, startDate=None, endDate=None, dpi=300):
+    """Write the annotation overlay as <fileName>.svg.
+
+    Always SVG, even with no annotations, so the file never alternates with a
+    .png of the same view. Each annotation is a hoverable line; overlapping ones
+    get their own lane along the bottom of the axes, and the text shows on hover
+    just above its line. Plots without a time axis (startDate None, profiles)
+    stack the lines at the right edge. Returns the added artists so a caller
+    reusing the figure can remove them.
+    """
+    if startDate is not None:
+        spans = [annoXnormalize(startDate, endDate, start, end) for start, end, _ in plotAnnotations]
+        lanes = annotationLanes(spans)
+    else:
+        spans = [(0.75, 1.0)] * len(plotAnnotations)
+        lanes = list(range(len(plotAnnotations)))
+
+    # tooltips sit above the whole stack of lines, so an open one never hides another line
+    labelY = 0.03 + (max(lanes, default=0) + 1) * 0.04
+    annoLines, artists = [], []
+    for i, ((x0, x1), lane, (_, _, text)) in enumerate(zip(spans, lanes, plotAnnotations)):
+        y = 0.03 + lane * 0.04
+        color = ANNO_COLORS[i % len(ANNO_COLORS)]
+        line = mlines.Line2D([x0, x1], [y, y], transform=ax.transAxes, color=color,
+                             linewidth=3, solid_capstyle='butt', zorder=20)
+        ax.add_line(line)
+        line.set_gid(f'anno_{i}')
+        # grow the box away from the nearer edge so it stays inside the axes
+        right = (x0 + x1) / 2 > 0.5
+        label = ax.annotate(tw.fill(tw.dedent(text.rstrip()), width=50),
+                            xy=(min(x1, 0.99) if right else max(x0, 0.01), labelY), xycoords='axes fraction',
+                            ha='right' if right else 'left', va='bottom', fontsize=5, zorder=21,
+                            bbox=dict(boxstyle='round', fc='w', ec=color))
+        label.set_gid(f'label_{i}')
+        annoLines.append(line)
+        artists += [line, label]
+
+    f = io.BytesIO()
+    fig.savefig(f, format='svg', dpi=dpi)
+    saveAnnos_SVG(annoLines, f, fileName)
+    return artists
+
+
 def conciseDateAxis(ax):
     """Compact date ticks shared by the time-series plots."""
     locator = mdates.AutoDateLocator()
@@ -393,9 +453,7 @@ def saveAnnos_SVG(annoLines,fileObject,fileName):
     tree, xmlid = et.XMLID(fileObject.getvalue())
     tree.set('onload', 'init(event)')
 
-    for i in annoLines:
-        # Get the index of the shape
-        index = annoLines.index(i)
+    for index in range(len(annoLines)):
         # Hide the tooltips
         tooltip = xmlid[f'label_{index}']
         tooltip.set('visibility', 'hidden')
@@ -666,25 +724,7 @@ def plotProfilesGrid(
                         if 'deploy' in spanString:
                             plt.axvline(timeRef_deploy,linewidth=1,color='k',linestyle='-.')
                         fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
-                        if plotAnnotations:
-                            annoLines = []
-                            for i, (lineStart, lineEnd, text) in enumerate(plotAnnotations):
-                                annoXmin,annoXmax = annoXnormalize(startDate,endDate,lineStart,lineEnd)
-                                A = ax.axhline(yMax,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
-                                A.set_gid(f'anno_{i}')
-                                annoLines.append(A)
-                                annotationString = tw.fill(tw.dedent(text.rstrip()), width=50)
-                                annoText = ax.annotate(annotationString,
-                                           xy=(lineStart,yMax),xytext=(0.25,0.25), textcoords='axes fraction',
-                                           bbox=dict(boxstyle='round',fc='w'),wrap=True,fontsize=5,
-                                           zorder = 1, clip_on=True
-                                )
-                                annoText.set_gid(f'label_{i}')
-                            f=io.BytesIO()
-                            plt.savefig(f, format="svg",dpi=300)
-                            saveAnnos_SVG(annoLines,f,fileName)
-                        else:
-                            profilePlot.savefig(fileName + '.png', dpi=300)
+                        saveAnnotationSVG(profilePlot, ax, plotAnnotations, fileName, startDate, endDate)
 
             if 'clim' in overlay:
                 if overlayData_clim:
@@ -772,8 +812,12 @@ def plotProfilesGrid(
         logger.info("saving files and created fileNameList...")
         profilePlot,ax = plotter(0, 0, 0, 'empty', colorMap, 'No Data Available', params, pressLabel)
         for overlay in overlays:
-            if 'none' not in overlay:
-                fileName = fileName_base + '_' + spanString + '_' + overlay
+            fileName = fileName_base + '_' + spanString + '_' + overlay
+            if overlay == 'anno':  # annotation views are always SVG
+                for plotRange in ['_full', '_standard', '_local']:
+                    saveAnnotationSVG(profilePlot, ax, [], fileName + plotRange)
+                    fileNameList.append(fileName + plotRange + '.svg')
+            elif overlay != 'none':
                 save_fig(profilePlot, fileNameList, fileName, dpi, ['_full', '_standard', '_local'])
 
     return fileNameList
@@ -1108,33 +1152,10 @@ def plotProfilesScatter(
         if 'anno' in overlay:
             if overlayData_anno:
                 plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate)
-                if plotAnnotations:
-                    annoLines, annoTexts = [], []
-                    yLimits = plt.gca().get_ylim()
-                    xLimits = plt.gca().get_xlim()
-                    annoLineColors = plt.get_cmap('Dark2').colors  # visible on white, distinct from the blue data
-                    for i, (_, _, text) in enumerate(plotAnnotations):
-                        A = axHandle.axhline(yLimits[0]+3+(i*10), 0.75, 1, linewidth=3,
-                                             color=annoLineColors[i % len(annoLineColors)], linestyle='-')
-                        A.set_gid(f'anno_{i}')
-                        annoLines.append(A)
-                        annotationString = tw.fill(tw.dedent(text.rstrip()), width=50)
-                        annoText = axHandle.annotate(annotationString,
-                                   xy=(xLimits[0], yLimits[0]), xytext=(0.25, 0.25), textcoords='axes fraction',
-                                   bbox=dict(boxstyle='round', fc='w'), wrap=True, fontsize=5,
-                                   zorder=1, clip_on=True)
-                        annoText.set_gid(f'label_{i}')
-                        annoTexts.append(annoText)
-                    f = io.BytesIO()
-                    figureHandle.savefig(f, format="svg", dpi=dpi)
-                    saveAnnos_SVG(annoLines, f, fileName)
-                    fileNameList.append(fileName + '.svg')
-                    # remove only what this overlay added; the data (plt.plot on day plots) is a Line2D too
-                    for artist in annoLines + annoTexts:
-                        artist.remove()
-                else:
-                    figureHandle.savefig(fileName + '.png', dpi=dpi)
-                    fileNameList.append(fileName + '.png')
+                # remove only what this overlay added; the data (plt.plot on day plots) is a Line2D too
+                for artist in saveAnnotationSVG(figureHandle, axHandle, plotAnnotations, fileName, dpi=dpi):
+                    artist.remove()
+                fileNameList.append(fileName + '.svg')
 
         elif 'clim' in overlay:
             climatology = {}
@@ -1594,25 +1615,7 @@ def plotScatter(
                 ax.set_ylim(plotYmin, plotYmax)
                 fileName = fileName_base + '_' + spanString + '_' + 'anno_' + plotRange
                 plotAnnotations = annotationsInRange(overlayData_anno, startDate, endDate) if overlayData_anno else []
-                if plotAnnotations:
-                    annoLines = []
-                    for i, (lineStart, lineEnd, text) in enumerate(plotAnnotations):
-                        annoXmin,annoXmax = annoXnormalize(startDate,endDate,lineStart,lineEnd)
-                        A = ax.axhline(plotYmin,annoXmin,annoXmax,linewidth=3,color='r',linestyle='-')
-                        A.set_gid(f'anno_{i}')
-                        annoLines.append(A)
-                        annotationString = tw.fill(tw.dedent(text.rstrip()), width=50)
-                        annoText = ax.annotate(annotationString,
-                                   xy=(lineStart,plotYmin),xytext=(0.25,0.25), textcoords='axes fraction',
-                                   bbox=dict(boxstyle='round',facecolor='white'),wrap=True,fontsize=5,
-                                   zorder = 20, clip_on=True
-                        )
-                        annoText.set_gid(f'label_{i}')
-                    f=io.BytesIO()
-                    plt.savefig(f, format="svg",dpi=dpi)
-                    saveAnnos_SVG(annoLines,f,fileName)
-                else:
-                    plt.savefig(fileName + '.png', dpi=dpi)
+                saveAnnotationSVG(fig, ax, plotAnnotations, fileName, startDate, endDate, dpi)
 
 
         if 'time' in overlay:
