@@ -23,7 +23,6 @@ fileName_base = 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2'
 overlayData_anno = pickle.load(open('./tests/toy_data/PCO2WA101_overlayData_anno.pickle', 'rb'))
 overlayData_clim = pickle.load(open('./tests/toy_data/PCO2WA101_overlayData_clim.pickle', 'rb'))
 overlayData_flag = xr.open_dataset('./tests/toy_data/PCO2WA101_overlayData_flag.nc')
-overlayData_near = {}
 span = '1'
 spanString = 'day'
 #profileList = pd.read_csv('./tests/toy_data/profileList.csv') # this may need to be static
@@ -59,13 +58,13 @@ def test_plotProfilesScatter(test_timeRef):
         overlayData_anno=overlayData_anno,
         overlayData_clim=overlayData_clim,
         overlayData_flag=overlayData_flag,
-        overlayData_near=overlayData_near,
         span=span,
         spanString=spanString,
         profileList=profileList,
         statusDict=statusDict,
         site=site,
-        homebrew_qartod=homebrew_qartod
+        homebrew_qartod=homebrew_qartod,
+        express=False,
     )
 
     assert fileNameList == expected_fileNameList

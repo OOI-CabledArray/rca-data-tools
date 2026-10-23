@@ -60,12 +60,6 @@ def np_mean(array: np.ndarray, axis: int) -> np.ndarray:
 
 
 @numba.njit
-def np_median(array: np.ndarray, axis: int) -> np.ndarray:
-    """Simple numpy median re-creation for numba"""
-    return _np_apply_along_axis(np.median, axis, array)
-
-
-@numba.njit
 def _areas_of_triangles(a: np.ndarray, bs: np.ndarray, c: np.ndarray):
     """Calculate areas of triangles from duples of vertex coordinates.
 

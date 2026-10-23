@@ -291,19 +291,13 @@ def run_dashboard_creation(
                         profile_paramMin_local = localRange["local_profile"][0]
                         profile_paramMax_local = localRange["local_profile"][1]
                 except KeyError:
-                    logger.warning(f"No local range defined. Defaulting to full range.")
+                    logger.warning("No local range defined. Defaulting to full range.")
 
                 yLabel = VARIABLE_PARAM_DICT[param]["label"]
 
-                # Load overlayData
-                overlayData_clim = {}
-                overlayData_grossRange = {}
+                # climatology overlay (the gross range is used by QARTOD, not the plots)
                 sensorType = site.split("-")[3][0:5].lower()
-                (overlayData_clim, overlayData_grossRange) = loadQARTOD(
-                    site, Yparam, sensorType, logger=logger
-                )
-                overlayData_near = {}
-                # overlayData_near = loadNear(site)
+                overlayData_clim, _ = loadQARTOD(site, Yparam, sensorType, logger=logger)
 
                 if "PROFILER" in plotInstrument:
                     pressureParams = VARIABLE_DICT["pressure"].strip('"').split(",")
@@ -341,7 +335,6 @@ def run_dashboard_creation(
                             imageName_base,
                             overlayData_anno,
                             overlayData_clim,
-                            overlayData_near,
                             span,
                             spanString,
                             profileList,
@@ -368,7 +361,6 @@ def run_dashboard_creation(
                                 overlayData_anno,
                                 overlayData_clim,
                                 overlayData_flag,
-                                overlayData_near,
                                 span,
                                 spanString,
                                 profileList,
@@ -419,7 +411,6 @@ def run_dashboard_creation(
                                         overlayData_anno,
                                         overlayData_clim_extract,
                                         overlayData_flag_extract,
-                                        overlayData_near,
                                         "medium",
                                         span,
                                         spanString,
@@ -456,7 +447,6 @@ def run_dashboard_creation(
                         overlayData_anno,
                         overlayData_clim_extract,
                         overlayData_flag,
-                        overlayData_near,
                         "small",
                         span,
                         spanString,
