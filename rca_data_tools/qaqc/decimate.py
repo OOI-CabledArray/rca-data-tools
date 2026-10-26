@@ -8,7 +8,7 @@ import math
 import numba
 import numpy as np
 import pandas as pd
-from typing import Callable, Optional
+from typing import Optional
 import logging
 import xarray as xr
 import dask.array as darray
@@ -17,126 +17,68 @@ from functools import reduce
 
 
 @numba.njit
-def split_data(data: np.ndarray, n_bins: int) -> np.ndarray:
-    """
-    Splits the data by the number of bins
+def _lttb_loop(data: np.ndarray, threshold: int) -> np.ndarray:
+    """Largest Triangle Three Buckets, after https://github.com/devoxi/lttb-py.
 
-    Parameters
-    ----------
-    data : np.ndarray
-        The data to be split
-    n_bins : int
-        The number of bins the data should be divided into
+    Keeps the first and last points; for each of the threshold-2 buckets, takes
+    the time at the bucket middle and the value of the point forming the largest
+    triangle with the previous output point and the next bucket's mean.
 
-    Returns
-    -------
-    np.ndarray
-        The split data arrays
-    """
-    return np.array_split(data[1 : len(data) - 1], n_bins)
-
-
-@numba.njit
-def _np_apply_along_axis(
-    func1d: Callable, axis: int, arr: np.ndarray
-) -> np.ndarray:
-    assert arr.ndim == 2
-    assert axis in [0, 1]
-    if axis == 0:
-        result = np.empty(arr.shape[1])
-        for i in range(len(result)):
-            result[i] = func1d(arr[:, i])
-    else:
-        result = np.empty(arr.shape[0])
-        for i in range(len(result)):
-            result[i] = func1d(arr[i, :])
-    return result
-
-
-@numba.njit
-def np_mean(array: np.ndarray, axis: int) -> np.ndarray:
-    """Simple numpy mean re-creation for numba"""
-    return _np_apply_along_axis(np.mean, axis, array)
-
-
-@numba.njit
-def _areas_of_triangles(a: np.ndarray, bs: np.ndarray, c: np.ndarray):
-    """Calculate areas of triangles from duples of vertex coordinates.
-
-    Uses implicit numpy broadcasting along first axis of ``bs``.
-
-    Parameters
-    ----------
-    a : np.ndarray
-        Point a
-    bs : np.ndarray
-        Current data bin
-    c : np.ndarray
-        The mean of the next bin
-    Returns
-    -------
-    numpy.array
-        Array of areas of shape (len(bs),)
-    """
-    bs_minus_a = bs - a
-    a_minus_bs = a - bs
-    return 0.5 * np.absolute(
-        (a[0] - c[0]) * (bs_minus_a[:, 1]) - (a_minus_bs[:, 0]) * (c[1] - a[1])
-    )
-
-
-@numba.njit
-def _largest_triangle_three_buckets(
-    data: np.ndarray, threshold: int
-) -> np.array:
-    """
-    Return a downsampled version of data.
-    Original code found at https://github.com/devoxi/lttb-py.
-
-    Parameters
-    ----------
-    data : np.ndarray
-        Original data that will be decimated.
-        Must be a numpy array or list of lists.
-        Data must be formatted this way: [[x,y], [x,y], [x,y], ...]
-    threshold : int
-        threshold must be >= 2 and <= to the len of data.
-    Returns
-    -------
-    numpy.ndarray
-        Decimated data.
+    Same output, bit for bit, as the original list-of-buckets version: buckets sized like np.array_split, the next-bucket
+    mean summed sequentially as numba's np.mean does, the area expression in
+    the same operation order, and argmax keeping the first maximum (or the
+    first NaN, as np.argmax does). It just walks indices instead of allocating
+    a list of bucket views plus temporaries for every bucket, which dominated
+    the runtime when buckets hold only a point or two.
     """
     n_bins = threshold - 2
-
-    # Prepare output array
-    # First and last points are the same as in the input.
+    n = data.shape[0]
     out = np.zeros((threshold, 2))
-    out[0] = data[0]
-    out[len(out) - 1] = data[len(data) - 1]
+    out[0, 0] = data[0, 0]
+    out[0, 1] = data[0, 1]
+    out[threshold - 1, 0] = data[n - 1, 0]
+    out[threshold - 1, 1] = data[n - 1, 1]
 
-    data_bins = split_data(data, n_bins)
+    # np.array_split of the n-2 interior points: the first `extra` bins get one more
+    n_items = n - 2
+    base = n_items // n_bins
+    extra = n_items % n_bins
 
-    # Largest Triangle Three Buckets (LTTB):
-    # In each bin, find the point that makes the largest triangle
-    # with the point saved in the previous bin
-    # and the centroid of the points in the next bin.
-    for i in range(len(data_bins)):
-        this_bin = data_bins[i]
+    start = 1
+    for i in range(n_bins):
+        size = base + 1 if i < extra else base
+        end = start + size
+
+        # mean of the next bin (the last bin looks ahead to the final point)
         if i < n_bins - 1:
-            next_bin = data_bins[i + 1]
+            next_end = end + (base + 1 if i + 1 < extra else base)
+            c0 = 0.0
+            c1 = 0.0
+            for j in range(end, next_end):
+                c0 += data[j, 0]
+                c1 += data[j, 1]
+            c0 /= next_end - end
+            c1 /= next_end - end
         else:
-            next_bin = data[len(data) - 1 :]
+            c0 = data[n - 1, 0]
+            c1 = data[n - 1, 1]
 
-        a = out[i]
-        bs = this_bin
-        c = np_mean(next_bin, 0)
-        areas = _areas_of_triangles(a, bs, c)
+        a0 = out[i, 0]
+        a1 = out[i, 1]
+        best = start
+        best_area = -1.0
+        for j in range(start, end):
+            area = 0.5 * np.abs((a0 - c0) * (data[j, 1] - a1) - (a0 - data[j, 0]) * (c1 - a1))
+            if np.isnan(area):  # np.argmax returns the first NaN
+                best = j
+                break
+            if area > best_area:
+                best_area = area
+                best = j
 
-        # Get middle of bucket
-        middle = bs[math.floor(bs.shape[0] / 2)]
-        point = bs[np.argmax(areas)]
-
-        out[i + 1] = np.array([middle[0], point[1]])
+        out[i + 1, 0] = data[start + size // 2, 0]  # middle of the bucket
+        out[i + 1, 1] = data[best, 1]
+        start = end
     return out
 
 
@@ -149,7 +91,7 @@ def _perform_decimation(ds, threshold):
     cols = [time_da.name, ds.name]
     data = darray.stack([time_da.data, ds.data], axis=1).compute()
     try:
-        decdata = _largest_triangle_three_buckets(data, threshold)
+        decdata = _lttb_loop(data, threshold)
     except Exception as e:
         raise LttbException(e)
     del ds
@@ -215,9 +157,17 @@ def downsample(
     logger.info("Decimation process completed.")
 
     logger.info("Creating decimated dataframe.")
-    final_df = reduce(
-        lambda left, right: pd.merge(left, right, on="time"), df_list
-    )
+    # Every variable shares the time axis and stride, so LTTB gives them all
+    # the same bucket-middle times: join by column instead of a chained merge,
+    # which recopied the growing frame for every variable. Same frame as the
+    # merge; fall back to it if the times ever differ.
+    times = [df["time"].to_numpy() for df in df_list]
+    if all(np.array_equal(times[0], t) for t in times[1:]) and pd.Index(times[0]).is_unique:
+        final_df = pd.concat([df_list[0]] + [df.drop(columns="time") for df in df_list[1:]], axis=1)
+    else:
+        final_df = reduce(
+            lambda left, right: pd.merge(left, right, on="time"), df_list
+        )
     final_df['time'] = pd.to_datetime(final_df['time'])
 
     return final_df
