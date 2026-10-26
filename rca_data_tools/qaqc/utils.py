@@ -17,17 +17,28 @@ def select_logger():
     return logger
 
 
-def _qartod_digit(a, i, n):
+QARTOD_NOT_EVALUATED = 2
+
+
+def _qartod_digit(a, i, n, var, test, logger):
     """i-th character of each qartod_executed string as an int.
 
-    Same values as `.str[i].astype(int)`, but reads the fixed-width unicode
-    codepoints directly instead of a python call per element (~250x faster
-    on a 12M-point chunk). Non-digits raise, as astype(int) would.
+    Reads the fixed-width unicode codepoints directly instead of a python call
+    per element (~250x faster than `.str[i].astype(int)` on a 12M-point chunk).
+    A character that is not a digit (e.g. 'n' from a 'nan' fill squeezed into
+    a one-character string, or '' when the flag is missing) has no test result,
+    so it becomes 2 (not evaluated) and is reported once per chunk.
     """
     u = np.asarray(a).astype(f"U{n}")
     d = u.view(np.uint32).reshape(u.shape + (n,))[..., i].astype(int) - ord("0")
-    if ((d < 0) | (d > 9)).any():
-        raise ValueError(f"non-digit character at position {i} of qartod_executed")
+    invalid = (d < 0) | (d > 9)
+    if invalid.any():
+        values = sorted({chr(c + ord("0")) if c + ord("0") else "" for c in np.unique(d[invalid])})
+        logger.warning(
+            f"Invalid QARTOD flag value(s) {values} in {var} ({test}): "
+            f"{invalid.sum()} point(s) plotted as {QARTOD_NOT_EVALUATED} (not evaluated)"
+        )
+        d = np.where(invalid, QARTOD_NOT_EVALUATED, d)
     return d
 
 
@@ -40,8 +51,11 @@ def coerce_qartod_executed_to_int(ds):
 
         for i, test in enumerate(executed_tests):
             test_var_name = f"{var}_{test}"
+            # the decode runs lazily in dask threads, which have no Prefect run
+            # context; pass this logger in so warnings reach the flow-run logs
             ds[test_var_name] = xr.apply_ufunc(
-                _qartod_digit, ds[var], kwargs={"i": i, "n": len(executed_tests)},
+                _qartod_digit, ds[var],
+                kwargs={"i": i, "n": len(executed_tests), "var": var, "test": test, "logger": logger},
                 dask="parallelized", output_dtypes=[int],
             )
 
