@@ -568,7 +568,11 @@ def opt_external_temp(traw):
     c = -3.87065673e-03
     d = 95.8241397
 
-    degC = a * np.power(traw.astype("O"), 3) + b * np.power(traw.astype("O"), 2) + c * traw + d
+    # float64, not the original object dtype ("32-bit execution" workaround):
+    # counts are 16-bit, so counts**3 < 2**53 is exact and the result is the same
+    # bit for bit, without a python object per sample (that OOM'd long profiler records)
+    t = traw.astype("float64")
+    degC = a * t**3 + b * t**2 + c * traw + d
     
     ###logger.info(f"Calculated external temperature: {degC.values}")
     
