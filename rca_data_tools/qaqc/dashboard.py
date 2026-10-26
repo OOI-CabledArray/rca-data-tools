@@ -302,6 +302,44 @@ def listDeployTimes(deployDict):
     return [deploy['deployDate'] for deploy in deployDict]
 
 
+def timeMachineTraces(timeRef, span, spanString, deployTimes, recordStart):
+    """([time, start, end] per time-machine trace, reference year).
+
+    Deploy span: +-15 days around every deployment. Otherwise the current
+    window plus the same window shifted back one 365-day year at a time to the
+    year the record starts.
+    """
+    if 'deploy' in spanString:
+        traces = [[time, time - timedelta(days=15), time + timedelta(days=15)] for time in deployTimes]
+        return traces, deployTimes[0].year
+    traces = [[timeRef, timeRef - timedelta(days=int(span)), timeRef]]
+    numYears = timeRef.year - pd.to_datetime(recordStart).year
+    for year in np.arange(1, numYears + 1, 1):
+        time = timeRef - timedelta(days=int(year * 365))
+        traces.append([time, time - timedelta(days=int(span)), time])
+    return traces, timeRef.year
+
+
+def scatterWindows(timeRef, span, spanString, deployTimes, recordStart):
+    """Every (start, end) time window plotScatter reads: its plot window first,
+    then the time-machine windows."""
+    if 'deploy' in spanString:
+        base = (deployTimes[0] - timedelta(days=15), deployTimes[0] + timedelta(days=15))
+    else:
+        base = (timeRef - timedelta(days=int(span)), timeRef)
+    traces, _ = timeMachineTraces(timeRef, span, spanString, deployTimes, recordStart)
+    return [base] + [(start, end) for _, start, end in traces]
+
+
+def selectWindows(ds, windows):
+    """The rows of ds inside any of the windows, in time order. Uses the same
+    label slicing as ds.sel(time=slice(start, end)), so selecting a window from
+    the result gives the same rows as selecting it from ds."""
+    index = ds.indexes['time']
+    rows = [np.arange(*index.slice_indexer(start, end).indices(len(index))) for start, end in windows]
+    return ds.isel(time=np.unique(np.concatenate(rows)))
+
+
 
 def annoInRange(startDate,endDate,annoStart,annoEnd):
     if (annoStart >= endDate) or (annoEnd is not None and annoEnd <= startDate):
@@ -1485,8 +1523,16 @@ def plotScatter(
     statusDict,
     site,
     homebrew_qartod,
+    deployTimes=None,
+    recordStart=None,
 ):
-    """Scatter plots for the dashboard's fixed depth and colormap (default) view"""
+    """Scatter plots for the dashboard's fixed depth and colormap (default) view.
+
+    paramData may be the full record or just the windows this plot reads
+    (see scatterWindows); pass recordStart (the full record's first time) in
+    the latter case so the time machine counts the same years. deployTimes
+    (deploy span) is fetched here when not passed in.
+    """
     fileNameList = []
     dpi = 300
     overlays = ['anno', 'clim', 'flag', 'time']
@@ -1544,8 +1590,8 @@ def plotScatter(
     print('plotting scatter for timeSpan: ', span)
 
     if 'deploy' in spanString:
-        deployHistory = loadDeploymentHistory(site)
-        deployTimes = listDeployTimes(deployHistory[site])
+        if deployTimes is None:
+            deployTimes = listDeployTimes(loadDeploymentHistory(site)[site])
 
         timeRef_deploy = deployTimes[0]
         startDate = timeRef_deploy - timedelta(days=15)
@@ -1620,32 +1666,18 @@ def plotScatter(
 
         if 'time' in overlay:
             fig, ax = setPlot()
-            
+
             print('adding time machine plot')
-            timeMachineList = []
             if 'deploy' in spanString:
                 xMinTime = parser.parse(str(deployTimes[0].year) + '-06-15')
                 xMaxTime = parser.parse(str(deployTimes[0].year) + '-09-15')
                 plt.xlim(xMinTime, xMaxTime)
-                yearRef = deployTimes[0].year
-                for time in deployTimes:
-                    start = time - timedelta(days=15)
-                    end = time + timedelta(days=15)
-                    timeMachineList.append([time,start,end]) 
             else:
                 plt.xlim(xMin, xMax)
-                yearRef = timeRef.year
-                start = timeRef - timedelta(days=int(span))
-                timeMachineList.append([timeRef,start,timeRef])
-                startYear = pd.to_datetime(paramData['time'].values.min()).year
-                numYears = timeRef.year - startYear
-                years = np.arange(1,numYears+1,1)
-                for year in years:
-                    time = timeRef - timedelta(days=int(year*365))
-                    start = time - timedelta(days=int(span))
-                    end = time
-                    timeMachineList.append([time,start,end])
-            
+            if recordStart is None:
+                recordStart = paramData['time'].values.min()
+            timeMachineList, yearRef = timeMachineTraces(timeRef, span, spanString, deployTimes, recordStart)
+
             for timeTrace in timeMachineList:
                 yearDiff = int(yearRef) - int(timeTrace[0].year)
                 timeDS = paramData.sel(time=slice(timeTrace[1],timeTrace[2]))

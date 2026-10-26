@@ -227,6 +227,18 @@ def run_dashboard_creation(
     if "PROFILER" in plotInstrument:
         profileList = dashboard.loadProfiles(site)
 
+    # Profilers read one set of time windows per parameter, up front: the plot
+    # window, plus the time-machine windows when there are depth-band plots.
+    # Each depth band used to re-read them all from s3 (8 bands x ~13 windows).
+    if "PROFILER" in plotInstrument and "ADCP" not in plotInstrument:
+        deployTimes = None
+        if "deploy" in spanString:
+            deployTimes = dashboard.listDeployTimes(dashboard.loadDeploymentHistory(site)[site])
+        recordStart = siteData.time.values.min()
+        windows = dashboard.scatterWindows(timeRef, span, spanString, deployTimes, recordStart)
+        if "Single" in stageDict[site]["depths"]:
+            windows = windows[:1]  # no depth-band plots, so no time machine to read
+
     # ADCP current vectors: one quiver per site/span, not per parameter. Short
     # spans show tidal flow; long spans average past the tidal Nyquist and show
     # subtidal circulation, which the title labels as an N-day mean.
@@ -310,6 +322,10 @@ def run_dashboard_creation(
                         flagParams = [item for item in qcParams if Yparam in item]
                         flagParams.extend((Yparam, pressParam))
                         overlayData_flag = siteData[flagParams]
+                        if "ADCP" not in plotInstrument:
+                            # one read per window; flags are only drawn for the plot window
+                            paramData = dashboard.selectWindows(paramData, windows).load()
+                            overlayData_flag = overlayData_flag.sel(time=slice(*windows[0])).load()
                         colorMap = "cmo." + VARIABLE_PARAM_DICT[param]["colorMap"]
                         depthMinMax = stageDict[site]["depthMinMax"].strip('"').split(",")
                         if "None" not in depthMinMax:
@@ -415,6 +431,8 @@ def run_dashboard_creation(
                                         statusDict,
                                         site,
                                         homebrew_qartod,
+                                        deployTimes=deployTimes,
+                                        recordStart=recordStart,
                                     )
                                     plotList.append(plots)
                 else:
