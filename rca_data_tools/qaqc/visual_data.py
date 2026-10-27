@@ -19,7 +19,9 @@ from rca_data_tools.qaqc.constants import (
     PLOT_DIR,
     PLOT_DIR_STR,
     STAGE3_DICT,
+    STATUS_COLORS,
 )
+from rca_data_tools.qaqc.dashboard import blankCax, conciseDateAxis, loadStatus
 from rca_data_tools.qaqc.utils import select_logger
 
 
@@ -165,35 +167,42 @@ def cam_qaqc_stacked_bar(site, time_string, span):
     timerange_df = make_timerange_df(start_date, end_date, base_url, img_size_cutoff)
     wide_df = make_wide_summary_df(timerange_df, img_size_cutoff)
 
-    plt.figure(figsize=(19, 6))
+    # same frame as the instrument plots (dashboard.plotScatter): 5 x 1.75 in at
+    # 300 dpi, serif, title left and operational status right, concise dates
+    statusString = loadStatus().get(site, 'UNAVAILABLE')
+    plt.close('all')
+    plt.rcParams["font.family"] = "serif"
+    fig, ax = plt.subplots()
+    fig.set_size_inches(5, 1.75)
+    fig.patch.set_facecolor('white')
+    plt.title(f"{site} images", fontsize=4, loc='left')
+    plt.title(statusString, fontsize=4, fontweight=0, color=STATUS_COLORS[statusString], loc='right', style='italic')
+    plt.ylabel("Number of Files", fontsize=4)
+    ax.tick_params(direction='out', length=2, width=0.5, labelsize=4)
+    conciseDateAxis(ax)
+    ax.grid(False)
+
+    notBlank, possiblyBlank = '#1f78b4', '#e31a1c'
     if wide_df is not None:
-        plt.bar(wide_df["date_taken"], wide_df["not_blank"], color="blue")
-        plt.bar(
-            wide_df["date_taken"],
-            wide_df["possibly_blank"],
-            bottom=wide_df["not_blank"],
-            color="red",
-        )
+        # each bar covers its own day, starting at midnight
+        days = pd.to_datetime(wide_df["date_taken"])
+        plt.bar(days, wide_df["not_blank"], width=0.8, align='edge', color=notBlank)
+        plt.bar(days, wide_df["possibly_blank"], width=0.8, align='edge',
+                bottom=wide_df["not_blank"], color=possiblyBlank)
         if 'CAMDS' in site:
-            plt.axhline(y=N_EXPECTED_IMGS, color="black", linestyle="--")
-        plt.axvline(x=end_date, color="black")
+            plt.axhline(y=N_EXPECTED_IMGS, color="k", linewidth=0.5, linestyle="--")
+        plt.axvline(x=end_date, color="k", linewidth=1, linestyle="-.")
     else:
         logger.warning("Creating blank plot to flag missing data")
-        plt.text(0.5, 0.5, "No images found in given date range", ha='center', va='center', fontsize=16)
+        plt.annotate("No Data Available", xy=(0.3, 0.5), xycoords="axes fraction")
+    plt.xlim(start_date, end_date + timedelta(days=1))
 
-    plt.title(site)
-    plt.ylabel("Number of Files")
+    swatch = lambda c, label: Line2D([], [], color=c, marker='s', markersize=2, linewidth=0, label=label)
+    ax.legend(handles=[swatch(possiblyBlank, f"Under {img_size_cutoff}Mb"), swatch(notBlank, f"Over {img_size_cutoff}Mb")],
+              loc="upper right", fontsize=3)
+    blankCax(ax)
 
-    # custom labels and handles legend
-    handles = [
-        Line2D([0], [0], color="red", linewidth=8),
-        Line2D([0], [0], color="blue", linewidth=8),
-    ]
-
-    labels = [f"Under {str(img_size_cutoff)}Mb", f"Over {str(img_size_cutoff)}Mb"]
-    plt.legend(handles=handles, labels=labels, loc="upper left")
-
-    plt.savefig(file_name)
+    fig.savefig(file_name, dpi=300)
     plot_list.append(file_name)
 
     return plot_list
