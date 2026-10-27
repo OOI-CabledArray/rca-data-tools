@@ -591,7 +591,7 @@ RS01SLBS-LJ01A-05-HPIESA101:
   temperature:
     local: [0, 10]
   seafloor_pressure:
-    local: [2957, 2953]
+    local: [2953, 2957]
 
 RS03ASHS-MJ03B-07-TMPSFA301:
   temperature:
