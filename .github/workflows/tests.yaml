@@ -1,0 +1,25 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Lint (pyflakes checks, see [tool.ruff.lint] in pyproject.toml)
+        run: uvx ruff@0.14.0 check rca_data_tools tests scripts
+      - name: Test (locked env, Python from .python-version)
+        run: uv run --locked --with pytest pytest -q

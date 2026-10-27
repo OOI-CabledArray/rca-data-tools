@@ -1,3 +1,4 @@
+import os
 import pytest
 import pickle
 from datetime import datetime
@@ -20,6 +21,7 @@ profile_paramMax = 1200.0
 profile_paramMin_local = 30
 profile_paramMax_local = 1400
 fileName_base = 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2'
+os.makedirs('QAQC_plots', exist_ok=True)  # the plots save here
 with open('./tests/toy_data/PCO2WA101_overlayData_anno.pickle', 'rb') as f:
     overlayData_anno = pickle.load(f)
 with open('./tests/toy_data/PCO2WA101_overlayData_clim.pickle', 'rb') as f:
