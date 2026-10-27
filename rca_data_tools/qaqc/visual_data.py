@@ -151,11 +151,12 @@ def cam_qaqc_stacked_bar(site, time_string, span):
 
     plot_list = []
     overlay = "none"
-    depth = "full"  # HACK but has been working forever
+    depth = "full"  # cameras have no depth ranges; keeps the dashboard filename pattern
     span_str = SPAN_DICT[span]
     file_name = f"{PLOT_DIR_STR}{site}_{span_str}_{overlay}_{depth}.png"
     logger.info(file_name)
-    img_size_cutoff = int(STAGE3_DICT[site]["dataParameters"])  # HACK probably a cleaner way to config
+    # for cameras, the dataParameters column holds the possibly-blank image size cutoff (MB)
+    img_size_cutoff = int(STAGE3_DICT[site]["dataParameters"])
 
     # calculate time window
     end_date = parser.parse(time_string)

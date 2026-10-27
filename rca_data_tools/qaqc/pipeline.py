@@ -63,7 +63,6 @@ class QAQCPipeline:
         self.__setup()
 
     def __setup(self):
-        # TODO Don S: data filtering/verification should occur in this class
         if self.site not in ALL_CONFIGS_DICT:
             raise ValueError(
                 f"{self.site} is not available. Available sites {','.join(list(ALL_CONFIGS_DICT.keys()))}"  # noqa

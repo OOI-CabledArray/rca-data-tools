@@ -222,9 +222,8 @@ def run_dashboard_creation(
             # now ~10k x nBins: load once so the per-parameter plot tasks reuse
             # it in memory instead of each re-reading the window from s3
             siteData = siteData.load()
-    
-    # TODO do not run PH, PC02 example during rca-data-tools pipline, needs logic below to do this and way 
-    # to ingest runDuringHarvest column
+
+    # only calculations with runDuringHarvest=False (see CALCULATE_DICT)
     site_zarr = stageDict[site]['zarrFile']
     if site_zarr in CALCULATE_DICT:
         logger.info(f"calculating parameters for {site}...")

@@ -7,7 +7,24 @@ This repository contains code for utility modules and scripts for the RCA Data T
 This is part of an effort to create a cohesive RCA Data Team Dashboard. Most of the current implementation were ported from the [QAQC_dashboard](https://github.com/OOI-CabledArray/QAQC_dashboard) repository.
 
 # Development
-The `rca-data-tools` imageis stored in the RCA AWS ECR. First authenticate with AWS CLI, then push changes. 
+Dependencies and the Python version are locked (`uv.lock`, `.python-version`):
+
+```
+uv sync                                   # local env
+uv run --with pytest pytest -q            # offline test suite, incl. config integrity checks
+uvx ruff@0.14.0 check rca_data_tools tests scripts
+```
+
+CI runs the tests and lint on every PR. For changes that touch plotting or data handling,
+compare the plots against `main` (reads s3, so it is a dev tool, not CI):
+
+```
+python scripts/compare_renders.py <refDes> <span> [--params temperature] [--base main]
+```
+
+Prefect flows on ECS `git_clone` this repo's `main` at run time, so merged code is live on the
+next run. The `rca-data-tools` image only supplies dependencies; rebuild it (stored in the RCA
+AWS ECR) when they change. Authenticate with the AWS CLI, then push:
 
 ```
 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
@@ -35,20 +52,23 @@ sync is refused so live plots are never overwritten.
 4. Log in to the dashboard → Internal tab → select the archive to review.
 
 # Configuration Files 
-`rca_data_tools/qaqc/params/`
+`rca_data_tools/qaqc/params/`, the source of truth for what the pipeline plots and how.
+`tests/test_config.py` checks the files reference each other consistently.
 
 | File | Description |
 |------|-------------|
-| `sitesDictionary.csv` | Authoritative registry of all RCA instruments that are QAQCed by data team. Each row is one refDes with a `stage` column controlling pipeline routing and support status: `1` = standard sensors (CTD, fluorometer, pH, PCO2, ADCP, etc.), `2` = computationaly intensive processing (VEL3D-C, OPTAA, SPKIR), `3` = cameras (CAMDS, CAMHD), `9` = acoustic and seismeic instruments with alternate processing routines ie `ooi-hyd-tools` and `rca-echo-tools`. |
-| `archiveDictionary.csv` | Same structure as `sitesDictionary.csv` for profiler/archive instruments. |
+| `sitesDictionary.csv` | Authoritative registry of all RCA instruments that are QAQCed by data team. Each row is one refDes with a `stage` column controlling pipeline routing and support status: `1` = standard sensors (CTD, fluorometer, pH, PCO2, ADCP, etc.), `2` = computationally intensive processing (VEL3D-C, OPTAA, SPKIR), `3` = cameras (CAMDS, CAMHD), `9` = acoustic and seismic instruments with alternate processing routines ie `ooi-hyd-tools` and `rca-echo-tools`. |
+| `archiveDictionary.csv` | Same columns as `sitesDictionary.csv` (no `stage`) for retired instruments kept for archive plots. |
 | `plotParameters.csv` | Maps instrument type to the ordered list of parameters that appear on its dashboard plot. |
 | `variableMap.csv` | Maps canonical parameter names (e.g. `temperature`) to the actual NetCDF/Zarr variable names used across different instruments. |
 | `variableParameters.csv` | Defines display properties for each parameter: expected min/max, profile min/max, axis label, color map, and whether it is static. |
 | `multiParameters.csv` | Maps instruments whose parameters are multi-dimensional (e.g. spectral irradiance) to their individual sub-parameter names. |
 | `deployedRanges.csv` | Restricts a coordinate dimension (e.g. ADCP bins) to a valid lower/upper index for the current deployment. |
-| `localRanges.yaml` | Site-specific local parameters ranges |
+| `maxCoordinateSizes.csv` | Maximum size of a coordinate per instrument (e.g. OPTAA wavelength, VADCP bins); data-vent pads to it so appends keep a fixed shape. |
+| `localRanges.yaml` | Site-specific local parameter ranges for the `local` y-axis view. |
 | `qartod_skip.yaml` | Lists parameters or instruments for which specific QARTOD tests (e.g. climatology, gross range) should be skipped. |
-| `inheritance.yaml` | Declares parameter dependencies so that a derived parameter |
+| `inheritance.yaml` | Declares, per stream, which input variables a derived parameter comes from (`downstream_from`). Not read by any code yet. |
 | `compute_exceptions.yaml` | Lists streams that require non-default AWS compute resources (more vCPU/memory) than the standard Prefect workpool provides. |
+| `eventPresets.csv` | Instrument/parameter/overlay presets for the dashboard's event report page (e.g. `tsunami`). |
 | `siteCalculations.csv` | Maps sites to the auxiliary calculations that should be run for them, and whether each site's calculations run during data-harvest or visualization pipeline (`runDuringHarvest`). |
 | `calculateCalls.csv` | Defines each named calculation: the function key to call, its input parameters, optional kwargs, and return parameter name(s). |
