@@ -1,10 +1,11 @@
+import os
 import pytest
 import pickle
 from datetime import datetime
 import pandas as pd
 import xarray as xr
 
-from rca_data_tools.qaqc.dashboard import plotProfilesScatter, loadProfiles
+from rca_data_tools.qaqc.dashboard import plotProfilesScatter
 
 site = 'RS01SBPS-SF01A-4F-PCO2WA101'
 Xparam = 'pco2_seawater'
@@ -20,13 +21,16 @@ profile_paramMax = 1200.0
 profile_paramMin_local = 30
 profile_paramMax_local = 1400
 fileName_base = 'QAQC_plots/RS01SBPS-SF01A-4F-PCO2WA101_pco2'
-overlayData_anno = pickle.load(open('./tests/toy_data/PCO2WA101_overlayData_anno.pickle', 'rb'))
-overlayData_clim = pickle.load(open('./tests/toy_data/PCO2WA101_overlayData_clim.pickle', 'rb'))
+os.makedirs('QAQC_plots', exist_ok=True)  # the plots save here
+with open('./tests/toy_data/PCO2WA101_overlayData_anno.pickle', 'rb') as f:
+    overlayData_anno = pickle.load(f)
+with open('./tests/toy_data/PCO2WA101_overlayData_clim.pickle', 'rb') as f:
+    overlayData_clim = pickle.load(f)
 overlayData_flag = xr.open_dataset('./tests/toy_data/PCO2WA101_overlayData_flag.nc')
 span = '1'
 spanString = 'day'
-#profileList = pd.read_csv('./tests/toy_data/profileList.csv') # this may need to be static
-profileList = loadProfiles(site) # this is dynamic and could cause problems with the test, may be at root of index error
+# profile indices for Jul 27-31 2025, saved from OOI-CabledArray/profileIndices so the test runs offline
+profileList = pd.read_csv('./tests/toy_data/RS01SBPS_profiles_2025-07-27_31.csv', parse_dates=['start', 'peak', 'end'])
 statusDict = {'RS01SBPS-SF01A-4F-PCO2WA101': 'OPERATIONAL'}
 site = 'RS01SBPS-SF01A-4F-PCO2WA101'
 homebrew_qartod = False

@@ -48,6 +48,15 @@ dependencies = [
 [tool.ruff]
 line-length = 95
 
+[tool.ruff.lint]
+# CI runs pyflakes checks only (undefined names, unused imports/variables):
+# they catch real bugs without style churn
+select = ["F"]
+
+[tool.ruff.lint.per-file-ignores]
+# unpacked instrument record fields are kept to document the data layout
+"rca_data_tools/qaqc/advanced_qaqc/calculateFunctions.py" = ["F841"]
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra"
