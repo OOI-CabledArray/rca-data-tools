@@ -190,7 +190,12 @@ def run_dashboard_creation(
                 siteData = siteData.reset_coords()
 
     elif stageDict[site]["decimationAlgo"] == "coarsen":  # gridded ADCPs
-        if int(span) in [30, 365]:
+        # ADCPs at ~1 Hz put hundreds of pings in every pixel at spans 1 and 7
+        # too, so they get the same pixel budget: ~1 min (span 7) / ~9 s (span 1)
+        # ensemble means, standard ADCP practice, and the surface-wave orbital
+        # velocities and ping noise no longer alias into the plot
+        coarsenSpans = [1, 7, 30, 365] if "ADCP" in plotInstrument else [30, 365]
+        if int(span) in coarsenSpans:
             # These plots are pcolormesh grids, so columns beyond the rendered
             # width are invisible: coarsen to a pixel budget instead of the LTTB
             # threshold (which left 500k-2.6M columns at span 365 - the VADCP
@@ -206,7 +211,13 @@ def run_dashboard_creation(
             nCols = 10_000  # ~6x plot pixel width; headroom for large displays
             if siteData.time.size > nCols:
                 window = math.ceil(siteData.time.size / nCols)
-                siteData = siteData.coarsen(time=window, boundary="trim").mean()
+                if "ADCP" in plotInstrument:
+                    # never average across a data gap; profilers keep the plain
+                    # coarsen (splitting at every between-profile gap would trim
+                    # a large share of each profile)
+                    siteData = decimate.coarsen_by_segment(siteData, nCols)
+                else:
+                    siteData = siteData.coarsen(time=window, boundary="trim").mean()
                 logger.info(f"Coarsened {site} to {siteData.time.size} columns (window {window}).")
             # now ~10k x nBins: load once so the per-parameter plot tasks reuse
             # it in memory instead of each re-reading the window from s3
@@ -253,7 +264,8 @@ def run_dashboard_creation(
                 uVar,
                 vVar,
                 pressVar,
-                siteData[[uVar, vVar, pressVar]],
+                # instrument depth and cell size set the surface side-lobe cutoff
+                siteData[[uVar, vVar, pressVar] + [x for x in ("depth_from_pressure", "cell_length") if x in siteData]],
                 site + " currents",
                 timeRef,
                 PLOT_DIR_STR + site,

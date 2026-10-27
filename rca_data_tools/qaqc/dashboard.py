@@ -475,6 +475,49 @@ def markerLegend(ax, marker=None):
     return ax.legend(handles=patches, loc="upper right", fontsize=3)
 
 
+def maskTimeGaps(x, y, z, factor=3):
+    """Blank data gaps in a pcolormesh of (time x, depth y, values z), y/z (bin, time).
+
+    pcolormesh stretches each cell halfway to its neighbor, so the samples on
+    either side of a gap smear across it as wide uniform blocks. Inserts a NaN
+    column one step inside each edge of every gap longer than `factor` x the
+    median spacing (depths copied from the neighbor, as pcolormesh needs finite
+    coordinates). Returns the inputs unchanged when there are no gaps.
+    """
+    t = np.asarray(x)
+    if t.size < 3:
+        return x, y, z
+    dt = np.diff(t)
+    step = np.median(dt)
+    gaps = np.flatnonzero(dt > factor * step)
+    if not gaps.size:
+        return x, y, z
+    at = np.repeat(gaps + 1, 2)
+    t = np.insert(t, at, np.stack([t[gaps] + step, t[gaps + 1] - step], 1).ravel())
+    y = np.asarray(y)
+    y = np.insert(y, at, y[:, np.stack([gaps, gaps + 1], 1).ravel()], axis=1)
+    z = np.insert(np.asarray(z, dtype=float), at, np.nan, axis=1)
+    return t, y, z
+
+
+def sidelobeCutoff(ds, binDepthVar, site):
+    """Depth (m, per time) above which surface side-lobe reflection contaminates an
+    upward-looking ADCP: h * (1 - cos(theta)) + 1.5 * cell size (Lentz et al. 2022, as
+    in calculateFunctions.sidelobe_depth). VADCPs (Sentinel V, 25 deg beams) carry no
+    instrument depth or cell size, so both come from the bin geometry: cell size is
+    the bin spacing, h the deepest bin plus one cell.
+    """
+    bins = ds[binDepthVar]
+    binH = bins.max('bin')
+    if 'cell_length' in ds:
+        dz = ds['cell_length'] / 100  # cm
+    else:
+        dz = abs(bins.diff('bin')).median('bin')
+    h = ds['depth_from_pressure'].fillna(binH + dz) if 'depth_from_pressure' in ds else binH + dz
+    theta = np.deg2rad(25 if 'VADCP' in site else 20)
+    return h * (1 - np.cos(theta)) + 1.5 * dz
+
+
 def gridRangeParams(zMin, zMax, zMin_local, zMax_local):
     """plotter() params for the full / standard / local color ranges."""
     return [
@@ -724,6 +767,7 @@ def plotProfilesGrid(
                 yi = baseDS[pressParam].T #transpose
                 zi = baseDS[Yparam].T #transpose
                 xiDT = baseDS.time
+                xiDT, yi, zi = maskTimeGaps(xiDT, yi, zi)
 
                 emptySlice, ax = plot_and_save_no_overlay_plots(
                     plotter,
@@ -866,7 +910,7 @@ def plotADCPVectors(
     uParam,  # eastward velocity variable
     vParam,  # northward velocity variable
     pressParam,  # bin_depths variable
-    paramData,  # xr.Dataset with uParam, vParam, pressParam
+    paramData,  # xr.Dataset with uParam, vParam, pressParam (+ depth_from_pressure, cell_length if present)
     plotTitle,
     timeRef,
     fileName_base,
@@ -942,6 +986,11 @@ def plotADCPVectors(
         binStride = max(1, math.ceil(nB / nDepth))
         timeStride = max(1, math.ceil(nT / maxTimePoints))
         sub = baseDS.isel(time=slice(None, None, timeStride), bin=slice(None, None, binStride))
+        # drop bins in the surface side-lobe zone before averaging, so arrows only
+        # average clean cells and bins wholly inside it draw no arrow
+        surface = sub[pressParam] < sidelobeCutoff(sub, pressParam, site)
+        sub[uParam] = sub[uParam].where(~surface)
+        sub[vParam] = sub[vParam].where(~surface)
         window = max(1, math.ceil(sub.time.size / nTime))
         if window > 1:
             sub = sub.coarsen(time=window, boundary='trim').mean()

@@ -171,3 +171,29 @@ def downsample(
     final_df['time'] = pd.to_datetime(final_df['time'])
 
     return final_df
+
+
+def coarsen_by_segment(ds: xr.Dataset, n_cols: int) -> xr.Dataset:
+    """Coarsen along time to about n_cols columns without averaging across gaps.
+
+    Each column is the mean of `window` consecutive samples, like
+    ds.coarsen(time=window, boundary="trim").mean(), but the record is first
+    split wherever the time step exceeds one column's duration, and each
+    continuous segment is coarsened on its own. So no column mixes data from
+    both sides of a gap (a plain coarsen put one such mean mid-gap). Segments
+    shorter than a window are dropped, as "trim" drops a short tail.
+    """
+    window = math.ceil(ds.time.size / n_cols)
+    if window <= 1:
+        return ds
+    dt = np.diff(ds.time.values)
+    breaks = np.flatnonzero(dt > window * np.median(dt)) + 1
+    bounds = [0, *breaks, ds.time.size]
+    parts = [
+        ds.isel(time=slice(a, b)).coarsen(time=window, boundary="trim").mean()
+        for a, b in zip(bounds[:-1], bounds[1:])
+        if b - a >= window
+    ]
+    if len(parts) <= 1:
+        return parts[0] if parts else ds.coarsen(time=window, boundary="trim").mean()
+    return xr.concat(parts, dim="time", data_vars="minimal", coords="minimal", compat="override")
