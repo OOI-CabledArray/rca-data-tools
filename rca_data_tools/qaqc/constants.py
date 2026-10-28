@@ -124,3 +124,10 @@ FUNCTION_REGISTRY = build_function_registry(CALCULATE_CALLS_DICT, module_name="r
 PLOT_DIR_STR = str(PLOT_DIR) + '/'
 
 COMPUTE_EXCEPTIONS = yaml.safe_load(open(PARAMS_DIR.joinpath("compute_exceptions.yaml")))
+
+# streams data-vent harvests daily, and their non-default ECS sizes
+_harvest = yaml.safe_load(open(PARAMS_DIR.joinpath("harvest.yaml")))
+HARVEST_STREAMS = sorted(
+    _all_sites_df.loc[_all_sites_df['stage'].isin([1, 2]), 'zarrFile'].tolist() + _harvest['extra_streams']
+)
+HARVEST_COMPUTE = _harvest['compute']

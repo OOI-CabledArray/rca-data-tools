@@ -1,0 +1,24 @@
+# data-vent harvests every stage 1/2 instrument's zarrFile (sitesDictionary.csv)
+# plus the extra streams below. Archived instruments are harvested only when named.
+
+# streams nothing here plots, kept in ooi-data for science users
+extra_streams:
+  - CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_dark_sample
+  - RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_dark_sample
+  - RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_dark_sample
+  - RS01SBPS-PC01A-06-VADCPB101-streamed-vadcp_b_velocity_beam5
+  - RS03AXPS-PC03A-06-VADCPB301-streamed-vadcp_b_velocity_beam5
+  - RS01SLBS-LJ01A-05-HPIESA101-streamed-hpies_data_header
+  - RS01SLBS-LJ01A-05-HPIESA101-streamed-horizontal_electric_field
+  - RS03AXBS-LJ03A-05-HPIESA301-streamed-hpies_data_header
+  - RS03AXBS-LJ03A-05-HPIESA301-streamed-horizontal_electric_field
+
+# stream_ingest deployment per harvest type (default 2vcpu_16gb)
+compute:
+  CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data: {refresh: 4vcpu_30gb, append: 4vcpu_30gb}
+  CE02SHBP-LJ01D-07-VEL3DC108-streamed-vel3d_cd_velocity_data: {refresh: 4vcpu_30gb, append: 4vcpu_30gb}
+  # NUTNRAs need extra for advanced qaqc
+  CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample: {refresh: 4vcpu_30gb, append: 4vcpu_30gb}
+  RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample: {refresh: 4vcpu_30gb, append: 4vcpu_30gb}
+  RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_sample: {refresh: 4vcpu_30gb, append: 4vcpu_30gb}
+  CE04OSPS-SF01B-3D-SPKIRA102-streamed-spkir_data_record: {refresh: 4vcpu_30gb}

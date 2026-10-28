@@ -8,6 +8,8 @@ from rca_data_tools.qaqc.constants import (
     CALCULATE_CALLS_DICT,
     COMPUTE_EXCEPTIONS,
     FUNCTION_REGISTRY,
+    HARVEST_COMPUTE,
+    HARVEST_STREAMS,
     LOCAL_RANGE_DICT,
     PARAMS_DIR,
     SPAN_DICT,
@@ -66,6 +68,17 @@ def test_compute_exceptions_point_at_real_sites_spans_and_deployments():
         for span, deployment in spans.items():
             assert str(span) in SPAN_DICT, f"compute_exceptions.yaml: {site} unknown span {span!r}"
             assert deployment in deployments, f"compute_exceptions.yaml: {site} span {span} -> unknown deployment {deployment}"
+
+
+def test_harvest_streams():
+    assert len(HARVEST_STREAMS) == len(set(HARVEST_STREAMS)), "harvest.yaml: extra stream duplicates a zarrFile"
+    for t in HARVEST_STREAMS:
+        assert t[:27] in set(PLOTTED.refDes), f"harvest.yaml: {t} is not a stage 1/2 instrument's stream"
+        assert len(t[28:].split("-")) == 2, f"harvest.yaml: {t} is not <refDes>-<method>-<stream>"
+    for t, sizes in HARVEST_COMPUTE.items():
+        assert t in HARVEST_STREAMS or t in ALL_ZARR, f"harvest.yaml compute: unknown stream {t}"
+        for kind, size in sizes.items():  # data-vent's stream_ingest deployments
+            assert kind in {"refresh", "append"} and size in {"4vcpu_30gb", "8vcpu_60gb"}, f"harvest.yaml compute: {t} {kind}: {size}"
 
 
 def test_site_calculations_resolve():
