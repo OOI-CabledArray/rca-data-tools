@@ -6,6 +6,16 @@ This repository contains code for utility modules and scripts for the RCA Data T
 
 This is part of an effort to create a cohesive RCA Data Team Dashboard. Most of the current implementation were ported from the [QAQC_dashboard](https://github.com/OOI-CabledArray/QAQC_dashboard) repository.
 
+# Ownership
+New code goes in the repo this rule points to:
+
+- **[data-vent](https://github.com/ooi-data/data-vent)** owns everything that talks to OOINet and writes data stores (`ooi-data`, `rca-advanced-qaqc`).
+- **rca-data-tools** owns the instrument registry (`rca_data_tools/qaqc/params/`) and everything that reads stores and renders.
+
+The registry and the calculation code (`calculate.py`, `advanced_qaqc/`) live here; data-vent imports them, runs the
+harvest-time calculations and writes their results. `tests/test_data_vent_contract.py` keeps those imports working
+and free of the plotting stack.
+
 # Development
 Dependencies and the Python version are locked (`uv.lock`, `.python-version`):
 
@@ -57,7 +67,7 @@ sync is refused so live plots are never overwritten.
 
 | File | Description |
 |------|-------------|
-| `sitesDictionary.csv` | Authoritative registry of all RCA instruments that are QAQCed by data team. Each row is one refDes with a `stage` column controlling pipeline routing and support status: `1` = standard sensors (CTD, fluorometer, pH, PCO2, ADCP, etc.), `2` = computationally intensive processing (VEL3D-C, OPTAA, SPKIR), `3` = cameras (CAMDS, CAMHD), `9` = acoustic and seismic instruments with alternate processing routines ie `ooi-hyd-tools` and `rca-echo-tools`. |
+| `sitesDictionary.csv` | Authoritative registry of all RCA instruments that are QAQCed by data team. Each row is one refDes with a `stage` column controlling pipeline routing and support status: `1` = standard sensors (CTD, fluorometer, pH, PCO2, ADCP, etc.), `2` = computationally intensive processing (VEL3D-C, OPTAA, SPKIR), `3` = cameras (CAMDS, CAMHD), `9` = acoustic and seismic instruments with alternate processing routines ie `ooi-hyd-tools` and `rca-echo-tools`; QAQC_dashboard builds its hydrophone, seismometer and echosounder workflow matrices and viewers from these rows. |
 | `archiveDictionary.csv` | Same columns as `sitesDictionary.csv` (no `stage`) for retired instruments kept for archive plots. |
 | `plotParameters.csv` | Maps instrument type to the ordered list of parameters that appear on its dashboard plot. |
 | `variableMap.csv` | Maps canonical parameter names (e.g. `temperature`) to the actual NetCDF/Zarr variable names used across different instruments. |

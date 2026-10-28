@@ -14,6 +14,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 
 from rca_data_tools.qaqc import dashboard, decimate
+from rca_data_tools.qaqc.calculate import run_calculations_for_site
 from rca_data_tools.qaqc.qartod import loadQARTOD
 from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
 
@@ -28,8 +29,6 @@ from rca_data_tools.qaqc.constants import (
     LOCAL_RANGE_DICT,
     DEPLOYED_RANGE_DICT,
     CALCULATE_DICT,
-    CALCULATE_CALLS_DICT,
-    FUNCTION_REGISTRY,
     PLOT_DIR_STR,
     PLOT_DIR,
 )
@@ -45,69 +44,6 @@ def extractMulti(ds, inst, multi_dict, fileParams):
         ds[newParam] = ds[multiParam][:, i]
         fileParams.append(newParam)
     return ds, fileParams
-
-def run_calculations_for_site(zarr_file, siteData, calculate_dict=None):
-    """
-    Run all configured calculations for a zarr file and append outputs to siteData.
-    Requires globals:
-        CALCULATE_DICT,
-        CALCULATE_CALLS_DICT,
-        FUNCTION_REGISTRY
-    If no calculate_dict is provided, defaults to CALCULATE_DICT from constants.py.
-    """
-    if calculate_dict is None:
-        calculate_dict = CALCULATE_DICT
-
-    site = "-".join(zarr_file.split("-")[:4])  # refdes for calculation functions that need it
-
-    logger.info(f"Starting calculations for {zarr_file}...")
-    #logger.info(f"calculate dict: {CALCULATE_DICT}")
-    fileParams = []
-
-    if zarr_file not in calculate_dict:
-        logger.info(f"No calculations configured for {zarr_file}. Skipping calculation step.")
-        return siteData, fileParams
-
-    logger.info(f"Calculating supplementary data arrays for {zarr_file}.")
-    for calc_name in calculate_dict[zarr_file]:
-        meta = CALCULATE_CALLS_DICT[calc_name]
-        func = FUNCTION_REGISTRY[meta["function_key"]]
-        logger.info(f"Running calculation: {calc_name} using function: {func.__name__}")
-
-        # --- gather inputs ---
-        args = []
-        for name in meta["inputs"]:
-            if name == "DATASET":
-                args.append(siteData)
-            elif name == "site":
-                args.append(site)
-            else:
-                args.append(siteData[name])
-
-        kwargs = meta.get("kwargs", {})
-
-        # --- run calculation ---
-        result = func(*args, **kwargs)
-        logger.info(f"Calculation {calc_name} complete. Result type: {type(result)}")
-
-        # --- handle outputs ---
-        outputs = meta["outputs"]
-        results = (result,) if len(outputs) == 1 else result
-
-        for out_name, value in zip(outputs, results):
-            if not isinstance(value, xr.DataArray):
-                value = xr.DataArray(
-                    value,
-                    dims=siteData["time"].dims,
-                    coords=siteData["time"].coords
-                )
-            siteData[out_name] = value
-            fileParams.append(out_name)
-
-    logger.info(f"Finished calculations for {zarr_file}. New parameters added: {fileParams}")
-
-    return siteData, fileParams
-
 
 def run_dashboard_creation(
     site: str,

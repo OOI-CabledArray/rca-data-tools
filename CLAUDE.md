@@ -10,8 +10,11 @@ Prefect flows on ECS (`scope-push-pool`).
   only when they change.
 - `rca_data_tools/qaqc/params/` (CSV/YAML) is the source of truth for instruments,
   parameters, ranges and compute sizes. `tests/test_config.py` checks they agree.
-- data-vent imports `HARVEST_STREAMS`, `HARVEST_COMPUTE`, `MAX_COORD_SIZES`, `PARAMS_DIR`, `S3_BUCKET`, `run_calculations_for_site`,
-  `load_site_calculations` and `get_s3_kwargs`; keep those names and signatures.
+- Ownership: data-vent owns everything that talks to OOINet and writes data stores; this repo
+  owns the instrument registry and everything that reads stores and renders.
+- data-vent imports `HARVEST_STREAMS`, `HARVEST_COMPUTE`, `MAX_COORD_SIZES`, `PARAMS_DIR`, `S3_BUCKET`, `run_calculations_for_site`
+  (from `calculate.py`), `load_site_calculations` and `get_s3_kwargs`; keep those names and signatures, and keep
+  those modules free of plotting imports (`tests/test_data_vent_contract.py`).
 - Pinned on purpose: `zarr<3` with `xarray<2026.4` (drop together in the zarr 3 migration),
   `pandas<3`, Python from `.python-version`.
 
