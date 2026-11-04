@@ -1,6 +1,5 @@
-# Streams that require more compute resources on AWS than 2 vcpu 
-# and 16 gb. (Those are the defaults associated with the prefect 2
-# workpool.)
+# ECS size per site and span when 2vcpu_16gb is not enough.
+# <vcpu>vcpu_<gb>gb, any Fargate combination (tests/test_config.py checks).
 
 CE04OSPS-SF01B-3D-SPKIRA102:
   "365": "8vcpu_60gb"

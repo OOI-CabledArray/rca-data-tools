@@ -7,7 +7,7 @@ import sys
 
 from rca_data_tools.qaqc.calculate import run_calculations_for_site
 from rca_data_tools.qaqc.constants import HARVEST_COMPUTE, HARVEST_STREAMS, MAX_COORD_SIZES, PARAMS_DIR, S3_BUCKET  # noqa: F401
-from rca_data_tools.qaqc.utils import get_s3_kwargs, load_site_calculations  # noqa: F401
+from rca_data_tools.qaqc.utils import ecs_job_variables, get_s3_kwargs, load_site_calculations  # noqa: F401
 
 PLOTTING = {"matplotlib", "rca_data_tools.qaqc.dashboard", "rca_data_tools.qaqc.plots"}
 

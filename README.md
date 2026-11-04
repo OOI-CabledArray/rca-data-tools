@@ -78,7 +78,7 @@ sync is refused so live plots are never overwritten.
 | `localRanges.yaml` | Site-specific local parameter ranges for the `local` y-axis view. |
 | `qartod_skip.yaml` | Lists parameters or instruments for which specific QARTOD tests (e.g. climatology, gross range) should be skipped. |
 | `inheritance.yaml` | Declares, per stream, which input variables a derived parameter comes from (`downstream_from`). Not read by any code yet. |
-| `compute_exceptions.yaml` | Lists streams that require non-default AWS compute resources (more vCPU/memory) than the standard Prefect workpool provides. |
+| `compute_exceptions.yaml` | ECS size (vCPU/memory) per site and span when the default 2 vCPU / 16 GB is not enough; applied per run to the single `qaqc` deployment. |
 | `harvest.yaml` | data-vent's daily harvest: streams harvested besides each stage 1/2 `zarrFile` (`extra_streams`), and non-default ECS sizes for harvest runs (`compute`). |
 | `eventPresets.csv` | Instrument/parameter/overlay presets for the dashboard's event report page (e.g. `tsunami`). |
 | `siteCalculations.csv` | Maps sites to the auxiliary calculations that should be run for them, and whether each site's calculations run during data-harvest or visualization pipeline (`runDuringHarvest`). |

@@ -25,6 +25,7 @@ from rca_data_tools.qaqc.constants import (
 )
 from rca_data_tools.qaqc.constants import COMPUTE_EXCEPTIONS, CAM_SPANS, THROTTLE_SPANS
 from rca_data_tools.qaqc.flow import qaqc_pipeline_flow, S3_BUCKET
+from rca_data_tools.qaqc.utils import ecs_job_variables
 
 now = datetime.datetime.utcnow()
 
@@ -145,25 +146,17 @@ class QAQCPipeline:
             logger.info(f"parameters set to: {parameters}!")
             if self.cloud_run is True:
                 run_name = "-".join([str(self.site), str(self.span)])
-                # IMPORTANT run_deployment determines the infrastructure and resources for each flow_run
-                if self.site in COMPUTE_EXCEPTIONS and self.span in COMPUTE_EXCEPTIONS[self.site]:
-
-                    deployment_name = f"qaqc-pipeline-flow/{COMPUTE_EXCEPTIONS[self.site][self.span]}"
-                    logger.warning(f"{self.site} with span {self.span} requires additional compute resources, creating flow_run from {deployment_name} instead of default")
-                    run_deployment(
-                        name=deployment_name,
-                        parameters=parameters,
-                        flow_run_name=run_name,
-                        timeout=0  # return immediately; launches are staggered in run_stage
-                    )
-                # otherwise run the default deployment with default compute resources        
-                else:
-                    run_deployment(
-                        name="qaqc-pipeline-flow/2vcpu_16gb",
-                        parameters=parameters,
-                        flow_run_name=run_name,
-                        timeout=0  # return immediately; launches are staggered in run_stage
-                    )
+                # ECS size per run: compute_exceptions.yaml, else 2vcpu_16gb
+                size = COMPUTE_EXCEPTIONS.get(self.site, {}).get(self.span, "2vcpu_16gb")
+                if size != "2vcpu_16gb":
+                    logger.warning(f"{self.site} with span {self.span} requires additional compute resources: {size}")
+                run_deployment(
+                    name="qaqc-pipeline-flow/qaqc",
+                    parameters=parameters,
+                    flow_run_name=run_name,
+                    job_variables=ecs_job_variables(size),
+                    timeout=0  # return immediately; launches are staggered in run_stage
+                )
             else:
                 qaqc_pipeline_flow(**parameters)
 

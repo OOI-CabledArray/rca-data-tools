@@ -13,7 +13,7 @@ Prefect flows on ECS (`scope-push-pool`).
 - Ownership: data-vent owns everything that talks to OOINet and writes data stores; this repo
   owns the instrument registry and everything that reads stores and renders.
 - data-vent imports `HARVEST_STREAMS`, `HARVEST_COMPUTE`, `MAX_COORD_SIZES`, `PARAMS_DIR`, `S3_BUCKET`, `run_calculations_for_site`
-  (from `calculate.py`), `load_site_calculations` and `get_s3_kwargs`; keep those names and signatures, and keep
+  (from `calculate.py`), `load_site_calculations`, `get_s3_kwargs` and `ecs_job_variables`; keep those names and signatures, and keep
   those modules free of plotting imports (`tests/test_data_vent_contract.py`).
 - Pinned on purpose: `zarr<3` with `xarray<2026.4` (drop together in the zarr 3 migration),
   `pandas<3`, Python from `.python-version`.
@@ -21,7 +21,8 @@ Prefect flows on ECS (`scope-push-pool`).
 ## Conventions
 - Prefer xarray; short comments; brevity over defensive error handling.
 - Never `.load()` a full record (it OOMs at 16 GB). Loading a span window is fine.
-- Heavy instruments get a bigger ECS deployment in `params/compute_exceptions.yaml`.
+- Heavy instruments get a bigger ECS size in `params/compute_exceptions.yaml`; one `qaqc` deployment,
+  sized per run through `job_variables`.
 
 ## Verifying changes
 - `uv run --locked --with pytest pytest -q` and `uvx ruff@0.14.0 check rca_data_tools tests scripts`,

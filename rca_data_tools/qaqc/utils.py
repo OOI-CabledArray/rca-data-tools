@@ -72,6 +72,12 @@ def get_s3_kwargs():
     return s3_kwargs
 
 
+def ecs_job_variables(size):
+    """Prefect job_variables for an ECS size string like "16vcpu_88gb"."""
+    vcpu, gb = size.removesuffix("gb").split("vcpu_")
+    return {"cpu": int(vcpu) * 1024, "memory": int(gb) * 1024}
+
+
 def save_fig(fig, fileNameList, fileName, dpi, imgTagList):
     for imgTag in imgTagList:
         imgTag = imgTag + '.png'

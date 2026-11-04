@@ -13,7 +13,7 @@ extra_streams:
   - RS03AXBS-LJ03A-05-HPIESA301-streamed-hpies_data_header
   - RS03AXBS-LJ03A-05-HPIESA301-streamed-horizontal_electric_field
 
-# stream_ingest deployment per harvest type (default 2vcpu_16gb)
+# stream_ingest ECS size per harvest type (default 2vcpu_16gb)
 compute:
   CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data: {refresh: 4vcpu_30gb, append: 4vcpu_30gb}
   CE02SHBP-LJ01D-07-VEL3DC108-streamed-vel3d_cd_velocity_data: {refresh: 4vcpu_30gb, append: 4vcpu_30gb}

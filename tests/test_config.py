@@ -2,8 +2,8 @@
 truth, so check that they reference each other consistently before a run does."""
 import pandas as pd
 import pytest
-import yaml
 
+from rca_data_tools.qaqc.utils import ecs_job_variables
 from rca_data_tools.qaqc.constants import (
     CALCULATE_CALLS_DICT,
     COMPUTE_EXCEPTIONS,
@@ -60,14 +60,23 @@ def test_every_plot_parameter_is_mapped():
     assert not params - set(VARIABLE_PARAMS.index), f"not in variableParameters.csv: {sorted(params - set(VARIABLE_PARAMS.index))}"
 
 
-def test_compute_exceptions_point_at_real_sites_spans_and_deployments():
-    deployments = {d["name"] for d in yaml.safe_load(open(PARAMS_DIR.parents[2] / "prefect.yaml"))["deployments"]
-                   if d["entrypoint"].endswith("qaqc_pipeline_flow")}
+# Fargate memory per vCPU count: (min GB, max GB, step GB)
+FARGATE = {2: (4, 16, 1), 4: (8, 30, 1), 8: (16, 60, 4), 16: (32, 120, 8)}
+
+
+def valid_fargate(size):
+    job = ecs_job_variables(size)
+    lo, hi, step = FARGATE.get(job["cpu"] // 1024, (1, 0, 1))
+    gb = job["memory"] // 1024
+    return lo <= gb <= hi and (gb - lo) % step == 0
+
+
+def test_compute_exceptions_point_at_real_sites_spans_and_sizes():
     for site, spans in COMPUTE_EXCEPTIONS.items():
         assert site in ALL_REFDES, f"compute_exceptions.yaml: unknown site {site}"  # archived sites included
-        for span, deployment in spans.items():
+        for span, size in spans.items():
             assert str(span) in SPAN_DICT, f"compute_exceptions.yaml: {site} unknown span {span!r}"
-            assert deployment in deployments, f"compute_exceptions.yaml: {site} span {span} -> unknown deployment {deployment}"
+            assert valid_fargate(size), f"compute_exceptions.yaml: {site} span {span} -> not a Fargate size {size}"
 
 
 def test_harvest_streams():
@@ -77,8 +86,8 @@ def test_harvest_streams():
         assert len(t[28:].split("-")) == 2, f"harvest.yaml: {t} is not <refDes>-<method>-<stream>"
     for t, sizes in HARVEST_COMPUTE.items():
         assert t in HARVEST_STREAMS or t in ALL_ZARR, f"harvest.yaml compute: unknown stream {t}"
-        for kind, size in sizes.items():  # data-vent's stream_ingest deployments
-            assert kind in {"refresh", "append"} and size in {"4vcpu_30gb", "8vcpu_60gb"}, f"harvest.yaml compute: {t} {kind}: {size}"
+        for kind, size in sizes.items():
+            assert kind in {"refresh", "append"} and valid_fargate(size), f"harvest.yaml compute: {t} {kind}: {size}"
 
 
 def test_site_calculations_resolve():

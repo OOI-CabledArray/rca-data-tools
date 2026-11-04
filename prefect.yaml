@@ -16,102 +16,13 @@ pull:
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
-- name: 2vcpu_16gb
-  version:
-  tags: []
-  description:
+# one deployment; pipeline.py sets cpu/memory per run from params/compute_exceptions.yaml
+- name: qaqc
   entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
   parameters: {}
   work_pool:
     name: scope-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 2048
-      memory: 16384
-  schedule:
-  is_schedule_active: true
-- name: 4vcpu_30gb
-  version:
-  tags: []
-  description:
-  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
-  parameters: {}
-  work_pool:
-    name: scope-push-pool
-    work_queue_name:
-    job_variables: {}
-  schedule:
-  is_schedule_active: true
-- name: 8vcpu_60gb
-  version:
-  tags: []
-  description:
-  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
-  parameters: {}
-  work_pool:
-    name: scope-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 8192
-      memory: 61440
-  schedule:
-  is_schedule_active: true
-- name: 16vcpu_80gb
-  version:
-  tags: []
-  description:
-  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
-  parameters: {}
-  work_pool:
-    name: scope-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 16384
-      memory: 81920
-  schedule:
-  is_schedule_active: true
-- name: 16vcpu_88gb
-  version:
-  tags: []
-  description:
-  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
-  parameters: {}
-  work_pool:
-    name: scope-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 16384
-      memory: 90112
-  schedule:
-  is_schedule_active: true
-- name: 16vcpu_96gb
-  version:
-  tags: []
-  description:
-  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
-  parameters: {}
-  work_pool:
-    name: scope-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 16384
-      memory: 98304
-  schedule:
-  is_schedule_active: true
-- name: 16vcpu_104gb
-  version:
-  tags: []
-  description:
-  entrypoint: rca_data_tools/qaqc/flow.py:qaqc_pipeline_flow
-  parameters: {}
-  work_pool:
-    name: scope-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 16384
-      memory: 106496
-  schedule:
-  is_schedule_active: true
+    job_variables: {cpu: 2048, memory: 16384}
 
 # --- QAQC_dashboard workflow triggers -------------------------------------
 # Reliable clock in front of the GitHub Actions
