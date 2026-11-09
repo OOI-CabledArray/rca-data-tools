@@ -184,8 +184,6 @@ RS03AXPS-SF03A-2A-CTDPFA302:
     local_profile: [75, 325]
 
 RS01SBPS-PC01A-4C-FLORDD103:
-  nitrate:
-    local: [0, 25]
   backscatter:
     local: [0, 300]
   cdom:
@@ -194,8 +192,6 @@ RS01SBPS-PC01A-4C-FLORDD103:
     local: [0, 4]
 
 RS03AXPS-PC03A-4C-FLORDD303:
-  nitrate:
-    local: [0, 40]
   backscatter:
     local: [0, 300]
   cdom:
@@ -228,20 +224,14 @@ RS03AXPS-SF03A-3A-FLORTD301:
     local: [0, 3]
 
 CE04OSPS-SF01B-4A-NUTNRA102:
-  sea_water_pressure:
-    local_profile: [0, 36]
   nitrate:
     local_profile: [0, 35]
 
 RS01SBPS-SF01A-4A-NUTNRA101:
-  sea_water_pressure:
-    local_profile: [0, 40]
   nitrate:
     local_profile: [0, 39]
 
 RS03AXPS-SF03A-4A-NUTNRA301:
-  sea_water_pressure:
-    local_profile: [0, 34]
   nitrate:
     local_profile: [3, 32]
 

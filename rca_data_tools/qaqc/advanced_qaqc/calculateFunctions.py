@@ -9,7 +9,9 @@ through OOI/M2M.
 import gc
 import xarray as xr
 import numpy as np
-from rca_data_tools.qaqc.utils import select_logger, get_calibration_dataset, broadcast_calibrations
+from rca_data_tools.qaqc.utils import select_logger, get_calibration_dataset, broadcast_calibrations, open_store, load_profiles
+from rca_data_tools.qaqc.advanced_qaqc import nitrate
+from rca_data_tools.qaqc.qartod import loadQARTOD, loadTestValues
 
 logger = select_logger()
 
@@ -220,253 +222,150 @@ def flor_advanced_flags(flor):
 ### NUTNR functions
 ### -------------------------------------------------------------------------------------
 
-def nutnr_advanced_flags(nutnr):
-    
-    # "Absorption: The data output of the SUNA V2 is the absorption at 350 nm and 254 nm
-    # (A350 and A254). These wavelengths are outside the nitrate absorption range and can be
-    # used to make an estimate of the impact of CDOM. If absorption is high (>1.3 AU), the
-    # SUNA will not be able to collect adequate light to make a measurement." SUNA V2 vendor
-    # documentation (Sea-Bird Scientific Document# SUNA180725)
-    
-    # "RMSE: The root-mean-square error parameter from the SUNA V2 can be used to make
-    # an estimate of how well the nitrate spectral fit is. This should usually be less than 1E-3. If
-    # it is higher, there is spectral shape (likely due to CDOM) that adversely impacts the nitrate
-    # estimate." SUNA V2 vendor documentation (Sea-Bird Scientific Document# SUNA180725)
+def _profiler_ctd(site):
+    """Reference designator of the profiler CTD on site's node."""
+    from rca_data_tools.qaqc.constants import ALL_CONFIGS_DICT  # constants imports this module
+    node = "-".join(site.split("-")[:2])
+    return next(r for r, c in ALL_CONFIGS_DICT.items() if r.startswith(node) and c["instrument"] == "CTD-PROFILER")
 
-    # Invalid: points where spectra - dark is negative, inf, or nan
-    invalid_mask = (
-        ((nutnr.spectral_channels - nutnr.nutnr_dark_value_used_for_fit) <= 0) |
-        np.isinf(nutnr.spectral_channels) |
-        nutnr.spectral_channels.isnull()
-    )
-    # Blocked absorption channel or failed lamp
-    channel_mask = (
-        (nutnr.nutnr_spectrum_average < 10000) 
-    )
-    # CDOM interference: where A254 or A350 > 1.3 AU
-    cdom_mask = (
-        (nutnr.nutnr_absorbance_at_254_nm > 1.3) |
-        (nutnr.nutnr_absorbance_at_350_nm > 1.3)
-    )
-    # onboard-RMSE: if rmse > 0.001; also include plant2023 RMSE if present
-    rmse_mask = (nutnr.nutnr_fit_rmse > 0.001)
-    if "nutnr_rmse" in nutnr:
-        rmse_mask = rmse_mask | (nutnr.nutnr_rmse > 0.001)
-        
-    base = xr.full_like(nutnr.salinity_corrected_nitrate, 1)
+
+def nutnr_advanced_flags(nutnr, site):
+    """
+    Per-sample SUNA spectral, instrument and CTD-input tests (1 pass, 3 flagged), ordered as
+    attrs['tests_executed']. Missing nitrate is left to the QARTOD tests (flag 9). References:
+        [CDOM note] Sea-Bird Scientific (2017). CDOM Interference on Nitrate Measurements
+            (quoted elsewhere as SUNA180725).
+        [Argo] Johnson et al. (2025). BGC-Argo quality control manual for nitrate
+            concentration, v1.1. doi:10.13155/84370
+        [SUNA] Sea-Bird Scientific (2025). SUNA V2 user manual, rev K. Its self-test reports
+            the dark frame's average and SD across channels ("Spec Dark av sd", OOI SUNA driver).
+        [EMVA] EMVA (2021). EMVA 1288 Standard for Characterization of Image Sensors and
+            Cameras, Release 4.0 General, Section 2.3.
+    """
+    cals = get_calibration_dataset(site)
+    dark = open_store(f"{site}-{nitrate.DARK_STREAM}")
     tests = [
-        ('channel', channel_mask),
-        ('invalid', invalid_mask),
-        ('CDOM',    cdom_mask),
-        ('RMSE',    rmse_mask),
+        # A254/A350 > 1.3 AU: too little light reaches the detector [CDOM note]
+        ('CDOM', (nutnr.nutnr_absorbance_at_254_nm > 1.3) | (nutnr.nutnr_absorbance_at_350_nm > 1.3)),
+        # fit RMSE should be < 1E-3; higher means unmodelled absorbers [CDOM note; Argo 2.2.2.4]
+        ('RMSE', nutnr.nutnr_fit_rmse > 0.001),  # onboard fit
+        # absorbance near 240 nm > 0.8: fouled window or compromised optical path [Argo 2.2.2.3]
+        ('A240', nitrate.absorbance_240(nutnr, cals) > 0.8),
+        # any fit-window pixel above 64,500 counts: absorbance in error [Argo 2.2.2.2]
+        ('saturation', nitrate.saturated_pixels(nutnr, cals) > 0),
+        # raw spectrum identical to the adjacent sample's: stuck sensor output [Argo test 13]
+        ('stuck', nitrate.stuck_spectrum(nutnr)),
+        # the lamp should not operate above 35 °C [SUNA 8.3.2]
+        ('lamp_temperature', nutnr.temp_lamp > 35),
+        # replace the lamp after 750 hours [SUNA 8.1.2]
+        ('lamp_hours', nutnr.lamp_time > 750 * 3600),
+        # internal humidity > 50%: the sensor may have a leak [SUNA troubleshooting]
+        ('humidity', nutnr.humidity > 50),
+        # high dark counts (> 1000) fail the self-test [SUNA troubleshooting]
+        ('dark', nutnr.nutnr_dark_value_used_for_fit > 1000),
+        # 20x integration time in optically dense water [SUNA 8.4.1]: reprocessing, and the
+        # recompute, assume the normal time [SUNA 6.2.3]
+        ('integration_time', nutnr.nutnr_integration_time_factor > 1),
+        # temporal noise of the sample's dark frame > 12 counts: its SD across channels exceeds
+        # the self-test spec (<= 12) from noise alone [SUNA troubleshooting; EMVA Eqs. 17-18]
+        ('dark_noise', nitrate.dark_noise(nutnr, dark) > 12),
     ]
+    # the stream's T, S and P failing QARTOD gross range (the node's profiler CTD tables) flag
+    # nitrate: 4 for T or P, 3 for S [Argo 2.2.2.1]; RCA flags 3 for all
+    ctd = _profiler_ctd(site)
+    for name, var, param in [('CTD_temperature', 'sea_water_temperature', 'seawater_temperature'),
+                             ('CTD_salinity', 'sea_water_practical_salinity', 'practical_salinity'),
+                             ('CTD_pressure', 'int_ctd_pressure', 'seawater_pressure')]:
+        gross = loadTestValues(ctd, param, "ctdpf", "gross_range", logger=logger)
+        if gross:
+            tests.append((name, nitrate.gross_range_flag(nutnr[var], gross) == 4))
+    if "nutnr_rmse" in nutnr:
+        tests.append(('RMSE_recomputed', nutnr.nutnr_rmse > 0.001))  # nutnr_plant2023 fit
+
+    base = xr.ones_like(nutnr.time, dtype=int)  # not NaN-masked, so missing nitrate can't corrupt the string
     return combine_qc_flags(base, tests)
 
 def nutnr_plant2023(nutnr, site):
     """
-    Description:
+    Dissolved nitrate [uM] recomputed from raw spectra: TCSS (Sakamoto et al. 2009) with the
+    Plant et al. (2023) temperature correction and the Sakamoto et al. (2017) pressure
+    correction. See nitrate.recompute_nitrate.
 
-        The code below calculates the Dissolved Nitrate Concentration
-        with the Plant et al (2023) updates to the 
-        Sakamoto et. al. (2009) algorithm that uses the observed
-        sample salinity and temperature to subtract the bromide component
-        of the overall seawater UV absorption spectrum before solving for
-        the nitrate concentration. Additionally, this adds the pressure
-        correction from Sakamoto 2017.
-
-        The output represents the OOI L2 Dissolved Nitrate Concentration,
-        Temperature and Salinity Corrected (NITRTSC).
-
-    Implemented by:
-
-        2014-05-22: Craig Risien. Initial Code
-        2014-05-27: Craig Risien. This function now looks for the light vs
-                    dark frame measurements and only calculates nitrate
-                    concentration based on the light frame measurements.
-        2015-04-09: Russell Desiderio. CI is now implementing cal coeffs
-                    by tiling in time, requiring coding changes. The
-                    tiling includes the wllower and wlupper variables
-                    when supplied by CI.
-        2025-09-19: Andrew Reed. Updates for improved T,S,P corrections
-                    following Plant et al 2023 and Sakamoto et al 2017
-
-    Usage:
-
-        NO3_conc = ts_corrected_nitrate(cal_temp, wl, eno3, eswa, di,
-                                        dark_value, ctd_t, ctd_sp, data_in,
-                                        frame_type, wllower, wlupper)
-
-            where
-
-        cal_temp = Calibration water temperature value
-        wl = (256,) array of wavelength bins
-        eno3 = (256,) array of wavelength-dependent nitrate
-                extinction coefficients
-        eswa = (256,) array of seawater extinction coefficients
-        di = (256,) array of deionized water reference spectrum
-        dark_value = (N,) array of dark average scalar value
-        ctd_t = (N,) array of water temperature values from
-                colocated CTD [deg C].
-                (see 1341-00010_Data_Product_Spec_TEMPWAT)
-        ctd_sp = (N,) array of practical salinity values from
-                colocated CTD [unitless].
-                (see 1341-00040_Data_Product_Spec_PRACSAL)
-        ctd_p = (N,) array of ctd pressure in dbar
-        data_in = (N x 256) array of nitrate measurement values
-                from the UV absorption spectrum data product
-                (L0 NITROPT) [unitless]
-        NO3_conc = L2 Dissolved Nitrate Concentration, Temperature and
-                Corrected (NITRTSC) [uM]
-        frame_type = (N,) array of Frame type, either a light or dark
-                measurement. This function only uses the data from light
-                frame measurements.
-        wllower = Lower wavelength limit for spectra fit.
-                  From DPS: 217 nm (1-cm pathlength probe tip) or
-                            220 nm (4-cm pathlength probe tip)
-        wlupper = Upper wavelength limit for spectra fit.
-                  From DPS: 240 nm (1-cm pathlength probe tip) or
-                            245 nm (4-cm pathlength probe tip)
-    Notes:
-
-    References:
-
-        OOI (2014). Data Product Specification for NUTNR Data Products.
-            Document Control Number 1341-00620.
-            https://alfresco.oceanobservatories.org/ (See: Company Home >>
-            OOI >> Controlled >> 1000 System Level >>
-            1341-00620_Data_Product_Spec_NUTNR_OOI.pdf)
-        Johnson, K. S., and L. J. Coletti. 2002. In situ ultraviolet
-            spectrophotometry for high resolution and long-term monitoring
-            of nitrate, bromide and bisulfide in the ocean. Deep-Sea Res.
-            I 49:1291-1305
-        Sakamoto, C.M., K.S. Johnson, and L.J. Coletti (2009). Improved
-            algorithm for the computation of nitrate concentrations in
-            seawater using an in situ ultraviolet spectrophotometer.
-            Limnology and Oceanography: Methods 7: 132-143
-        Plant, J. N., Sakamoto, C. M., Johnson, K. S., Maurer, T. L., & Bif, M. B. (2023).
-            Updated temperature correction for computing seawater nitrate with in situ 
-            ultraviolet spectrophotometer and submersible ultraviolet nitrate analyzer 
-            nitrate sensors. Limnology and Oceanography: Methods 21(10): 581–593. 
-            https://doi.org/10.1002/lom3.10566
+    Returns dissolved_nitrate, nutnr_fitting_function (nitrate, baseline intercept, baseline
+    slope per nm) and nutnr_rmse; NaN for dark frames and times without a calibration.
     """
-    logger.info(nutnr)
-    logger.info("Loading calibrations")
-    cals = get_calibration_dataset(site)
+    out = nitrate.recompute_nitrate(nutnr, get_calibration_dataset(site))
+    fit = xr.concat([out.nitrate, out.baseline_intercept, out.baseline_slope], dim="coefficient")
+    return out.nitrate, fit.transpose("time", "coefficient"), out.fit_rmse
 
-    logger.info("Building calibration index (no broadcast)...")
-    coeffs = broadcast_calibrations(cals, nutnr.time)
-    cal_tables = coeffs["tables"]
 
-    cal_temp = cal_tables["CC_cal_temp"]
-    wl = cal_tables["CC_wl"]
-    eno3 = cal_tables["CC_eno3"]
-    eswa = cal_tables["CC_eswa"]
-    di = cal_tables["CC_di"]
-    wllower = cal_tables["CC_lower_wavelength_limit_for_spectra_fit"]
-    wlupper = cal_tables["CC_upper_wavelength_limit_for_spectra_fit"]
-    
-    dark_value = nutnr.nutnr_dark_value_used_for_fit.values
-    ctd_t = nutnr.sea_water_temperature.values
-    ctd_sp = nutnr.sea_water_practical_salinity.values
-    data_in = nutnr.spectral_channels.values
-    frame_type = nutnr.frame_type.values
-                               
-    n_data_packets = data_in.shape[0]
+def nutnr_qartod_recomputed(nutnr, site):
+    """
+    OOI production QARTOD climatology, gross range and flat line tables (built for
+    salinity_corrected_nitrate) applied to the recomputed dissolved_nitrate, then the profile
+    tests (_nutnr_profile_tests). Returns OOI-style dissolved_nitrate_qartod_executed and
+    dissolved_nitrate_qartod_results.
+    """
+    clim, gross = loadQARTOD(site, "salinity_corrected_nitrate", "nutnr", logger=logger)
+    flat = loadTestValues(site, "salinity_corrected_nitrate", "nutnr", "flat_line", logger=logger)
+    no3 = nutnr.dissolved_nitrate
+    tests = {}
+    if clim:
+        tests["climatology_test"] = nitrate.climatology_flag(no3, nutnr.int_ctd_pressure, clim)
+    if gross:
+        tests["gross_range_test"] = nitrate.gross_range_flag(no3, gross)
+    if flat:
+        tests["flat_line_test"] = nitrate.flat_line_flag(no3, flat)
+    tests.update(_nutnr_profile_tests(nutnr, site, gross))
+    return nitrate.qartod_outputs(tests)
 
-    cal_index = coeffs["index"]
 
-    # Ensure 2D (n_cal_rows x n_wavelengths) before indexing
-    if wl.ndim == 1:
-        wl = wl[np.newaxis, :]
-        di = di[np.newaxis, :]
-        eno3 = eno3[np.newaxis, :]
-        eswa = eswa[np.newaxis, :]
+# per-sample tests a sample must pass to feed the profile-test statistics (the history
+# the limits were derived from); instrument diagnostics such as dark_noise still flag it
+SPECTRAL_TESTS = ["CDOM", "RMSE", "A240", "saturation", "stuck", "RMSE_recomputed"]
 
-    # Expand 1D cal arrays to n_data_packets using cal_index
-    if np.ndim(wllower) == 0:
-        wllower = np.full(n_data_packets, float(wllower))
-    else:
-        wllower = wllower[cal_index]
-    if np.ndim(wlupper) == 0:
-        wlupper = np.full(n_data_packets, float(wlupper))
-    else:
-        wlupper = wlupper[cal_index]
-    if np.ndim(cal_temp) == 0:
-        cal_temp = np.full(n_data_packets, float(cal_temp))
-    else:
-        cal_temp = cal_temp[cal_index]
 
-    wl = wl[cal_index, :]
-    di = di[cal_index, :]
-    eno3 = eno3[cal_index, :]
-    eswa = eswa[cal_index, :]
+def _passes(flags, tests):
+    """True where each of tests that advanced_qc_flags ran is 1."""
+    names = flags.attrs["tests_executed"].split(",")
+    return xr.concat([flags.str.get(names.index(t)) == "1" for t in tests if t in names], "test").all("test")
 
-    c0 = 1.46380e-02
-    c1 = 1.67660e-03
-    c2 = 2.91898e-05
-    c3 = -7.56395e-06
-    c4 = 1.27353e-07
 
-    NO3_conc = np.ones(n_data_packets)
-    fitting_function = np.full((n_data_packets, 3), np.nan)
-    rmse = np.ones(n_data_packets)
+def _nutnr_profile_tests(nutnr, site, gross):
+    """
+    Spike (BGC-Argo test 9), multi-variate (IOOS test 9) and attenuated signal (IOOS test 10)
+    flags for nutnr's samples, with limits from params/nutnr_profile_tests.yaml. Upcasts come
+    from the RCA profile indices. Statistics use samples that pass the spectral tests
+    (SPECTRAL_TESTS) and gross range. The previous history_days are read back from the store
+    so the multi-variate test has its window.
+    """
+    from rca_data_tools.qaqc.constants import ALL_CONFIGS_DICT, NUTNR_PROFILE_TESTS as cfg  # constants imports this module
+    keep = ["dissolved_nitrate", "sea_water_temperature", "int_ctd_pressure"]
+    t0 = nutnr.time.values[0]
+    start = t0 - np.timedelta64(cfg["multi_variate"]["history_days"], "D")
+    stored = open_store(ALL_CONFIGS_DICT[site]["zarrFile"])
+    parts = [nutnr[keep].assign(good=_passes(nutnr.advanced_qc_flags, SPECTRAL_TESTS))]
+    if all(v in stored for v in keep + ["advanced_qc_flags"]):  # once harvests have stored the recomputed products
+        old = stored[keep + ["advanced_qc_flags"]].sel(time=slice(start, t0 - np.timedelta64(1, "ns"))).load()
+        parts.insert(0, old[keep].assign(good=_passes(old.advanced_qc_flags, SPECTRAL_TESTS)))
+    d = xr.concat(parts, "time").load()
 
-    for i in range(0, n_data_packets):
+    no3, p, good = d.dissolved_nitrate, d.int_ctd_pressure, d.good
+    if gross:
+        good &= nitrate.gross_range_flag(no3, gross) != 4
+    years = range(int(d.time.dt.year.min()) - 1, int(d.time.dt.year.max()) + 1)  # an upcast can start the year before
+    table = nitrate.profile_table(load_profiles(site, years))
+    upcast = nitrate.upcast_number(d.time, table)
+    flags = {
+        "spike_test": nitrate.spike_flag(no3, upcast, good, cfg["spike_uM"]),
+        "multi_variate_test": nitrate.multi_variate_flag(no3, d.sea_water_temperature, p, upcast, good, table,
+                                                         cfg["multi_variate"]),
+        "attenuated_signal_test": nitrate.attenuated_signal_flag(no3, p, upcast, good, cfg["attenuated_signal"]["suspect_uM"][site],
+                                                                 cfg["attenuated_signal"]["fail_uM"], cfg["full_depth"]),
+    }
+    return {name: f.sel(time=nutnr.time) for name, f in flags.items()}
 
-        if frame_type[i] == 'SDB' or frame_type[i] == 'SDF' or frame_type[i] == "NDF":
-            NO3_conc[i] = np.nan
-            rmse[i] = np.nan
 
-        else:
-            useindex = np.logical_and(wllower[i] <= wl[i, :], wl[i, :] <= wlupper[i])
-
-            WL = wl[i, useindex]
-            ENO3 = eno3[i, useindex]
-            ESWA = eswa[i, useindex]
-            DI = np.array(di[i, useindex], dtype='float64')
-            SW = np.array(data_in[i, useindex], dtype='float64')
-
-            SWcorr = SW - dark_value[i]
-            with np.errstate(divide='ignore', invalid='ignore'):
-                Absorbance = np.log10(DI / SWcorr)
-
-            WL_prime = (WL - 210.0)
-            f_prime = (c0 + c1 * WL_prime + c2 * WL_prime**2 + c3 * WL_prime**3 
-                       + c4 * WL_prime**4)
-
-            SWA_Ext_at_T = (ESWA * np.exp(f_prime * (ctd_t[i] - cal_temp[i])))
-
-            A_SWA = ctd_sp[i] * SWA_Ext_at_T
-            Acomp = np.array(Absorbance - A_SWA, ndmin=2).T
-
-            subset_array_size = np.shape(ENO3)
-            Ones = np.ones((subset_array_size[0],), dtype='float64') / 100
-            M = np.vstack((ENO3, Ones, WL / 1000)).T
-
-            C = np.dot(np.linalg.pinv(M), Acomp)
-
-            NO3_conc[i] = C[0, 0]
-
-            # Reconstruct the fitted absorbance from the solved coefficients
-            Afit = np.dot(M, C).flatten()
-            # Compute RMSE between the fitted and measured absorbance
-            residuals = Acomp.flatten() - Afit
-            rmse[i] = np.sqrt(np.mean(residuals**2))
-            # Store the fitting function as the coefficients array [NO3, baseline_const, slope]
-            fitting_function[i] = C.flatten()
-
-    coords = {"time": nutnr["time"]}
-
-    logger.info("Wrapping outputs into DataArrays")
-
-    return (
-        xr.DataArray(NO3_conc,        coords=coords, dims=["time"], name="dissolved_nitrate"),
-        xr.DataArray(fitting_function, coords=coords, dims=["time", "coefficient"], name="nutnr_fitting_function"),
-        xr.DataArray(rmse,            coords=coords, dims=["time"], name="nutnr_rmse"),
-    )
-    
-    
-    
 ### -------------------------------------------------------------------------------------
 ### OPTAA functions
 ### -------------------------------------------------------------------------------------
@@ -673,17 +572,19 @@ def opt_calculate_all_optical_products(
     cal_tables = coeffs["tables"]
 
     logger.info("Finding wavelength indices...")
-    wl_a_vals = optaa["wavelength_a"].values
-    aw_vals = cal_tables["CC_awlngth"]
-    cw_vals = cal_tables["CC_cwlngth"]
+    # channel wavelengths of the calibration covering most samples; each instrument has its
+    # own (NaN-padded) set, and the stored wavelength_a is a single vector for the whole record
+    row = np.bincount(cal_index[cal_index >= 0]).argmax()
+    aw_vals = cal_tables["CC_awlngth"][row]
+    cw_vals = cal_tables["CC_cwlngth"][row]
 
-    def nearest(vals, t): return int(np.abs(vals - t).argmin())
+    def nearest(vals, t): return int(np.nanargmin(np.abs(vals - t)))
 
-    m412 = nearest(wl_a_vals, 412.0)
-    m440 = nearest(wl_a_vals, 440.0)
-    m490 = nearest(wl_a_vals, 490.0)
-    m530 = nearest(wl_a_vals, 530.0)
-    m676r = nearest(wl_a_vals, 676.0)
+    m412 = nearest(aw_vals, 412.0)
+    m440 = nearest(aw_vals, 440.0)
+    m490 = nearest(aw_vals, 490.0)
+    m530 = nearest(aw_vals, 530.0)
+    m676r = nearest(aw_vals, 676.0)
 
     m650 = nearest(aw_vals, 650.0)
     m676 = nearest(aw_vals, 676.0)
@@ -783,13 +684,14 @@ def opt_calculate_all_optical_products(
 
     logger.info("Wrapping outputs into DataArrays")
 
+    # same order as the outputs in calculateCalls.csv
     return (
+        xr.DataArray(chl,         coords=coords, dims=[time_dim], name="estimated_chlorophyll"),
+        xr.DataArray(poc,         coords=coords, dims=[time_dim], name="estimated_poc"),
         xr.DataArray(ratio_cdom,  coords=coords, dims=[time_dim], name="ratio_cdom"),
         xr.DataArray(ratio_carot, coords=coords, dims=[time_dim], name="ratio_carotenoids"),
         xr.DataArray(ratio_phyco, coords=coords, dims=[time_dim], name="ratio_phycobilins"),
         xr.DataArray(ratio_qband, coords=coords, dims=[time_dim], name="ratio_qband"),
-        xr.DataArray(chl,         coords=coords, dims=[time_dim], name="estimated_chlorophyll"),
-        xr.DataArray(poc,         coords=coords, dims=[time_dim], name="estimated_poc"),
     )
 
 

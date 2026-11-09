@@ -6,20 +6,47 @@ import pandas as pd
 from rca_data_tools.qaqc.utils import select_logger
 
 
-# Gross-range tables are one CSV per sensorType covering all sites/params, so
+GITHUB_URL = "https://raw.githubusercontent.com/oceanobservatories/qc-lookup/master/qartod/"
+
+# Gross-range and flat-line tables are one CSV per sensorType covering all sites/params, so
 # cache the parsed DataFrame by URL — otherwise it re-downloads once per param.
-_GROSS_RANGE_CACHE = {}
+_TABLE_CACHE = {}
 
 
-def _load_gross_range_df(url):
-    if url not in _GROSS_RANGE_CACHE:
+def _load_table(url):
+    if url not in _TABLE_CACHE:
         download = requests.get(url)
-        _GROSS_RANGE_CACHE[url] = (
+        _TABLE_CACHE[url] = (
             pd.read_csv(io.StringIO(download.content.decode("utf-8")))
             if download.status_code == 200
             else None
         )
-    return _GROSS_RANGE_CACHE[url]
+    return _TABLE_CACHE[url]
+
+
+def _table_config(url, refDes, param):
+    """qcConfig dict for refDes/param from a per-sensorType table, {} if absent."""
+    df = _load_table(url)
+    if df is None:
+        return {}
+    (site, node, sensor1, sensor2) = refDes.split("-")
+    qcConfig = df.qcConfig[
+        (df.subsite == site)
+        & (df.node == node)
+        & (df.sensor == sensor1 + "-" + sensor2)
+        & (df.parameters.str.contains(param))
+    ]
+    return json.loads(qcConfig.values[0].replace("'", '"')) if len(qcConfig) > 0 else {}
+
+
+def loadTestValues(refDes, param, sensorType, test, logger=select_logger()):
+    """qcConfig for refDes/param from the OOI production `{test}_test_values` table (e.g.
+    test="flat_line" or "gross_range"), {} if absent."""
+    url = GITHUB_URL + sensorType + "/" + sensorType + f"_qartod_{test}_test_values.csv"
+    config = _table_config(url, refDes, param)
+    if not config:
+        logger.warning(f"error retrieving {test} data for {refDes} {param} {sensorType}")
+    return config
 
 
 def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
@@ -34,51 +61,28 @@ def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
     if param in renameMap:
         param = renameMap[param]
 
-    (site, node, sensor1, sensor2) = refDes.split("-")
-    sensor = sensor1 + "-" + sensor2
-
     # if parameter is oxygen sensor in ctd stream, replace sensor type
     if sensorType == "ctdpf" and "oxygen" in param:
-        if "SF" in node:
+        if "SF" in refDes.split("-")[1]:
             sensorType = "dofst"
         else:
             sensorType = "dosta"
 
     # Load climatology and gross range values
 
-    githubBaseURL = (
-        "https://raw.githubusercontent.com/oceanobservatories/qc-lookup/master/qartod/"
-    )
-
     if sensorType == "phsen":
         param = "seawater_ph"
 
     clim_URL = (
-        githubBaseURL + sensorType + "/climatology_tables/" + refDes + "-" + param + ".csv"
+        GITHUB_URL + sensorType + "/climatology_tables/" + refDes + "-" + param + ".csv"
     )
     grossRange_URL = (
-        githubBaseURL + sensorType + "/" + sensorType + "_qartod_gross_range_test_values.csv"
+        GITHUB_URL + sensorType + "/" + sensorType + "_qartod_gross_range_test_values.csv"
     )
 
-    df_grossRange = _load_gross_range_df(grossRange_URL)
-    if df_grossRange is not None:
-        qcConfig = df_grossRange.qcConfig[
-            (df_grossRange.subsite == site)
-            & (df_grossRange.node == node)
-            & (df_grossRange.sensor == sensor)
-            & (df_grossRange.parameters.str.contains(param))
-        ]
-        if len(qcConfig) > 0:
-            qcConfig_json = qcConfig.values[0].replace("'", '"')
-            grossRange_dict = json.loads(qcConfig_json)
-        else:
-            logger.warning(
-                f"error retrieving gross range data for {refDes} {param} {sensorType}"
-            )
-            grossRange_dict = {}
-    else:
+    grossRange_dict = _table_config(grossRange_URL, refDes, param)
+    if not grossRange_dict:
         logger.warning(f"error retrieving gross range data for {refDes} {param} {sensorType}")
-        grossRange_dict = {}
 
     download = requests.get(clim_URL)
     if download.status_code == 200:

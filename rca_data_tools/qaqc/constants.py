@@ -125,6 +125,8 @@ PLOT_DIR_STR = str(PLOT_DIR) + '/'
 
 COMPUTE_EXCEPTIONS = yaml.safe_load(open(PARAMS_DIR.joinpath("compute_exceptions.yaml")))
 
+NUTNR_PROFILE_TESTS = yaml.safe_load(open(PARAMS_DIR.joinpath("nutnr_profile_tests.yaml")))
+
 # streams data-vent harvests daily, and their non-default ECS sizes
 _harvest = yaml.safe_load(open(PARAMS_DIR.joinpath("harvest.yaml")))
 HARVEST_STREAMS = sorted(

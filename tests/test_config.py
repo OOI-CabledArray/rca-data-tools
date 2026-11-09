@@ -11,6 +11,7 @@ from rca_data_tools.qaqc.constants import (
     HARVEST_COMPUTE,
     HARVEST_STREAMS,
     LOCAL_RANGE_DICT,
+    NUTNR_PROFILE_TESTS,
     PARAMS_DIR,
     SPAN_DICT,
 )
@@ -98,6 +99,15 @@ def test_site_calculations_resolve():
             assert calc in CALCULATE_CALLS_DICT, f"siteCalculations.csv: {r.zarrFile} -> unknown calculation {calc}"
     for name, meta in CALCULATE_CALLS_DICT.items():
         assert meta["function_key"] in FUNCTION_REGISTRY, f"calculateCalls.csv: {name} -> no function {meta['function_key']}"
+
+
+def test_nutnr_profile_test_limits():
+    # every site running the profile tests needs its attenuated-signal suspect limit
+    calcs = csv("siteCalculations.csv")
+    running = {z[:27] for z, c in zip(calcs.zarrFile, calcs.calculations) if "nutnr_qartod_recomputed" in c}
+    suspect = NUTNR_PROFILE_TESTS["attenuated_signal"]["suspect_uM"]
+    assert running == set(suspect), f"nutnr_profile_tests.yaml: suspect_uM sites {sorted(suspect)} != {sorted(running)}"
+    assert all(NUTNR_PROFILE_TESTS["attenuated_signal"]["fail_uM"] < v for v in suspect.values())
 
 
 def test_deployed_ranges():
