@@ -1,0 +1,32 @@
+# Profile tests on the recomputed nitrate tier (nutnr_qartod_recomputed; nitrate roadmap 1.8).
+# Upcasts come from the RCA profile indices; statistics use samples that pass the per-sample tests.
+
+# BGC-Argo nitrate QC test 9: |nitrate - 5-point running median| along each upcast
+spike_uM: 5.0
+
+# IOOS nutrients QARTOD test 10: SD of nitrate over each full-depth upcast
+attenuated_signal:
+  fail_uM: 0.3          # SUNA short-term precision with T-S correction (3 sigma)
+  suspect_uM:           # half the lowest SD of any healthy upcast in each site's history
+    CE04OSPS-SF01B-4A-NUTNRA102: 1.9
+    RS01SBPS-SF01A-4A-NUTNRA101: 1.9
+    RS03AXPS-SF03A-4A-NUTNRA301: 1.8
+
+# IOOS nutrients QARTOD test 9: a nitrate change between consecutive upcasts, in the same
+# pressure bin, that temperature doesn't share. SDs over the bin's previous window_upcasts.
+multi_variate:
+  n_nitrate: 4
+  n_temperature: 1
+  floor_uM: 0.3         # SUNA short-term precision with T-S correction (3 sigma)
+  bin_dbar: 5
+  pressure_dbar: [15, 185]
+  window_upcasts: 14    # ~7 days at two upcasts a day
+  min_upcasts: 7
+  max_gap_hours: 14     # longest gap between consecutive upcasts
+  history_days: 8       # read back from the store to fill the window
+
+# a full-depth upcast: screened samples reaching <= top_dbar and >= bottom_dbar
+full_depth:
+  top_dbar: 30
+  bottom_dbar: 150
+  min_samples: 40

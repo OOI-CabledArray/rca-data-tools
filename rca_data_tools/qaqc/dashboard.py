@@ -17,7 +17,6 @@ import json
 import math
 import numpy as np
 import pandas as pd
-import re
 import requests
 import s3fs
 import statistics as st
@@ -240,38 +239,6 @@ def loadDeploymentHistory(refDes):
     return deployHistory
 
 
-
-def loadProfiles(refDes):
-    logger = select_logger()
-
-    profileList = []
-    dateColumns = ['start','peak','end']
-    if len(refDes) > 8:
-        (site, node, sensor1, sensor2) = refDes.split('-')
-    else:
-        site = refDes
-    # URL on the Github where the csv files are stored
-    github_url = 'https://github.com/OOI-CabledArray/profileIndices/' 
-    gh_baseURL = 'https://raw.githubusercontent.com/OOI-CabledArray/profileIndices/main/'
-
-    page = requests.get(github_url).text
-    fileNames = list(set(re.findall(site + r'_profiles_[0-9]{4}\.csv',page)))
-
-    if fileNames:
-        profiles_partial = []
-        headers = {'User-Agent': 'RCA-profile-fetcher'} # so github doesn't block us?
-        logger.info("fetching profiles from github...")
-        for file in fileNames:
-            profiles_URL = gh_baseURL + file
-            download = requests.get(profiles_URL, headers=headers)
-            if download.status_code == 200:
-                data = pd.read_csv(io.StringIO(download.content.decode('utf-8')),parse_dates=dateColumns)
-                profiles_partial.append(data)
-
-        profileList = pd.concat(profiles_partial, ignore_index=True)
-        profileList = profileList.sort_values('start')
-    
-    return profileList
 
 
 

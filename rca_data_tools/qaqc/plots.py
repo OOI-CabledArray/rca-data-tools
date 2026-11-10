@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from rca_data_tools.qaqc import dashboard, decimate
 from rca_data_tools.qaqc.calculate import run_calculations_for_site
 from rca_data_tools.qaqc.qartod import loadQARTOD
-from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int
+from rca_data_tools.qaqc.utils import select_logger, coerce_qartod_executed_to_int, load_profiles
 
 logger = select_logger()
 
@@ -171,7 +171,7 @@ def run_dashboard_creation(
     # not on the parameter, so fetch them once instead of per-parameter.
     overlayData_anno = dashboard.loadAnnotations(site)
     if "PROFILER" in plotInstrument:
-        profileList = dashboard.loadProfiles(site)
+        profileList = load_profiles(site)
 
     # Profilers read one set of time windows per parameter, up front: the plot
     # window, plus the time-machine windows when there are depth-band plots.

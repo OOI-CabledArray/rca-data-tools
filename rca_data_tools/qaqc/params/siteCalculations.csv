@@ -14,9 +14,9 @@ RS01SBPS-SF01A-2D-PHSENA101-streamed-phsen_data_record,ph_advanced_flags,True
 RS03AXPS-PC03A-4B-PHSENA302-streamed-phsen_data_record,ph_advanced_flags,True
 RS03AXPS-SF03A-2D-PHSENA301-streamed-phsen_data_record,ph_advanced_flags,True
 CE02SHBP-LJ01D-10-PHSEND103-streamed-phsen_data_record,ph_advanced_flags,True
-CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags,True
-RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags,True
-RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags,True
+CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags|nutnr_qartod_recomputed,True
+RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags|nutnr_qartod_recomputed,True
+RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_sample,nutnr_plant2023|nutnr_advanced_flags|nutnr_qartod_recomputed,True
 RS01SLBS-LJ01A-10-ADCPTE101-streamed-adcp_velocity_beam,adcp_advanced_flags,False
 RS01SBPS-PC01A-4C-FLORDD103-streamed-flort_d_data_record,flor_advanced_flags,False
 CE04OSPS-SF01B-3A-FLORTD104-streamed-flort_d_data_record,flor_advanced_flags,False

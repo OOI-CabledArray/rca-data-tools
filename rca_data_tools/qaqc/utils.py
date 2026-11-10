@@ -1,9 +1,11 @@
 import ast
+import io
 import numpy as np
 import os
 import pandas as pd
 import re
 import requests
+import s3fs
 import xarray as xr
 import importlib
 
@@ -70,6 +72,28 @@ def get_s3_kwargs():
     
     s3_kwargs = {'key': aws_key, 'secret': aws_secret}
     return s3_kwargs
+
+
+def open_store(zarr_file):
+    """Lazy dataset for a zarr store in ooi-data."""
+    fs = s3fs.S3FileSystem(**get_s3_kwargs())
+    return xr.open_zarr(fs.get_mapper("ooi-data/" + zarr_file), consolidated=True)
+
+
+PROFILE_INDEX_URL = "https://raw.githubusercontent.com/OOI-CabledArray/profileIndices/main/"
+
+
+def load_profiles(refDes, years=None):
+    """RCA profiler indices (profile, start, peak, end) for refDes's site, sorted by start: one
+    CSV per year, 2014 to now unless years is given. [] if there are none."""
+    site = refDes.split("-")[0]
+    parts = []
+    for year in years or range(2014, pd.Timestamp.now().year + 1):
+        download = requests.get(f"{PROFILE_INDEX_URL}{site}_profiles_{year}.csv",
+                                headers={"User-Agent": "RCA-profile-fetcher"})
+        if download.status_code == 200:
+            parts.append(pd.read_csv(io.StringIO(download.text), parse_dates=["start", "peak", "end"]))
+    return pd.concat(parts, ignore_index=True).sort_values("start") if parts else []
 
 
 def ecs_job_variables(size):
@@ -322,28 +346,34 @@ def get_calibration_dataset(reference_designator):
     return ds
 
 
+def calibration_index(cals, timestamps):
+    """
+    Calibration row valid at each time (valid_start <= t < valid_stop), -1 where no
+    window covers it. get_calibration_dataset windows don't overlap; if they do, the
+    latest-starting window that has begun is used, or -1 if it has already ended.
+    """
+    start, stop = cals.valid_start.values, cals.valid_stop.values
+    order = np.argsort(start)
+    t = np.asarray(timestamps)
+    pos = np.searchsorted(start[order], t, side="right") - 1
+    row = order[np.maximum(pos, 0)]
+    return np.where((pos >= 0) & (t < stop[row]), row, -1).astype("int32")
+
+
 def broadcast_calibrations(cals, timestamps):
     """
     Memory-safe calibration lookup (no full broadcast).
-    Returns calibration tables + index mapping.
+    Returns calibration tables + index mapping. The index is -1 where no calibration
+    covers a time; every table ends in a NaN row, so table[index] is NaN there rather
+    than the last calibration.
     """
-    intervals = pd.IntervalIndex.from_arrays(
-        cals.valid_start.values,
-        cals.valid_stop.values,
-        closed="left"
-    )
-
-    # For each timestamp → which calibration row applies
-    cal_index = intervals.get_indexer(timestamps).astype("int32")
-
-    # Store calibration tables WITHOUT expanding
-    tables = {}
-    for var in cals.data_vars:
-        tables[var] = cals[var].values  # small
-
+    tables = {
+        var: np.concatenate([cals[var].values, np.full((1,) + cals[var].shape[1:], np.nan)])
+        for var in cals.data_vars
+    }
     return {
-        "index": cal_index,   # shape (n_time,)
-        "tables": tables      # small calibration arrays
+        "index": calibration_index(cals, timestamps),  # shape (n_time,)
+        "tables": tables,                              # small calibration arrays, + NaN row
     }
 
 # -------------------------------------------------------------------------------------
