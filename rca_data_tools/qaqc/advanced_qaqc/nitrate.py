@@ -175,7 +175,7 @@ def flat_line_flag(x, table):
     points pass, so a chunk's first points can't see the previous chunk. Unlike ioos_qc, a
     window needs two valid values: a lone value after a gap has nothing to repeat."""
     t = table["qartod"]["flat_line_test"]
-    interval = x.time.diff("time").median().values.astype("timedelta64[s]").astype(float)
+    interval = float(x.time.diff("time").median() / np.timedelta64(1, "s"))
     position = xr.ones_like(x.time, dtype=int).cumsum("time")
     def flat(seconds):
         n = int(seconds / interval)
@@ -183,6 +183,7 @@ def flat_line_flag(x, table):
         return ((window.max() - window.min()) < t["tolerance"]) & (position > n)
     flag = xr.where(flat(t["fail_threshold"]), 4, xr.where(flat(t["suspect_threshold"]), 3, 1))
     return flag.where(x.notnull(), 9)
+
 
 def profile_table(profiles):
     """RCA profile indices (utils.load_profiles) as a Dataset on `upcast`, the profile number."""
@@ -197,11 +198,18 @@ def upcast_number(time, table):
     return last.upcast.where(time <= last.peak, -1).astype(int).rename("upcast")
 
 
+def _not_evaluated(no3):
+    """2 everywhere, 9 where missing."""
+    return xr.full_like(no3, 2, dtype=int).where(no3.notnull(), 9)
+
+
 def spike_flag(no3, upcast, good, threshold):
     """BGC-Argo test 9 along each upcast: 3 where a screened (good) value differs from the
     5-point running median of its upcast's screened values by more than threshold. 2 for
     samples not screened, off an upcast or within two samples of an upcast's ends; 9 missing."""
     x = no3.where(good & (upcast >= 0)).dropna("time")
+    if not x.size:
+        return _not_evaluated(no3)
     ref = x.groupby(upcast.sel(time=x.time)).map(lambda g: g.rolling(time=5, center=True).median())
     flag = xr.where(abs(x - ref) > threshold, 3, 1).where(ref.notnull(), 2)
     return flag.reindex_like(no3, fill_value=2).where(no3.notnull(), 9)
@@ -240,6 +248,8 @@ def multi_variate_flag(no3, temp, pressure, upcast, good, table, cfg):
     key = (upcast * 1000 + pbin).where(good & (pbin >= 0) & (upcast >= 0), -1).rename("key")
     med = xr.Dataset({"no3": no3, "t": temp}).groupby(key).median()
     med = med.isel(key=(med.key >= 0).values)
+    if not med.key.size:
+        return _not_evaluated(no3)
     med = med.assign_coords(upcast=med.key // 1000, pbin=med.key % 1000).set_index(key=["upcast", "pbin"]).unstack("key")
 
     start = table.start.sel(upcast=med.upcast)

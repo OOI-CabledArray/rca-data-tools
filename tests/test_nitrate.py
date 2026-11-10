@@ -170,6 +170,10 @@ def test_flat_line_flags_repeats_within_tolerance():
     # a lone value after a gap passes (ioos_qc flags it 3)
     gap = xr.DataArray([1, np.nan, np.nan, np.nan, 2], coords={"time": time[:5]}, dims="time")
     assert nitrate.flat_line_flag(gap, FLAT).values.tolist() == [1, 9, 9, 9, 1]
+    # sub-second sampling: 200 s is 400 previous points
+    fast = xr.DataArray(np.r_[np.arange(100.0), np.full(500, 3.0)], dims="time",
+                        coords={"time": pd.date_range("2025-06-01", periods=600, freq="500ms")})
+    assert (nitrate.flat_line_flag(fast, FLAT) == 4).values.tolist() == [False] * 500 + [True] * 100
 
 
 def test_flat_line_table_lookup(monkeypatch):
@@ -336,14 +340,36 @@ def test_profile_tests_read_history_from_the_store(monkeypatch):
         return history
     monkeypatch.setattr(calculateFunctions, "open_store", store)
     monkeypatch.setattr(calculateFunctions, "load_profiles", lambda refDes, years: table)
-    monkeypatch.setattr(calculateFunctions, "loadQARTOD", lambda *a, **k: ({}, GROSS))
-    monkeypatch.setattr(calculateFunctions, "loadTestValues", lambda *a, **k: {})
+    monkeypatch.setattr(calculateFunctions, "loadQARTOD", lambda *a, **k: (CLIM, GROSS))
+    monkeypatch.setattr(calculateFunctions, "loadTestValues", lambda *a, **k: FLAT)
     executed, results = calculateFunctions.nutnr_qartod_recomputed(chunk, site)
-    assert executed.attrs["tests_executed"] == "gross_range_test, spike_test, multi_variate_test, attenuated_signal_test"
+    assert executed.attrs["tests_executed"] == ("climatology_test, gross_range_test, flat_line_test, spike_test, "
+                                                "multi_variate_test, attenuated_signal_test")
     step = ((chunk.int_ctd_pressure >= 100) & (chunk.int_ctd_pressure < 105)).values
-    mv = np.array([s[2] for s in executed.values])
+    mv = np.array([s[4] for s in executed.values])
     assert set(mv[step]) == {"3"} and set(mv[~step]) <= {"1", "2"}  # the window comes from the stored upcasts
     assert executed.sizes["time"] == chunk.sizes["time"]
+
+    # a table that failed to download raises, so the digits can't shift
+    monkeypatch.setattr(calculateFunctions, "loadTestValues", lambda *a, **k: {})
+    with pytest.raises(KeyError):
+        calculateFunctions.nutnr_qartod_recomputed(chunk, site)
+
+
+def test_profile_tests_without_screened_upcast_samples_are_not_evaluated():
+    ds, table = make_upcasts(2)
+    late = ds.assign_coords(time=ds.time + np.timedelta64(30, "D"))  # newer than the profile indices
+    late["dissolved_nitrate"][3] = np.nan
+    t = nitrate.profile_table(table)
+    up = nitrate.upcast_number(late.time, t)
+    good = xr.ones_like(late.dissolved_nitrate, dtype=bool)
+    expected = np.full(late.sizes["time"], 2)
+    expected[3] = 9
+    for f in (nitrate.spike_flag(late.dissolved_nitrate, up, good, 5.0),
+              nitrate.multi_variate_flag(late.dissolved_nitrate, late.sea_water_temperature, late.int_ctd_pressure,
+                                         up, good, t, MV),
+              nitrate.attenuated_signal_flag(late.dissolved_nitrate, late.int_ctd_pressure, up, good, 1.9, 0.3, FULL_DEPTH)):
+        assert f.values.tolist() == expected.tolist()
 
 
 def test_load_profiles_reads_each_year(monkeypatch):

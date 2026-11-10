@@ -277,8 +277,7 @@ def nutnr_advanced_flags(nutnr, site):
                              ('CTD_salinity', 'sea_water_practical_salinity', 'practical_salinity'),
                              ('CTD_pressure', 'int_ctd_pressure', 'seawater_pressure')]:
         gross = loadTestValues(ctd, param, "ctdpf", "gross_range", logger=logger)
-        if gross:
-            tests.append((name, nitrate.gross_range_flag(nutnr[var], gross) == 4))
+        tests.append((name, nitrate.gross_range_flag(nutnr[var], gross) == 4))
     if "nutnr_rmse" in nutnr:
         tests.append(('RMSE_recomputed', nutnr.nutnr_rmse > 0.001))  # nutnr_plant2023 fit
 
@@ -309,13 +308,12 @@ def nutnr_qartod_recomputed(nutnr, site):
     clim, gross = loadQARTOD(site, "salinity_corrected_nitrate", "nutnr", logger=logger)
     flat = loadTestValues(site, "salinity_corrected_nitrate", "nutnr", "flat_line", logger=logger)
     no3 = nutnr.dissolved_nitrate
-    tests = {}
-    if clim:
-        tests["climatology_test"] = nitrate.climatology_flag(no3, nutnr.int_ctd_pressure, clim)
-    if gross:
-        tests["gross_range_test"] = nitrate.gross_range_flag(no3, gross)
-    if flat:
-        tests["flat_line_test"] = nitrate.flat_line_flag(no3, flat)
+    # every table is required, so a failed download raises rather than shifting the digits
+    tests = {
+        "climatology_test": nitrate.climatology_flag(no3, nutnr.int_ctd_pressure, clim),
+        "gross_range_test": nitrate.gross_range_flag(no3, gross),
+        "flat_line_test": nitrate.flat_line_flag(no3, flat),
+    }
     tests.update(_nutnr_profile_tests(nutnr, site, gross))
     return nitrate.qartod_outputs(tests)
 
@@ -351,8 +349,7 @@ def _nutnr_profile_tests(nutnr, site, gross):
     d = xr.concat(parts, "time").load()
 
     no3, p, good = d.dissolved_nitrate, d.int_ctd_pressure, d.good
-    if gross:
-        good &= nitrate.gross_range_flag(no3, gross) != 4
+    good &= nitrate.gross_range_flag(no3, gross) != 4
     years = range(int(d.time.dt.year.min()) - 1, int(d.time.dt.year.max()) + 1)  # an upcast can start the year before
     table = nitrate.profile_table(load_profiles(site, years))
     upcast = nitrate.upcast_number(d.time, table)
