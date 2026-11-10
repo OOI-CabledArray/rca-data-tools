@@ -335,8 +335,8 @@ def test_profile_tests_read_history_from_the_store(monkeypatch):
     ds["advanced_qc_flags"] = ds.advanced_qc_flags.copy(data=np.full(n * 100, "111113"))
     history, chunk = ds.where(ds.time < chunk_start, drop=True), ds.where(ds.time >= chunk_start, drop=True)
     site = "CE04OSPS-SF01B-4A-NUTNRA102"
-    def store(zarr_file):
-        assert zarr_file == f"{site}-streamed-nutnr_a_sample"
+    def store(zarr_file, bucket="ooi-data"):
+        assert (zarr_file, bucket) == (f"{site}-streamed-nutnr_a_sample", "rca-advanced-qaqc")
         return history
     monkeypatch.setattr(calculateFunctions, "open_store", store)
     monkeypatch.setattr(calculateFunctions, "load_profiles", lambda refDes, years: table)

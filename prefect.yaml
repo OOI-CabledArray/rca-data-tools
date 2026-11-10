@@ -41,12 +41,13 @@ deployments:
   is_schedule_active: true
 - name: trigger-profile-indices
   tags: [scheduler]
+  description: after the profiler CTD harvests (done ~10:33), before the 11:00 plots
   entrypoint: rca_data_tools/qaqc/scheduler.py:trigger_workflow
   parameters: {workflow_file: profile_indices.yaml}
   work_pool:
     name: scope-push-pool
     job_variables: {cpu: 512, memory: 1024}
-  schedule: {cron: "30 10 * * *", timezone: UTC}
+  schedule: {cron: "45 10 * * *", timezone: UTC}
   is_schedule_active: true
 - name: trigger-daily-batch
   tags: [scheduler]

@@ -17,6 +17,7 @@ CAM_URL_DICT = {
 N_EXPECTED_IMGS = 145
 
 S3_BUCKET = 'ooi-rca-qaqc-prod'
+ADVANCED_QAQC_BUCKET = 'rca-advanced-qaqc'  # data-vent's harvest-time calculation outputs
 
 # CSV config constants 
 HERE = Path(__file__).parent.absolute()

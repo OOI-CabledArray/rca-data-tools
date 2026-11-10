@@ -337,11 +337,14 @@ def _nutnr_profile_tests(nutnr, site, gross):
     (SPECTRAL_TESTS) and gross range. The previous history_days are read back from the store
     so the multi-variate test has its window.
     """
-    from rca_data_tools.qaqc.constants import ALL_CONFIGS_DICT, NUTNR_PROFILE_TESTS as cfg  # constants imports this module
+    from rca_data_tools.qaqc.constants import ADVANCED_QAQC_BUCKET, ALL_CONFIGS_DICT, NUTNR_PROFILE_TESTS as cfg  # constants imports this module
     keep = ["dissolved_nitrate", "sea_water_temperature", "int_ctd_pressure"]
     t0 = nutnr.time.values[0]
     start = t0 - np.timedelta64(cfg["multi_variate"]["history_days"], "D")
-    stored = open_store(ALL_CONFIGS_DICT[site]["zarrFile"])
+    try:  # the store data-vent writes these products to; absent until its first build
+        stored = open_store(ALL_CONFIGS_DICT[site]["zarrFile"], ADVANCED_QAQC_BUCKET)
+    except KeyError:
+        stored = xr.Dataset()
     parts = [nutnr[keep].assign(good=_passes(nutnr.advanced_qc_flags, SPECTRAL_TESTS))]
     if all(v in stored for v in keep + ["advanced_qc_flags"]):  # once harvests have stored the recomputed products
         old = stored[keep + ["advanced_qc_flags"]].sel(time=slice(start, t0 - np.timedelta64(1, "ns"))).load()

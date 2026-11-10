@@ -74,10 +74,10 @@ def get_s3_kwargs():
     return s3_kwargs
 
 
-def open_store(zarr_file):
-    """Lazy dataset for a zarr store in ooi-data."""
+def open_store(zarr_file, bucket="ooi-data"):
+    """Lazy dataset for a zarr store, in ooi-data unless bucket is given."""
     fs = s3fs.S3FileSystem(**get_s3_kwargs())
-    return xr.open_zarr(fs.get_mapper("ooi-data/" + zarr_file), consolidated=True)
+    return xr.open_zarr(fs.get_mapper(f"{bucket}/{zarr_file}"), consolidated=True)
 
 
 PROFILE_INDEX_URL = "https://raw.githubusercontent.com/OOI-CabledArray/profileIndices/main/"
