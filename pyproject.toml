@@ -15,7 +15,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "bs4",
     "cmislib3",
@@ -36,8 +36,8 @@ dependencies = [
     "requests",
     "s3fs>=2024",
     "scipy",
-    "xarray>=2024.1.1,<2026.4",  # 2026.4 dropped zarr 2; we pin zarr<3
-    "zarr<3.0.0",
+    "xarray>=2025.6",
+    "zarr>=3.1",
 ]
 
 [project.scripts]

@@ -1,4 +1,4 @@
-FROM prefecthq/prefect:2-python3.10
+FROM prefecthq/prefect:3-python3.11
 
 COPY ./ /tmp/rca_data_tools
 
