@@ -343,7 +343,7 @@ def _nutnr_profile_tests(nutnr, site, gross):
     start = t0 - np.timedelta64(cfg["multi_variate"]["history_days"], "D")
     try:  # the store data-vent writes these products to; absent until its first build
         stored = open_store(ALL_CONFIGS_DICT[site]["zarrFile"], ADVANCED_QAQC_BUCKET)
-    except KeyError:
+    except FileNotFoundError:
         stored = xr.Dataset()
     parts = [nutnr[keep].assign(good=_passes(nutnr.advanced_qc_flags, SPECTRAL_TESTS))]
     if all(v in stored for v in keep + ["advanced_qc_flags"]):  # once harvests have stored the recomputed products

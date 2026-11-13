@@ -350,6 +350,14 @@ def test_profile_tests_read_history_from_the_store(monkeypatch):
     assert set(mv[step]) == {"3"} and set(mv[~step]) <= {"1", "2"}  # the window comes from the stored upcasts
     assert executed.sizes["time"] == chunk.sizes["time"]
 
+    # a first build has no store (zarr 3 raises GroupNotFoundError, a FileNotFoundError): no history
+    def missing(zarr_file, bucket="ooi-data"):
+        raise FileNotFoundError(zarr_file)
+    monkeypatch.setattr(calculateFunctions, "open_store", missing)
+    executed, _ = calculateFunctions.nutnr_qartod_recomputed(chunk, site)
+    assert {s[4] for s in executed.values} == {"2"}  # no window yet
+    monkeypatch.setattr(calculateFunctions, "open_store", store)
+
     # a table that failed to download raises, so the digits can't shift
     monkeypatch.setattr(calculateFunctions, "loadTestValues", lambda *a, **k: {})
     with pytest.raises(KeyError):
