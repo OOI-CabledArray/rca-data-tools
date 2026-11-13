@@ -70,6 +70,10 @@ Outputs `dissolved_nitrate_qartod_executed` (one digit per test) and
   from the `rca-advanced-qaqc` store.
 - data-vent recomputes the last 2 days of flags on each append, so samples newer than the
   profile index, and upcasts split across appends, are re-evaluated on the next harvest.
+- data-vent rebuilds an advanced store from full history when its outputs change (new or dropped
+  variables, new dims, a test added to a flags string). The profile tests read their own stored
+  history first, so after changing `nutnr_advanced_flags` or the NUTNR outputs, delete the three
+  `rca-advanced-qaqc` NUTNR stores; the next harvest rebuilds them.
 - Flag values: 1 pass, 2 not evaluated, 3 suspect, 4 fail, 9 missing. Summary precedence follows
   ioos_qc `qartod_compare`: 4 > 3 > 1 > 2 > 9.
 - `advanced_qc_flags` are not part of the summary.
