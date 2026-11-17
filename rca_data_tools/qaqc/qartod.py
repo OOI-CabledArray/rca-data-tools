@@ -50,16 +50,15 @@ def loadTestValues(refDes, param, sensorType, test, logger=select_logger()):
 
 
 def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
-    renameMap = {
+    # qc-lookup's test tables name inputs by OOI CI parameter name; RCA climatology files use the
+    # stream (netCDF) variable name (qc-lookup PR #121). Built from the name, since the
+    # climatology test table doesn't list every RCA file.
+    ciNames = {
         "sea_water_temperature": "seawater_temperature",
         "sea_water_practical_salinity": "practical_salinity",
         "sea_water_pressure": "seawater_pressure",
         "sea_water_density": "density",
-        #'ph_seawater':'seawater_ph',
     }
-
-    if param in renameMap:
-        param = renameMap[param]
 
     # if parameter is oxygen sensor in ctd stream, replace sensor type
     if sensorType == "ctdpf" and "oxygen" in param:
@@ -70,9 +69,6 @@ def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
 
     # Load climatology and gross range values
 
-    if sensorType == "phsen":
-        param = "seawater_ph"
-
     clim_URL = (
         GITHUB_URL + sensorType + "/climatology_tables/" + refDes + "-" + param + ".csv"
     )
@@ -80,7 +76,7 @@ def loadQARTOD(refDes, param, sensorType, logger=select_logger()):
         GITHUB_URL + sensorType + "/" + sensorType + "_qartod_gross_range_test_values.csv"
     )
 
-    grossRange_dict = _table_config(grossRange_URL, refDes, param)
+    grossRange_dict = _table_config(grossRange_URL, refDes, ciNames.get(param, param))
     if not grossRange_dict:
         logger.warning(f"error retrieving gross range data for {refDes} {param} {sensorType}")
 
